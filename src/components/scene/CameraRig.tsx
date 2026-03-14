@@ -8,18 +8,15 @@ import { getCameraParams } from "./timeline";
 
 export default function CameraRig({
   elapsedRef,
-  playingRef,
   sceneGroupRef,
 }: {
   elapsedRef: React.MutableRefObject<number>;
-  playingRef: React.RefObject<boolean>;
   sceneGroupRef: React.RefObject<THREE.Group | null>;
 }) {
   const { camera } = useThree();
   const angleRef = useRef(0);
 
   useFrame((_, delta) => {
-    if (!playingRef.current) return;
     elapsedRef.current += delta;
     const elapsed = Math.min(elapsedRef.current, CONFIG.timeline.duration);
 

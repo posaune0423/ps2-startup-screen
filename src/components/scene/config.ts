@@ -38,8 +38,8 @@ export const CONFIG = {
   },
   timeline: {
     duration: 9.5,
-    accelStart: 6.0,
-    rushStart: 6.5,
+    accelStart: 7.5,
+    rushStart: 8.5,
   },
   particle: {
     count: 4,

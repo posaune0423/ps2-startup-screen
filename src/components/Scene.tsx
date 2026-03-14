@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
 import * as THREE from "three";
@@ -15,19 +15,13 @@ import ParticleTrails from "./scene/ParticleTrails";
 import FadeOverlay from "./scene/FadeOverlay";
 import PostProcessing from "./scene/PostProcessing";
 
-function SceneContent({
-  elapsedRef,
-  playingRef,
-}: {
-  elapsedRef: React.MutableRefObject<number>;
-  playingRef: React.RefObject<boolean>;
-}) {
+function SceneContent({ elapsedRef }: { elapsedRef: React.MutableRefObject<number> }) {
   const sceneGroupRef = useRef<THREE.Group>(null);
 
   return (
     <>
       <color attach="background" args={["#1A1A1A"]} />
-      <CameraRig elapsedRef={elapsedRef} playingRef={playingRef} sceneGroupRef={sceneGroupRef} />
+      <CameraRig elapsedRef={elapsedRef} sceneGroupRef={sceneGroupRef} />
       <Environment preset="warehouse" background={false} environmentIntensity={0.25} />
       <group ref={sceneGroupRef}>
         <Lighting elapsedRef={elapsedRef} />
@@ -43,19 +37,20 @@ function SceneContent({
 
 export default function Scene() {
   const elapsedRef = useRef(0);
-  const playingRef = useRef(false);
+  const soundStartedRef = useRef(false);
 
-  const [play] = useSound("/sound/ps2-startup-bgm.mp3", {
+  const [play, { sound }] = useSound("/sound/ps2-startup-bgm.mp3", {
     volume: 1.0,
-    onplay: () => {
-      elapsedRef.current = 0;
-      playingRef.current = true;
-    },
   });
 
-  useEffect(() => {
+  const handleInteraction = useCallback(() => {
+    if (soundStartedRef.current) return;
+    soundStartedRef.current = true;
     play();
-  }, [play]);
+    if (sound) {
+      sound.seek(elapsedRef.current);
+    }
+  }, [play, sound]);
 
   const getOverlayOpacity = useCallback(() => {
     const elapsed = elapsedRef.current;
@@ -66,7 +61,10 @@ export default function Scene() {
   }, []);
 
   return (
-    <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
+    <div
+      style={{ position: "relative", width: "100vw", height: "100vh", cursor: "pointer" }}
+      onClick={handleInteraction}
+    >
       <Canvas
         shadows
         dpr={CONFIG.render.dpr}
@@ -74,11 +72,16 @@ export default function Scene() {
         onCreated={({ gl }) => {
           gl.shadowMap.type = THREE.PCFShadowMap;
         }}
-        camera={{ fov: 50, near: 0.1, far: 100 }}
+        camera={{
+          fov: 50,
+          near: 0.1,
+          far: 100,
+          position: [0, CONFIG.camera.startHeight, 0],
+        }}
         scene={{ background: new THREE.Color("#1A1A1A") }}
         style={{ width: "100%", height: "100%" }}
       >
-        <SceneContent elapsedRef={elapsedRef} playingRef={playingRef} />
+        <SceneContent elapsedRef={elapsedRef} />
       </Canvas>
       <FadeOverlay getOpacity={getOverlayOpacity} />
     </div>

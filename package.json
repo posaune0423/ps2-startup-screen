@@ -26,6 +26,7 @@
     "use-sound": "^5.0.0"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.28.0",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -38,6 +39,7 @@
     "typescript": "^5.9.3",
     "vinext": "^0.0.30",
     "vite": "^8.0.0",
-    "vite-plus": "^0.1.11"
+    "vite-plus": "^0.1.11",
+    "wrangler": "^4.73.0"
   }
 }
