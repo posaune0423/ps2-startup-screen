@@ -14,7 +14,7 @@ const CORE_GLOW = [
 
 const FILL_FOG_COUNT = 200;
 const FILL_SPREAD_XZ = 3.5;
-const FILL_HEIGHT: [number, number] = [0.02, 1.0];
+const FILL_HEIGHT: [number, number] = [0.02, 1.6];
 const FILL_SCALE: [number, number] = [2.2, 4.0];
 const FILL_TILT_MAX = 0.4;
 
@@ -121,6 +121,24 @@ const FOG_PLANES: FogLayerDef[] = [
     color: "#2A3060",
     seed: 500,
   },
+  {
+    y: 1.0,
+    scale: 4.5,
+    opacity: 0.1,
+    rotSpeed: -0.006,
+    blending: THREE.AdditiveBlending,
+    color: "#3A4580",
+    seed: 530,
+  },
+  {
+    y: 1.3,
+    scale: 3.5,
+    opacity: 0.06,
+    rotSpeed: 0.005,
+    blending: THREE.AdditiveBlending,
+    color: "#2A3060",
+    seed: 560,
+  },
 ];
 
 function seededRandom(seed: number): () => number {
@@ -153,7 +171,7 @@ function generateFillFogs(): FillFogData[] {
     const s = FILL_SCALE[0] + rand() * (FILL_SCALE[1] - FILL_SCALE[0]);
     const tiltX = -Math.PI / 2 + (rand() - 0.5) * FILL_TILT_MAX;
     const distNorm = r / FILL_SPREAD_XZ;
-    const heightFade = 1 - Math.pow(y / FILL_HEIGHT[1], 0.6);
+    const heightFade = 1 - Math.pow(y / FILL_HEIGHT[1], 0.45);
     const opacity = (0.5 + rand() * 0.25) * (1 - distNorm * 0.2) * heightFade;
     result.push({
       position: [x, y, z],
@@ -171,13 +189,13 @@ function generateFillFogs(): FillFogData[] {
     const r = Math.pow(rand(), 0.7) * FILL_SPREAD_XZ;
     const x = Math.cos(angle) * r;
     const z = Math.sin(angle) * r;
-    const yCenter = FILL_HEIGHT[0] + rand() * (FILL_HEIGHT[1] - FILL_HEIGHT[0]) * 0.7;
+    const yCenter = FILL_HEIGHT[0] + rand() * (FILL_HEIGHT[1] - FILL_HEIGHT[0]) * 0.85;
     const w = 0.8 + rand() * 1.5;
     const h = 0.6 + rand() * 1.2;
     const rotY = rand() * Math.PI;
     const tiltFwd = (rand() - 0.5) * 0.3;
     const distNorm = r / FILL_SPREAD_XZ;
-    const heightFade = 1 - Math.pow(yCenter / FILL_HEIGHT[1], 0.6);
+    const heightFade = 1 - Math.pow(yCenter / FILL_HEIGHT[1], 0.45);
     const opacity = (0.35 + rand() * 0.2) * (1 - distNorm * 0.25) * heightFade;
     result.push({
       position: [x, yCenter, z],

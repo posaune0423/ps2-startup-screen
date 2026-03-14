@@ -6,7 +6,7 @@ export const CONFIG = {
     cullRate: 0.07,
     heightMin: 0.2,
     heightMax: 4.5,
-    colors: ["#B0B5C4", "#A8ADBA", "#BFC3CE", "#C5C8D2"] as readonly string[],
+    colors: ["#CDD2DE", "#C4C9D6", "#D6DAE4", "#DCDFE8"] as readonly string[],
     baseWidth: 0.38,
     widthVariance: 0.06,
     roughness: 0.7,
@@ -38,8 +38,8 @@ export const CONFIG = {
   },
   timeline: {
     duration: 9.5,
-    accelStart: 6.5,
-    rushStart: 7.0,
+    accelStart: 6.0,
+    rushStart: 6.5,
   },
   particle: {
     count: 4,
@@ -73,13 +73,13 @@ export const CONFIG = {
   },
   lighting: {
     directional: {
-      intensity: 2.5,
+      intensity: 1.8,
       color: "#FFFFFF",
       position: [3, 12, 3] as readonly [number, number, number],
       shadowMapSize: 2048,
     },
     ambient: {
-      intensity: 0.6,
+      intensity: 0.5,
       color: "#8890A8",
     },
   },

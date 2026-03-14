@@ -15,19 +15,25 @@ import ParticleTrails from "./scene/ParticleTrails";
 import FadeOverlay from "./scene/FadeOverlay";
 import PostProcessing from "./scene/PostProcessing";
 
-function SceneContent({ elapsedRef }: { elapsedRef: React.MutableRefObject<number> }) {
+function SceneContent({
+  elapsedRef,
+  playingRef,
+}: {
+  elapsedRef: React.MutableRefObject<number>;
+  playingRef: React.RefObject<boolean>;
+}) {
   const sceneGroupRef = useRef<THREE.Group>(null);
 
   return (
     <>
       <color attach="background" args={["#1A1A1A"]} />
-      <CameraRig elapsedRef={elapsedRef} sceneGroupRef={sceneGroupRef} />
+      <CameraRig elapsedRef={elapsedRef} playingRef={playingRef} sceneGroupRef={sceneGroupRef} />
       <Environment preset="warehouse" background={false} environmentIntensity={0.25} />
       <group ref={sceneGroupRef}>
         <Lighting elapsedRef={elapsedRef} />
         <CentralGlow elapsedRef={elapsedRef} />
         <PrismField />
-        <FloatingCubes />
+        <FloatingCubes elapsedRef={elapsedRef} />
         <ParticleTrails elapsedRef={elapsedRef} />
       </group>
       <PostProcessing />
@@ -37,8 +43,15 @@ function SceneContent({ elapsedRef }: { elapsedRef: React.MutableRefObject<numbe
 
 export default function Scene() {
   const elapsedRef = useRef(0);
+  const playingRef = useRef(false);
 
-  const [play] = useSound("/sound/ps2-startup-bgm.mp3", { volume: 1.0 });
+  const [play] = useSound("/sound/ps2-startup-bgm.mp3", {
+    volume: 1.0,
+    onplay: () => {
+      elapsedRef.current = 0;
+      playingRef.current = true;
+    },
+  });
 
   useEffect(() => {
     play();
@@ -58,11 +71,14 @@ export default function Scene() {
         shadows
         dpr={CONFIG.render.dpr}
         gl={{ antialias: false, alpha: false }}
+        onCreated={({ gl }) => {
+          gl.shadowMap.type = THREE.PCFShadowMap;
+        }}
         camera={{ fov: 50, near: 0.1, far: 100 }}
         scene={{ background: new THREE.Color("#1A1A1A") }}
         style={{ width: "100%", height: "100%" }}
       >
-        <SceneContent elapsedRef={elapsedRef} />
+        <SceneContent elapsedRef={elapsedRef} playingRef={playingRef} />
       </Canvas>
       <FadeOverlay getOpacity={getOverlayOpacity} />
     </div>
