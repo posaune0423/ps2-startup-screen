@@ -193,6 +193,32 @@ function getFadeFactor(t: number): number {
   - `shadow.mapSize`: `1024 × 1024`
   - 柱による遮光パターンが光漏れ表現の核
 
+## Low-Resolution Rendering (PS2 Style)
+
+### Strategy
+
+- 内部レンダリング解像度を表示解像度より少し低く設定する
+- 拡大後も極端なドット感にはしない
+- ごく弱い grain を加えて、少し古い映像的な質感を作る
+- 現代的なシャープさを抑える
+
+### Implementation
+
+- `Canvas` の `dpr` を `0.75` に設定（デバイスピクセル比の 75%）
+- `gl.antialias: false` でシャープな AA を排除
+- `@react-three/postprocessing` の `Noise` エフェクトで弱いフィルムグレインを追加
+- `Vignette` で画面端をわずかに暗くし、映像感を演出
+- `RenderPixelatedPass` は使わない（ドット化が強すぎるため）
+
+### Tunable Parameters
+
+| Key | Type | Default | Note |
+|-----|------|---------|------|
+| `render.dpr` | `number` | `0.75` | 内部解像度比 |
+| `render.noiseIntensity` | `number` | `0.035` | フィルムグレイン強度 |
+| `render.vignetteOffset` | `number` | `0.3` | ビネット開始位置 |
+| `render.vignetteDarkness` | `number` | `0.7` | ビネット暗さ |
+
 ## Performance Constraints
 
 - `InstancedMesh` で柱の draw call を 1 回に

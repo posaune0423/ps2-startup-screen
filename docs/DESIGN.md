@@ -208,6 +208,27 @@
 - 使う場合: `intensity = 0.3`, `radius = 0.5`, `threshold = 0.8`
 - 白飛びは絶対に避ける
 
+## Render Style Spec
+
+### PS2-Era Visual Quality
+
+- "少し甘い・少し荒い・でも抽象映像として綺麗" のバランスを目指す
+- 2000 年代前半の PS2 起動画面は、現代基準では低解像度だが美しい抽象映像
+- 現代の three.js デモのようなシャープで高精細な印象にしない
+
+### Approach
+
+1. **Low internal resolution**: 表示解像度の 75% で描画し、拡大表示
+2. **No antialiasing**: WebGL のアンチエイリアスを無効化し、わずかなジャギー感を許容
+3. **Film grain**: ごく弱いノイズを加え、映像的な質感を作る
+4. **Vignette**: 画面端をわずかに暗くし、ブラウン管的な雰囲気
+
+### Avoid
+
+- 露骨なピクセル化（`RenderPixelatedPass` 等）
+- 過剰なノイズやスキャンライン
+- CRT フィルター風の極端なレトロ表現
+
 ## Do Not Do
 
 - 遠景に色付きの霧や大気を入れない（背景は純黒）

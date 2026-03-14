@@ -26,6 +26,7 @@ src/
 │       ├── ParticleTrails.tsx      # ライン状パーティクル軌跡
 │       ├── Lighting.tsx            # DirectionalLight + AmbientLight
 │       ├── CameraRig.tsx           # スクリプトカメラ制御
+│       ├── PostProcessing.tsx      # 低解像度 + フィルムグレイン
 │       └── FadeOverlay.tsx         # 暗転用 CSS overlay
 └── lib/
     └── glowTexture.ts              # 発光スプライト用 Canvas テクスチャ生成
@@ -139,6 +140,13 @@ export const CONFIG = {
 - `useFrame` 内でカメラ位置を毎フレーム計算
 - `timeline.ts` の phase に応じて回転速度・距離を補間
 - `camera.lookAt(0, 0, 0)` で常に中心を注視
+
+### `PostProcessing.tsx`
+
+- `@react-three/postprocessing` の `EffectComposer` を使用
+- `Noise` エフェクト: 弱いフィルムグレイン（`BlendFunction.SCREEN`、opacity `0.035`）
+- `Vignette` エフェクト: 画面端の微弱な暗転
+- Canvas の `dpr` と併せて PS2 風の低解像度レンダリングを実現
 
 ### `FadeOverlay.tsx`
 
