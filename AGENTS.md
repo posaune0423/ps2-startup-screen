@@ -72,8 +72,42 @@ Use steering to align decisions with product goals, tech stack, and structure.
 5. **Document Results**: Add review section to `.agents/memory/todo.md`
 6. **Capture Lessons**: Update `.agents/memory/lessons.md` after corrections
 
+## Video Verification Protocol
+
+The reference video `docs/assets/PS2 Startup Screen.mp4` is the **single source of truth** for this project. All implementation must be verified against it.
+
+### Rules
+
+1. **Video-first**: When in doubt about any visual detail (color, timing, layout, motion), extract the relevant frame from the video and inspect it. Do NOT rely on memory or assumptions.
+2. **Frame extraction**: Use `ffmpeg` to extract frames at specific timestamps for comparison.
+   ```bash
+   # Extract a frame at a specific second
+   ffmpeg -ss <seconds> -i "docs/assets/PS2 Startup Screen.mp4" -frames:v 1 -q:v 2 /tmp/ps2-ref-<seconds>s.jpg
+   ```
+3. **Compare at checkpoints**: After implementing each phase (see `docs/STRUCTURE.md`), take a viewport screenshot and compare side-by-side with the corresponding video frame.
+4. **Mandatory comparison points**:
+   - `0.0s`: Initial top-down view — pillar density, camera angle
+   - `1.0s`: Early rotation — pillar perspective, central glow visibility
+   - `4.0s`: Mid scene — particle trails, floating cubes
+   - `7.0s`: Pre-acceleration — zoom level, pillar scale
+   - `8.5s`: Acceleration — motion blur feel, darkness progression
+   - `9.5s`: Blackout — must be pure black
+5. **If it doesn't match the video, it's wrong.** Adjust until it matches. The docs describe the video; if the docs and the video disagree, the video wins.
+
+### Verification Workflow
+
+```
+Implement feature
+  → Extract reference frame from video (ffmpeg)
+  → Take viewport screenshot
+  → Compare visually
+  → If mismatch: identify delta → adjust → re-compare
+  → If match: proceed to next feature
+```
+
 ## Core Principles
 
-- **Simplicity First**: Make every change as simple as possible. Impact minimal code.YAGNI, KISS, DRY. No backward-compat shims or fallback paths unless they come free without adding cyclomatic complexity.
+- **Simplicity First**: Make every change as simple as possible. Impact minimal code. YAGNI, KISS, DRY. No backward-compat shims or fallback paths unless they come free without adding cyclomatic complexity.
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
+- **Video Is Canon**: The reference video is the ultimate authority. If implementation looks different from the video, the implementation is wrong.

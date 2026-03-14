@@ -2,144 +2,217 @@
 
 ## Visual Direction
 
-- Mood: 冷たく静かで、少し神秘的
-- Era feel: 現代的な写実表現ではなく、2000年代前半の抽象 CG ムービー寄り
-- Contrast: 真っ黒には落とさず、暗い青灰の空気感を残す
-- Glow: 白く飛ばさず、青紫の色光としてにじませる
+- Mood: 冷たく静寂、神秘的でやや不穏
+- Era feel: 2000 年代前半の抽象 CG ムービー。フォトリアルではなくスタイライズド
+- Contrast: 背景は純黒、柱は白～クールグレーのハイコントラスト
+- Glow: 中央から漏れ出す青紫の光。bloom ではなく光源として表現
 
-## Base Palette
+## Color Palette
 
-- Background base: `#171A1C`
-- Background deep shadow: `#0C1018`
-- Prism base: `#B9CAED`
-- Prism highlight: `#E8F1FF`
-- Prism shadow tint: `#8EA0C7`
-- Haze base: `#313972`
-- Haze highlight: `#4A57A8`
-- Haze deep tone: `#222755`
-- Accent blue: `#3557D6`
-- Accent green particle: `#49D8A8`
-- Accent red particle: `#E2516A`
+### Scene Base
 
-## Atmosphere Spec
+| Role | Hex | Note |
+|------|-----|------|
+| Background | `#000000` | 純黒。動画の背景には色付きの空や霧はない |
+| Ground plane | `#0A0A0E` | 柱の根元が見える程度のごく暗いダークグレー |
 
-### Chosen Approach
+### Prism (Pillars)
 
-- 真の volumetric は使わず、2.5D の layered transparent planes で表現する
-- 奥行き補助として `FogExp2` をごく薄く使う
-- 発光感は bloom 頼みではなく、加算ブレンドの重なりで作る
+| Role | Hex | Note |
+|------|-----|------|
+| Base | `#B8BCC8` | クールグレー、わずかに青味 |
+| Top highlight | `#D8DCE8` | ライト上面。直接光を受ける面 |
+| Side shadow | `#6A6E7A` | 光が当たらない側面 |
+| Deep shadow | `#3A3E4A` | 柱同士の隙間、奥まった面 |
 
-### Haze Layout
+### Central Glow
 
-- Haze group は柱群より奥、カメラから見て `z = -6` から `z = -16` の範囲に置く
-- Haze plane 数は `8` 枚を基準値とし、調整レンジは `6` から `12`
-- 1 枚ごとの初期スケールは `0.8` から `2.6`
-- 各 plane のサイズは完全ランダムではなく、大 `3` / 中 `3` / 小 `2` の比率を基本にする
-- 画面中央に寄せすぎず、左右に少し偏りを持たせて塊感を出す
+| Role | Hex | Note |
+|------|-----|------|
+| Core | `#4A57A8` | 発光の中心色。インディゴブルー |
+| Spread | `#313972` | 拡散領域。やや暗い青紫 |
+| Edge falloff | `#1A1F45` | 光の外縁、背景に溶ける |
 
-### Haze Material
+### Particles
 
-- Base color は `#313972` を中心に、`#2A2F68` から `#4A57A8` の範囲で揺らす
-- Opacity 初期値は `0.08` から `0.18`
-- Blend は `AdditiveBlending` を基本とする
-- `transparent: true`
-- `depthWrite: false`
-- `depthTest: true`
-- `side: DoubleSide`
-- 白寄りにしない。彩度を落としすぎて灰色にも寄せない
+| Role | Hex | Note |
+|------|-----|------|
+| Red trail | `#E2516A` | 赤い光線 |
+| Green trail | `#49D8A8` | 緑の光線 |
+| Blue trail | `#3557D6` | 青紫の光線 |
 
-### Texture Character
+### Floating Cubes
 
-- エッジが立った雲ではなく、ぼけた楕円とノイズを重ねたアルファ
-- 中心は少し密度があり、外周は長く消える
-- 1 枚ごとに UV offset と rotation を変え、同じ形に見えないようにする
-- ノイズは高周波ではなく低周波。細かい煙感より大きい漂いを優先する
+| Role | Hex | Note |
+|------|-----|------|
+| Surface | `#2A2E3C` | ダークグレー半透明 |
+| Edge highlight | `#4A5068` | エッジにわずかな反射 |
 
-## Motion Spec
+## Prism Field Spec
 
-### Haze Animation
+### Layout
 
-- `rotation.z` はゆっくり回し、速度は `0.015` から `0.05 rad/s`
-- `scale` は `1.00` から `1.06` の範囲で脈動させる
-- `position.x` は最大 `0.12`
-- `position.y` は最大 `0.18`
-- UV の `offset.x` は `0.003` から `0.01 /s`
-- UV の `offset.y` は `0.002` から `0.008 /s`
-- どの値も同期させず、位相をずらす
+- 柱数: **60–80 本**（動画フレームから逆算）
+- 配置パターン: 7×10 程度のグリッドベース
+- グリッド間隔: 柱幅の 1.1–1.3 倍（密集感を出すため狭め）
+- 一部のグリッドセルは空（ランダムに 10–20% 間引く）
+- グリッド位置に ±0.05 程度の微小なジッターを加える
 
-### Particle Motion
+### Geometry
 
-- 粒子はモヤと独立したレイヤで管理する
-- 粒子数は常時 `18` から `32`
-- 移動速度は低速基準、終盤のみ `1.8x` まで加速
-- 尾の長さは短めで、線より残像に近い見え方にする
+- 各柱: `BoxGeometry` で表現
+- 断面サイズ: `0.4 × 0.4` を基本に、`0.35–0.5` のバリエーション
+- 高さ: `0.3–3.5` の範囲でランダム（分布は低めの柱が多く、一部が突出する）
+- 高さ分布: 30% が `0.3–0.8`、50% が `0.8–2.0`、20% が `2.0–3.5`
 
-### Camera Motion
+### Material
 
-- 全体尺は `10.0s`
-- `0.0s` から `7.4s` は低速の回転とズーム
-- `7.4s` から `8.8s` で回転・ズーム・粒子速度を加速
-- `8.8s` から `10.0s` は暗転主体で、奥のモヤもフェードさせる
+- `MeshStandardMaterial` を使用
+- `color`: `#B8BCC8`
+- `roughness`: `0.75`（マットだが完全にフラットではない）
+- `metalness`: `0.05`（金属感はほぼなし）
+- 柱ごとに色のわずかな揺れ（±0.03 の明度差）
 
-## Depth And Fog
+## Ground Plane Spec
 
-- `FogExp2` は空気遠近補助専用
-- Fog color は背景寄りの `#171A1C`
-- density 基準値は `0.028`
-- 調整レンジは `0.018` から `0.04`
-- Fog が主役にならないこと。モヤの塊感を消すなら濃すぎる
+- `PlaneGeometry` で十分な面積をカバー（柱群の 2 倍程度）
+- `MeshStandardMaterial`
+- `color`: `#0A0A0E`
+- `roughness`: `0.9`
+- 柱からの影を受ける（`receiveShadow: true`）
+
+## Central Glow Spec
+
+### 実装アプローチ
+
+- 柱群の中心（Y=0 付近、柱の根元レベル）にポイントライトを配置
+- 光色: `#4A57A8`
+- 強度: `2.0–4.0`（要調整）
+- 減衰距離: 柱群の半径程度
+- 追加で **加算ブレンドの発光スプライト** を中心に 2–3 枚重ねて光の「塊」感を出す
+- スプライトのアルファは中心が高く外周で 0 に減衰するラジアルグラデーション
+
+### Light Rays
+
+- 中央の光が柱の隙間から漏れ出す表現が重要
+- `VolumetricSpotLight` や god-ray エフェクトは使わず、柱自体が光を遮る **自然なシャドウ** で表現する
+- ポイントライトの `castShadow: true` を活用
+
+## Floating Cubes Spec
+
+- 数: **3–5 個**
+- サイズ: `0.3–0.7` の立方体
+- 配置: 柱群の間（柱の上ではない）、柱の高さの中間あたりに浮遊
+- Material: `MeshPhysicalMaterial`
+  - `color`: `#2A2E3C`
+  - `transparent: true`
+  - `opacity`: `0.4–0.6`
+  - `roughness`: `0.3`
+  - `metalness`: `0.1`
+- アニメーション:
+  - 各軸でゆっくり回転（`0.1–0.3 rad/s`）
+  - `position.y` に `sin` で微小な上下漂い（振幅 `0.05–0.15`、周期 `3–6s`）
+
+## Particle Trail Spec
+
+### Visual Character
+
+- 「点」ではなく **細いライン状の軌跡**
+- 柱群の間を水平方向に横切るように移動
+- レーザービームのような鋭い線、ただし非常に細い
+
+### Parameters
+
+- 同時表示数: **3–6 本**
+- 各トレイルの長さ: 柱群の幅の 30–60%
+- 移動速度: `0.5–1.5 units/s`（通常時）、終盤 `2.0x` まで加速
+- 線の太さ: `0.01–0.02`（画面上でごく細い線として見える）
+- 色: 赤 / 緑 / 青紫（各色 1–2 本）
+- 残像: 進行方向の後ろに `0.5–1.5` の長さのフェードする尾
+
+### Motion
+
+- 直線的ではなく、ゆるやかなカーブを描いて移動
+- 柱にぶつかっても貫通する（物理判定なし）
+- Y 座標は柱の高さの中間あたり（`0.5–2.0`）で水平移動
+
+## Camera Spec
+
+### Orbit Path
+
+- **回転中心**: 柱群の重心（`x=0, y=0, z=0`）
+- **初期位置**: ほぼ真上（仰角 ~75°）、距離 ~12 units
+- **軌道**: Y 軸周りの反時計回り円軌道
+- **仰角変化**: 75° → 60°（9.5s かけて緩やかに降下）
+
+### Timeline
+
+| Phase | Time | Camera Speed | Zoom Speed | Note |
+|-------|------|-------------|------------|------|
+| Calm | 0.0–7.5s | 0.08 rad/s | -0.15 units/s | ゆったりした俯瞰 |
+| Accel | 7.5–8.5s | 0.08→0.5 rad/s | -0.15→-1.5 units/s | 急加速 |
+| Rush | 8.5–9.5s | 0.5→1.2 rad/s | -1.5→-3.0 units/s | 高速接近 + 暗転 |
+
+### Easing
+
+- Calm→Accel 遷移: `easeInCubic` 的な加速カーブ
+- 急激な切り替えではなく滑らかに加速する
+
+## Ending Spec
+
+### Fade Timeline
+
+| Time | Brightness | Note |
+|------|-----------|------|
+| 0.0–7.5s | 100% | 通常表示 |
+| 7.5–8.5s | 100%→70% | 暗転開始、まだシーンは見える |
+| 8.5–9.0s | 70%→30% | 急速に暗くなる |
+| 9.0–9.5s | 30%→0% | 完全暗転 |
+
+### Implementation
+
+- CSS overlay の `opacity` ではなく、**シーン内のグローバルライト強度** を下げる方式を基本とする
+- 最終段階（30%→0%）では CSS overlay の黒フェードを併用してもよい
+- 暗転はシーン全体に均一にかかる（特定要素だけ先に消えたりしない）
+
+## Lighting Spec
+
+### Primary Light (Top)
+
+- `DirectionalLight`
+- 方向: 斜め上から（`position: [5, 10, 5]` 程度）
+- 強度: `1.0–1.5`
+- 色: `#FFFFFF`（純白）
+- `castShadow: true`
+- 柱の上面を明るく、側面に陰影を作る
+
+### Ambient
+
+- `AmbientLight`
+- 強度: `0.15–0.25`
+- 色: `#8890A8`（わずかに青味のあるグレー）
+
+### Central Point Light
+
+- `PointLight`
+- 位置: 柱群の中心、地面レベル（`y=0`）
+- 色: `#4A57A8`
+- 強度: `2.0–4.0`
+- 減衰: `distance = 8, decay = 2`
+- `castShadow: true`（柱の隙間からの光漏れを作る）
 
 ## Post Process
 
-- Bloom は使う場合のみ弱く入れる
-- 強度は「白飛びしない」を最優先に決める
-- 目標は輪郭の発光ではなく、青紫の滲み
-- まず bloom なしで成立させ、最後に必要最小限だけ加える
-- 初期の評価値は `intensity = 0.22`, `radius = 0.45`, `threshold = 0.72`
+- Bloom は **最後に** 必要最小限だけ検討する
+- まず bloom なしで中央発光が成立するか確認
+- 使う場合: `intensity = 0.3`, `radius = 0.5`, `threshold = 0.8`
+- 白飛びは絶対に避ける
 
 ## Do Not Do
 
-- ガチの volumetric cloud
-- raymarching 前提の重い構成
+- 遠景に色付きの霧や大気を入れない（背景は純黒）
+- 柱を発光させない（発光するのは中央のライトだけ）
 - 白く大きい bloom
-- 霧だけでモヤを表現する構成
 - 高速すぎる回転や脈動
-- 彩度の高すぎるネオン表現
-
-## Acceptance Criteria
-
-- モヤが「遠景の発光する雲状の塊」として見える
-- 柱より前に出て見えず、奥レイヤとして読める
-- 静止画でも塊感があり、動画ではゆっくり漂って見える
-- 青紫の気配はあるが、画面全体が青一色に潰れない
-- 終盤の暗転時にモヤだけが不自然に残らない
-
-## Open Decisions
-
-- Haze 用のアルファを画像で持つか、`ShaderMaterial` で手続き生成するか
-- Bloom を入れるか、加算ブレンドだけで完結させるか
-- 粒子の残像をラインで作るか、後処理で作るか
-- 尺を `10.0s` 固定にするか、`8.0s` 前後へ短縮するか
-- 音と同期するなら、加速開始点を秒数固定ではなく進行率基準にするか
-
-## Decisions To Lock Before Build
-
-- ループ形式を固定する
-  - `10.0s` ワンショット
-  - `10.0s + black hold` のループ
-- Haze ノイズ源を固定する
-  - PNG alpha
-  - `ShaderMaterial` の 2D procedural noise
-- レイヤ構成を固定する
-  - `8` 枚固定
-  - `6` から `12` の調整余地を残す
-- ブレンド方針を固定する
-  - 全面 `AdditiveBlending`
-  - 手前 `2` 枚のみ `NormalBlending`
-- 終盤フェード順を固定する
-  - モヤ先行
-  - 粒子同時
-- 承認用の比較フレームを固定する
-  - 通常時
-  - 加速開始直前
-  - 暗転直前
+- 彩度の高いネオン表現
+- 粒子を「粒」として表現しない（ライン/トレイルとして表現する）
