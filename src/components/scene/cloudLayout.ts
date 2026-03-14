@@ -1,6 +1,10 @@
 import * as THREE from "three";
 
-export const VAPOR_SPREAD_XZ = 4.4;
+export const VAPOR_SPREAD_XZ = 3.8;
+export const VAPOR_OPACITY_MULTIPLIER = 0.8;
+export const VAPOR_SCALE_X_MULTIPLIER = 0.88;
+export const VAPOR_SCALE_Y_MULTIPLIER = 0.68;
+export const VAPOR_Y_OFFSET = -0.12;
 
 export interface VaporSpriteDef {
   position: [number, number, number];
@@ -24,6 +28,18 @@ function seededRandom(seed: number): () => number {
   };
 }
 
+export function scaleVaporOpacity(opacity: number): number {
+  return opacity * VAPOR_OPACITY_MULTIPLIER;
+}
+
+export function scaleVaporScale(width: number, height: number): [number, number] {
+  return [width * VAPOR_SCALE_X_MULTIPLIER, height * VAPOR_SCALE_Y_MULTIPLIER];
+}
+
+export function liftVaporY(baseY: number): number {
+  return baseY + VAPOR_Y_OFFSET;
+}
+
 export function generateVaporSprites(): VaporSpriteDef[] {
   const rand = seededRandom(42);
   const result: VaporSpriteDef[] = [];
@@ -34,13 +50,12 @@ export function generateVaporSprites(): VaporSpriteDef[] {
     const r = Math.pow(rand(), 0.5) * VAPOR_SPREAD_XZ;
     const x = Math.cos(angle) * r;
     const z = Math.sin(angle) * r;
-    const baseY = 0.02 + rand() * 0.15;
+    const baseY = liftVaporY(0.02 + rand() * 0.15);
     const distNorm = r / VAPOR_SPREAD_XZ;
 
-    const w = 3.5 + rand() * 4.0;
-    const h = 2.5 + rand() * 4.0;
+    const [w, h] = scaleVaporScale(3.5 + rand() * 4.0, 2.5 + rand() * 4.0);
     const centerDensity = 1 - Math.pow(distNorm, 0.7);
-    const opacity = (0.5 + rand() * 0.4) * centerDensity;
+    const opacity = scaleVaporOpacity((0.5 + rand() * 0.4) * centerDensity);
 
     const t = distNorm;
     const ri = Math.round(20 + t * 12);
@@ -70,13 +85,12 @@ export function generateVaporSprites(): VaporSpriteDef[] {
     const r = Math.pow(rand(), 0.55) * VAPOR_SPREAD_XZ;
     const x = Math.cos(angle) * r;
     const z = Math.sin(angle) * r;
-    const baseY = rand() * 1.2;
+    const baseY = liftVaporY(rand() * 1.2);
     const distNorm = r / VAPOR_SPREAD_XZ;
 
-    const w = 1.5 + rand() * 3.0;
-    const h = 3.0 + rand() * 5.5;
+    const [w, h] = scaleVaporScale(1.5 + rand() * 3.0, 3.0 + rand() * 5.5);
     const centerDensity = 1 - Math.pow(distNorm, 0.6);
-    const opacity = (0.35 + rand() * 0.45) * centerDensity;
+    const opacity = scaleVaporOpacity((0.35 + rand() * 0.45) * centerDensity);
 
     const t = distNorm;
     const ri = Math.round(26 + t * 20);
@@ -106,14 +120,13 @@ export function generateVaporSprites(): VaporSpriteDef[] {
     const r = Math.pow(rand(), 0.65) * VAPOR_SPREAD_XZ * 0.7;
     const x = Math.cos(angle) * r;
     const z = Math.sin(angle) * r;
-    const baseY = 1.5 + rand() * 2.5;
+    const baseY = liftVaporY(1.5 + rand() * 2.5);
     const distNorm = r / (VAPOR_SPREAD_XZ * 0.7);
 
-    const w = 1.2 + rand() * 2.5;
-    const h = 2.0 + rand() * 4.0;
+    const [w, h] = scaleVaporScale(1.2 + rand() * 2.5, 2.0 + rand() * 4.0);
     const centerDensity = 1 - Math.pow(distNorm, 0.5);
     const heightFade = 1 - ((baseY - 1.5) / 2.5) * 0.5;
-    const opacity = (0.2 + rand() * 0.3) * centerDensity * heightFade;
+    const opacity = scaleVaporOpacity((0.2 + rand() * 0.3) * centerDensity * heightFade);
 
     const t = distNorm;
     const ri = Math.round(30 + t * 20);
@@ -143,11 +156,10 @@ export function generateVaporSprites(): VaporSpriteDef[] {
     const r = Math.pow(rand(), 0.8) * VAPOR_SPREAD_XZ * 0.5;
     const x = Math.cos(angle) * r;
     const z = Math.sin(angle) * r;
-    const baseY = rand() * 2.0;
+    const baseY = liftVaporY(rand() * 2.0);
 
-    const w = 0.8 + rand() * 1.5;
-    const h = 1.5 + rand() * 3.5;
-    const opacity = 0.4 + rand() * 0.4;
+    const [w, h] = scaleVaporScale(0.8 + rand() * 1.5, 1.5 + rand() * 3.5);
+    const opacity = scaleVaporOpacity(0.4 + rand() * 0.4);
     const color = "#3A4580";
 
     const speedMul = 0.8 + rand() * 1.2;
