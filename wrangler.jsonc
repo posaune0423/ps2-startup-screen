@@ -5,6 +5,7 @@
   "compatibility_date": "2026-03-12",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
+  "preview_urls": true,
   "routes": [
     {
       "pattern": "ps2.posaune0423.com",
