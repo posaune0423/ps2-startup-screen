@@ -7,10 +7,17 @@ const layoutSource = readFileSync(new URL("../../src/app/layout.tsx", import.met
 
 test("root layout wraps the app with LanguageProvider", () => {
   assert.match(layoutSource, /import \{ LanguageProvider \} from "\.\.\/lib\/language-context"/);
-  assert.match(layoutSource, /<LanguageProvider>\{children\}<\/LanguageProvider>/);
+  assert.match(layoutSource, /<LanguageProvider>[\s\S]*<\/LanguageProvider>/);
 });
 
 test("root layout enables next-view-transitions at the app boundary", () => {
   assert.match(layoutSource, /import \{ ViewTransitions \} from "next-view-transitions"/);
   assert.match(layoutSource, /<ViewTransitions>/);
+});
+
+test("fixed BackButton stays outside the view transition boundary", () => {
+  assert.match(
+    layoutSource,
+    /<LanguageProvider>\s*<ViewTransitions>\{children\}<\/ViewTransitions>\s*<BackButton \/>\s*<\/LanguageProvider>/,
+  );
 });
