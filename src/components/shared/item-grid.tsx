@@ -300,7 +300,7 @@ export default function ItemGrid({ items, title }: ItemGridProps) {
       <div
         style={{
           position: "absolute",
-          top: "clamp(12px, 3vh, 32px)",
+          top: "clamp(6px, 1.5vh, 16px)",
           left: "clamp(16px, 3vw, 40px)",
           pointerEvents: "none",
           zIndex: 10,
@@ -310,7 +310,7 @@ export default function ItemGrid({ items, title }: ItemGridProps) {
           gap: "6px",
         }}
       >
-        <div style={{ width: compact ? 56 : 64, height: compact ? 56 : 64, flexShrink: 0 }}>
+        <div style={{ width: compact ? 40 : 48, height: compact ? 40 : 48, flexShrink: 0, marginTop: "6px" }}>
           <Canvas
             camera={MEMORY_CARD_ICON_CAMERA}
             dpr={compact ? 1 : 1.25}
@@ -322,71 +322,46 @@ export default function ItemGrid({ items, title }: ItemGridProps) {
             </Suspense>
           </Canvas>
         </div>
-        <div
+        <span
+          className="ps2-text"
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
+            fontSize: compact ? "clamp(16px, 4vw, 28px)" : "clamp(20px, 2.2vw, 32px)",
+            fontWeight: 700,
+            color: "#FFFFFF",
+            letterSpacing: "0.02em",
+            whiteSpace: "nowrap",
+            transformOrigin: "left center",
+            marginTop: 0,
           }}
         >
-          <span
-            className="ps2-text"
-            style={{
-              fontSize: compact ? "clamp(16px, 4vw, 28px)" : "clamp(20px, 2.2vw, 32px)",
-              fontWeight: 700,
-              color: "#FFFFFF",
-              letterSpacing: "0.02em",
-              whiteSpace: "nowrap",
-              textAlign: "center",
-              transformOrigin: "left center",
-            }}
-          >
-            Memory Card ({title}) / 1
-          </span>
-        </div>
+          Memory Card ({title}) / 1
+        </span>
       </div>
 
       <div
         style={{
           position: "absolute",
           top: "clamp(12px, 3vh, 32px)",
-          right: "clamp(28px, 6vw, 88px)",
+          right: "clamp(16px, 4vw, 48px)",
           pointerEvents: "none",
           zIndex: 10,
-          width: "min(42vw, 420px)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          overflow: "hidden",
-          textAlign: "center",
+          maxWidth: "45vw",
         }}
       >
         <div
+          className="ps2-text"
           style={{
-            width: "calc(100% / 1.18)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
+            fontSize: compact ? "clamp(16px, 4.2vw, 28px)" : "clamp(20px, 2.4vw, 34px)",
+            fontWeight: 700,
+            color: "#C5CF1F",
+            letterSpacing: "0.02em",
+            lineHeight: 1.1,
+            whiteSpace: "nowrap",
+            textAlign: "right",
+            transformOrigin: "right center",
           }}
         >
-          <div
-            className="ps2-text"
-            style={{
-              fontSize: compact ? "clamp(16px, 4.2vw, 28px)" : "clamp(20px, 2.4vw, 34px)",
-              fontWeight: 700,
-              color: "#C5CF1F",
-              letterSpacing: "0.02em",
-              lineHeight: 1.1,
-              whiteSpace: "normal",
-              overflowWrap: "anywhere",
-              textAlign: "center",
-              transformOrigin: "right center",
-            }}
-          >
-            {items[activeIndex].label}
-          </div>
+          {items[activeIndex].label}
         </div>
       </div>
     </div>

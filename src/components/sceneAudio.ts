@@ -40,17 +40,17 @@ export function startSceneSound({
   let nextHasSyncedPosition = hasSyncedPosition;
   let nextHasRequestedPlayback = hasRequestedPlayback;
 
+  if (!nextHasStarted) {
+    nextHasStarted = sound.playing();
+  }
+
   if (!nextHasStarted && !nextHasRequestedPlayback) {
     play();
     nextHasRequestedPlayback = true;
     nextHasStarted = sound.playing();
   }
 
-  if (!nextHasStarted) {
-    nextHasStarted = sound.playing();
-  }
-
-  if (!nextHasSyncedPosition) {
+  if (!nextHasSyncedPosition && nextHasStarted) {
     sound.seek(elapsed);
     nextHasSyncedPosition = true;
   }

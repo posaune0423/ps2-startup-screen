@@ -21,21 +21,25 @@ const PETAL_DATA = Array.from({ length: PETAL_COUNT }, (_, i) => {
 const sharedGeometry = new THREE.CylinderGeometry(PETAL_RADIUS_TOP, PETAL_RADIUS_BOTTOM, PETAL_HEIGHT, 6);
 
 const sharedMaterial = new THREE.MeshPhysicalMaterial({
-  color: new THREE.Color("#ffffff"),
-  emissive: new THREE.Color("#1040AA"),
-  emissiveIntensity: 0.5,
-  transmission: 0.96,
+  color: new THREE.Color("#e8f0ff"),
+  emissive: new THREE.Color("#5090FF"),
+  emissiveIntensity: 0.8,
+  transmission: 1.0,
   roughness: 0,
   metalness: 0,
-  thickness: 0.3,
-  ior: 1.6,
+  thickness: 0.15,
+  ior: 1.5,
   iridescence: 0.8,
   iridescenceIOR: 1.8,
-  iridescenceThicknessRange: [100, 700],
-  clearcoat: 0.6,
+  iridescenceThicknessRange: [200, 800],
+  clearcoat: 1.0,
   clearcoatRoughness: 0,
+  specularIntensity: 1.2,
+  specularColor: new THREE.Color("#ffffff"),
+  attenuationColor: new THREE.Color("#c0dcff"),
+  attenuationDistance: 5.0,
   transparent: true,
-  opacity: 0.85,
+  opacity: 0.55,
   flatShading: true,
 });
 
@@ -45,11 +49,16 @@ export default function HexFlower() {
   useFrame((_, delta) => {
     if (groupRef.current) {
       groupRef.current.rotation.y += delta * 0.08;
+      groupRef.current.rotation.z -= delta * 0.025;
+      groupRef.current.rotation.x -= delta * 0.02;
     }
   });
 
   return (
-    <group ref={groupRef} position={[-2.5, 0, -3]}>
+    <group ref={groupRef} position={[-3.2, 0.3, -5]} rotation={[-0.25, 0, 0.3]}>
+      <pointLight position={[2, 3, 4]} intensity={40} color="#A0D0FF" distance={18} decay={1.5} />
+      <pointLight position={[-3, -1, 2]} intensity={25} color="#6090FF" distance={14} decay={1.5} />
+      <pointLight position={[0, 0, 0]} intensity={20} color="#7080FF" distance={10} decay={1.8} />
       {PETAL_DATA.map(({ position, rotation }) => (
         <mesh
           key={`${position.join("-")}-${rotation.join("-")}`}

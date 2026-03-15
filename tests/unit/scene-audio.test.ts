@@ -4,7 +4,7 @@ import { test } from "vite-plus/test";
 
 import { startSceneSound } from "../../src/components/sceneAudio";
 
-test("starts playback and syncs to the current elapsed time on first run", () => {
+test("syncs to the current elapsed time when sound is already playing", () => {
   let playCalls = 0;
   const seekCalls: number[] = [];
 
@@ -23,8 +23,38 @@ test("starts playback and syncs to the current elapsed time on first run", () =>
     },
   });
 
-  assert.equal(playCalls, 1);
+  assert.equal(playCalls, 0);
   assert.deepEqual(seekCalls, [2.4]);
+  assert.deepEqual(nextState, {
+    hasStarted: true,
+    hasSyncedPosition: true,
+    hasRequestedPlayback: false,
+  });
+});
+
+test("requests playback when sound is not yet playing", () => {
+  let playCalls = 0;
+  let isPlaying = false;
+  const seekCalls: number[] = [];
+
+  const nextState = startSceneSound({
+    elapsed: 0.1,
+    hasStarted: false,
+    hasSyncedPosition: false,
+    play: () => {
+      playCalls += 1;
+      isPlaying = true;
+    },
+    sound: {
+      playing: () => isPlaying,
+      seek: (seconds) => {
+        seekCalls.push(seconds);
+      },
+    },
+  });
+
+  assert.equal(playCalls, 1);
+  assert.deepEqual(seekCalls, [0.1]);
   assert.deepEqual(nextState, {
     hasStarted: true,
     hasSyncedPosition: true,
@@ -101,10 +131,10 @@ test("keeps click fallback available when a play attempt does not start playback
   });
 
   assert.equal(playCalls, 1);
-  assert.deepEqual(seekCalls, [3.1]);
+  assert.deepEqual(seekCalls, []);
   assert.deepEqual(nextState, {
     hasStarted: false,
-    hasSyncedPosition: true,
+    hasSyncedPosition: false,
     hasRequestedPlayback: true,
   });
 });
