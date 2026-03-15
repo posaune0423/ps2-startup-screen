@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback } from "react";
 import { usePathname } from "vinext/shims/navigation";
 
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
@@ -16,19 +16,15 @@ const BACK_ROUTES: Record<string, string> = {
   "/memory/sns": "/browser",
 };
 
-const BUTTON_REVEAL_MS = 90;
-
 export default function BackButton() {
   const pathname = usePathname();
   const { playBack } = useNavigationSound();
   const { isMobile } = useViewport();
   const { locale } = useLanguage();
-  const [isHidden, setIsHidden] = useState(false);
 
   const isJa = locale === "ja";
   const enterIcon = isJa ? "/buttons/circle.png" : "/buttons/x.png";
   const backIcon = isJa ? "/buttons/x.png" : "/buttons/circle.png";
-
   const backHref = BACK_ROUTES[pathname];
 
   const handleBack = useCallback(() => {
@@ -41,29 +37,7 @@ export default function BackButton() {
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
   }, []);
 
-  useEffect(() => {
-    const hideButton = () => {
-      setIsHidden(true);
-    };
-
-    window.addEventListener("app:navigate", hideButton);
-    return () => window.removeEventListener("app:navigate", hideButton);
-  }, []);
-
-  useEffect(() => {
-    if (!backHref) {
-      setIsHidden(true);
-      return;
-    }
-
-    const id = window.setTimeout(() => {
-      setIsHidden(false);
-    }, BUTTON_REVEAL_MS);
-
-    return () => window.clearTimeout(id);
-  }, [backHref, pathname]);
-
-  if (!backHref || isHidden) return null;
+  if (!backHref) return null;
 
   const size = isMobile ? 22 : 30;
   const containerClassName = isMobile
@@ -72,14 +46,16 @@ export default function BackButton() {
   const buttonClassName = isMobile
     ? "flex items-center gap-1.5 cursor-pointer border-none bg-transparent p-0 text-inherit [font:inherit] [letter-spacing:inherit]"
     : "flex items-center gap-2.5 cursor-pointer border-none bg-transparent p-0 text-inherit [font:inherit] [letter-spacing:inherit]";
+  const iconStyle = { clipPath: "circle(40%)" } as const;
+
   return (
     <div className={containerClassName}>
       <button type="button" onClick={handleEnter} className={buttonClassName}>
-        <img src={enterIcon} alt="" width={size} height={size} className="block" style={{ clipPath: "circle(40%)" }} />
+        <img src={enterIcon} alt="" width={size} height={size} className="block" style={iconStyle} />
         <span>Enter</span>
       </button>
       <button type="button" onClick={handleBack} className={buttonClassName}>
-        <img src={backIcon} alt="" width={size} height={size} className="block" style={{ clipPath: "circle(40%)" }} />
+        <img src={backIcon} alt="" width={size} height={size} className="block" style={iconStyle} />
         <span>Back</span>
       </button>
     </div>
