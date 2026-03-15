@@ -1,6 +1,6 @@
 <div align="center">
 
-# posaune0423 Portfolio
+# Portfolio
 
 **A personal portfolio site inspired by the PlayStation 2 startup and browser UX.**
 
@@ -12,7 +12,7 @@ Built with Three.js, React Three Fiber, and deployed on Cloudflare Workers.
 [![Vite](https://img.shields.io/badge/Vite_8-646CFF?style=flat&logo=vite&logoColor=white)](https://vite.dev/)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare_Workers-F38020?style=flat&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 
-**[portfolio.posaune0423.com](https://portfolio.posaune0423.com)**
+**[posaune0423.com](https://posaune0423.com)**
 
 </div>
 
