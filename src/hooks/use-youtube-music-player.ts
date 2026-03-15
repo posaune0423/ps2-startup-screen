@@ -60,19 +60,49 @@ async function loadYoutubeIframeApi(): Promise<YoutubePlayerNamespace> {
 
   youtubeApiPromise = new Promise<YoutubePlayerNamespace>((resolve, reject) => {
     const existingScript = document.querySelector<HTMLScriptElement>('script[data-youtube-iframe-api="true"]');
+    const previousReady = window.onYouTubeIframeAPIReady;
+    let settled = false;
+    let timeoutId = 0;
 
-    const handleReady = () => {
+    const restoreReadyHandler = () => {
+      if (window.onYouTubeIframeAPIReady === handleReady) {
+        window.onYouTubeIframeAPIReady = previousReady;
+      }
+    };
+
+    const rejectLoad = (error: Error) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeoutId);
+      youtubeApiPromise = null;
+      restoreReadyHandler();
+      reject(error);
+    };
+
+    const resolveLoad = () => {
+      if (settled) return;
       if (window.YT?.Player) {
+        settled = true;
+        window.clearTimeout(timeoutId);
+        restoreReadyHandler();
         resolve(window.YT);
         return;
       }
-      reject(new Error("YouTube API loaded without exposing window.YT.Player."));
+      rejectLoad(new Error("YouTube API loaded without exposing window.YT.Player."));
     };
 
-    const previousReady = window.onYouTubeIframeAPIReady;
-    window.onYouTubeIframeAPIReady = () => {
-      previousReady?.();
-      handleReady();
+    function handleReady() {
+      try {
+        previousReady?.();
+      } finally {
+        resolveLoad();
+      }
+    }
+
+    window.onYouTubeIframeAPIReady = handleReady;
+
+    const handleScriptError = () => {
+      rejectLoad(new Error("Failed to load the YouTube IFrame API."));
     };
 
     if (!existingScript) {
@@ -80,15 +110,13 @@ async function loadYoutubeIframeApi(): Promise<YoutubePlayerNamespace> {
       script.async = true;
       script.src = "https://www.youtube.com/iframe_api";
       script.dataset.youtubeIframeApi = "true";
-      script.addEventListener("error", () => reject(new Error("Failed to load the YouTube IFrame API.")), {
-        once: true,
-      });
+      script.addEventListener("error", handleScriptError, { once: true });
       document.head.appendChild(script);
     }
 
-    window.setTimeout(() => {
+    timeoutId = window.setTimeout(() => {
       if (!window.YT?.Player) {
-        reject(new Error("Timed out while loading the YouTube IFrame API."));
+        rejectLoad(new Error("Timed out while loading the YouTube IFrame API."));
       }
     }, 10000);
   });
@@ -106,6 +134,7 @@ export function useYoutubeMusicPlayer(tracks: readonly MusicTrack[]) {
   const playerRef = useRef<YoutubePlayerInstance | null>(null);
   const pendingSelectionRef = useRef<{ autoplay: boolean; index: number } | null>(null);
   const activeTrackIndexRef = useRef(0);
+  const isReadyRef = useRef(false);
   const suppressEndedRef = useRef(false);
   const tracksRef = useRef(tracks);
   const [activeTrackIndex, setActiveTrackIndex] = useState(0);
@@ -128,6 +157,10 @@ export function useYoutubeMusicPlayer(tracks: readonly MusicTrack[]) {
   useEffect(() => {
     tracksRef.current = tracks;
   }, [tracks]);
+
+  useEffect(() => {
+    isReadyRef.current = isReady;
+  }, [isReady]);
 
   const syncProgress = useCallback(() => {
     const player = playerRef.current;
@@ -169,7 +202,7 @@ export function useYoutubeMusicPlayer(tracks: readonly MusicTrack[]) {
       try {
         const parsed = parseYoutubeTrackSource(nextTrack.youtubeUrl);
 
-        if (!player || !isReady) {
+        if (!player || !isReadyRef.current) {
           pendingSelectionRef.current = { autoplay, index: nextIndex };
           setNoticeMessage("Loading YouTube player...");
           setPlayerState("loading");
@@ -190,8 +223,14 @@ export function useYoutubeMusicPlayer(tracks: readonly MusicTrack[]) {
         setPlayerState("error");
       }
     },
-    [isReady, tracks],
+    [tracks],
   );
+
+  const applyTrackSelectionRef = useRef(applyTrackSelection);
+
+  useEffect(() => {
+    applyTrackSelectionRef.current = applyTrackSelection;
+  }, [applyTrackSelection]);
 
   const runPlayerCommand = useCallback(
     (
@@ -312,6 +351,7 @@ export function useYoutubeMusicPlayer(tracks: readonly MusicTrack[]) {
               setPlayerState("error");
             },
             onReady: () => {
+              isReadyRef.current = true;
               setIsReady(true);
               setNoticeMessage("YouTube player ready.");
               setPlayerState("ready");
@@ -319,7 +359,7 @@ export function useYoutubeMusicPlayer(tracks: readonly MusicTrack[]) {
               if (pendingSelectionRef.current) {
                 const pending = pendingSelectionRef.current;
                 pendingSelectionRef.current = null;
-                applyTrackSelection(pending.index, pending.autoplay);
+                applyTrackSelectionRef.current(pending.index, pending.autoplay);
               }
             },
             onStateChange: (event) => {
@@ -339,7 +379,7 @@ export function useYoutubeMusicPlayer(tracks: readonly MusicTrack[]) {
                     const upcomingTrack = tracksRef.current[activeTrackIndexRef.current + 1];
                     if (upcomingTrack) {
                       setNoticeMessage(`Advancing to Track ${upcomingTrack.number}...`);
-                      applyTrackSelection(activeTrackIndexRef.current + 1, true);
+                      applyTrackSelectionRef.current(activeTrackIndexRef.current + 1, true);
                       break;
                     }
                   }
@@ -384,10 +424,11 @@ export function useYoutubeMusicPlayer(tracks: readonly MusicTrack[]) {
 
     return () => {
       disposed = true;
+      isReadyRef.current = false;
       playerRef.current?.destroy();
       playerRef.current = null;
     };
-  }, [applyTrackSelection]);
+  }, []);
 
   useEffect(() => {
     if (!isReady) return;

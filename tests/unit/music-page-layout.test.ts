@@ -42,7 +42,10 @@ test("music page abstracts YouTube playback through a dedicated hook and keeps p
 });
 
 test("music page uses a six-face cube and animates the selected cube into the player pane", () => {
-  assert.match(musicPageSource, /const \[viewMode, setViewMode\] = useState<"grid" \| "player" \| "transition">\("grid"\);/);
+  assert.match(
+    musicPageSource,
+    /const \[viewMode, setViewMode\] = useState<"grid" \| "player" \| "transition">\("grid"\);/,
+  );
   assert.match(musicPageSource, /rotateY\(180deg\) translateZ/);
   assert.match(musicPageSource, /rotateY\(90deg\) translateZ/);
   assert.match(musicPageSource, /rotateY\(-90deg\) translateZ/);
@@ -51,4 +54,13 @@ test("music page uses a six-face cube and animates the selected cube into the pl
   assert.match(musicPageSource, /playerDockRef/);
   assert.match(musicPageSource, /position: "fixed"/);
   assert.match(musicPageSource, /music-cube-twist-walk 5\.8s linear infinite/);
+});
+
+test("music page keeps the track cubes on a clean x/y grid and removes static camera tilt", () => {
+  assert.match(musicPageSource, /display: "grid"/);
+  assert.match(musicPageSource, /gridTemplateColumns: `repeat\(\$\{columnCount\}, minmax\(0, 1fr\)\)`/);
+  assert.doesNotMatch(musicPageSource, /const GRID_CAMERA = \{/);
+  assert.doesNotMatch(musicPageSource, /const STATIC_CUBE_CAMERA = \{/);
+  assert.doesNotMatch(musicPageSource, /rotateX\(-55deg\) rotateY\(25deg\)/);
+  assert.doesNotMatch(musicPageSource, /perspective: gridCamera\.perspective/);
 });

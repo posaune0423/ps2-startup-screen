@@ -32,8 +32,9 @@ test("browser page also clamps canvas DPR and prefers low-power WebGL settings",
 
 test("3D pages release GLTF resources on unmount to avoid cache growth across navigation", () => {
   assert.match(itemGridSource, /releaseGLTFAsset\(modelPath, scene, clearGLTF\)/);
-  assert.match(browserPageSource, /releaseGLTFAsset\("\/3d\/memorycard\.glb", scene, clearGLTF\)/);
-  assert.match(browserPageSource, /releaseGLTFAsset\("\/3d\/icons\/cd\.glb", scene, clearGLTF\)/);
+  assert.match(browserPageSource, /releaseGLTFAsset\(modelPath, scene, clearGLTF\)/);
+  assert.doesNotMatch(browserPageSource, /releaseGLTFAsset\("\/3d\/memorycard\.glb", scene, clearGLTF\)/);
+  assert.doesNotMatch(browserPageSource, /releaseGLTFAsset\("\/3d\/icons\/cd\.glb", scene, clearGLTF\)/);
   assert.match(browserPageSource, /modelPath:\s*"\/3d\/icons\/cd\.glb"/);
 });
 

@@ -65,7 +65,7 @@ export const MUSIC_TRACKS: MusicTrack[] = [
   },
   {
     accentColor: TRACK_COLORS[5],
-    artist: "# Gabriel Masson",
+    artist: "Gabriel Masson",
     id: "track-6",
     number: 6,
     title: "Deux Danses",

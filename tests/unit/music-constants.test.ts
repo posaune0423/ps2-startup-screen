@@ -28,6 +28,11 @@ test("music constants define the requested ten tracks in order", () => {
   );
 });
 
+test("music constants keep artist metadata free of markdown artifacts", () => {
+  assert.equal(MUSIC_TRACKS[5]?.artist, "Gabriel Masson");
+  assert.ok(MUSIC_TRACKS.every((track) => !/^\s*#\s+/.test(track.artist)));
+});
+
 test("youtube parser extracts the video id and requested start times from authored track URLs", () => {
   assert.deepEqual(parseYoutubeTrackSource(MUSIC_TRACKS[0].youtubeUrl), {
     startSeconds: 0,
