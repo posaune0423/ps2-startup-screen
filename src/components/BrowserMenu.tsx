@@ -5,7 +5,6 @@ import { useRouter } from "vinext/shims/navigation";
 
 import MenuList from "@/components/browser-menu/menu-list";
 import OrbRing from "@/components/browser-menu/orb-ring";
-import { navigateWithTransition } from "@/components/shared/navigate-with-transition";
 import { useMenuNavigation } from "@/components/shared/use-menu-navigation";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
@@ -32,7 +31,7 @@ export default function BrowserMenu() {
   const handleSelect = useCallback(
     (index: number) => {
       playEnter();
-      navigateWithTransition(router, MENU_ITEMS[index].href);
+      router.push(MENU_ITEMS[index].href);
     },
     [router, playEnter],
   );
