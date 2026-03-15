@@ -2,7 +2,7 @@
 
 ## Product Name
 
-PS2-style Startup Scene (Three.js)
+posaune0423 Portfolio
 
 ## Goal
 

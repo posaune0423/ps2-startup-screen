@@ -5,9 +5,9 @@ import { test } from "vite-plus/test";
 import manifest from "../../src/app/manifest";
 import robots from "../../src/app/robots";
 import sitemap from "../../src/app/sitemap";
-import { siteDescription, siteName, siteThemeColor } from "../../src/constants/site";
+import { siteDescription, siteName, siteShortName, siteThemeColor } from "../../src/constants/site";
 
-const siteUrl = "https://ps2.posaune0423.com";
+const siteUrl = "https://posaune0423.com";
 
 test("sitemap exposes the home page with the canonical site URL", () => {
   assert.deepEqual(sitemap(), [
@@ -33,7 +33,7 @@ test("robots allows crawling and points to the sitemap", () => {
 test("manifest describes the single-page experience and icons", () => {
   assert.deepEqual(manifest(), {
     name: siteName,
-    short_name: "posaune0423",
+    short_name: siteShortName,
     description: siteDescription,
     start_url: "/",
     display: "standalone",
