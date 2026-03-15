@@ -3,7 +3,7 @@
 import { Environment } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import type { Howl } from "howler";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import type { RefObject } from "react";
 import * as THREE from "three";
 import useSceneSound from "use-sound";
@@ -22,9 +22,8 @@ import ParticleTrails from "./scene/ParticleTrails";
 import PostProcessing from "./scene/PostProcessing";
 import PrismField from "./scene/PrismField";
 import { startSceneSound } from "./sceneAudio";
-import { navigateWithTransition } from "./shared/navigate-with-transition";
 
-function SceneContent({ elapsedRef }: { elapsedRef: RefObject<number> }) {
+const SceneContent = memo(function SceneContent({ elapsedRef }: { elapsedRef: RefObject<number> }) {
   const sceneGroupRef = useRef<THREE.Group>(null);
 
   return (
@@ -43,7 +42,11 @@ function SceneContent({ elapsedRef }: { elapsedRef: RefObject<number> }) {
       <PostProcessing />
     </>
   );
-}
+});
+
+const GL_PROPS = { antialias: false, alpha: false } as const;
+const CANVAS_STYLE = { width: "100%", height: "100%" } as const;
+const CONTAINER_STYLE = { position: "relative" as const, width: "100vw", height: "100vh", cursor: "pointer" };
 
 export default function Scene() {
   const router = useRouter();
@@ -92,7 +95,7 @@ export default function Scene() {
     let raf: number;
     const check = () => {
       if (elapsedRef.current >= CONFIG.timeline.duration) {
-        navigateWithTransition(router, "/menu");
+        router.push("/menu");
         return;
       }
       raf = requestAnimationFrame(check);
@@ -119,7 +122,6 @@ export default function Scene() {
     initializeSoundEnabled();
     if (!getSoundEnabled()) return;
     if (soundStartedRef.current) return;
-    // Reset sync flag so onplay will seek to the current animation position
     soundPositionSyncedRef.current = false;
     play();
   }, [play]);
@@ -132,26 +134,32 @@ export default function Scene() {
     return t * t * (3 - 2 * t);
   }, []);
 
+  const onCreated = useCallback(({ gl }: { gl: THREE.WebGLRenderer }) => {
+    gl.shadowMap.type = THREE.PCFShadowMap;
+  }, []);
+
+  const cameraProps = useMemo(
+    () => ({
+      fov: 50,
+      near: 0.1,
+      far: 100,
+      position: [0, CONFIG.camera.startHeight, 0] as [number, number, number],
+    }),
+    [],
+  );
+
+  const sceneProps = useMemo(() => ({ background: new THREE.Color("#1A1A1A") }), []);
+
   return (
-    <div
-      style={{ position: "relative", width: "100vw", height: "100vh", cursor: "pointer" }}
-      onClick={handleStartSound}
-    >
+    <div style={CONTAINER_STYLE} onClick={handleStartSound}>
       <Canvas
         shadows
         dpr={CONFIG.render.dpr}
-        gl={{ antialias: false, alpha: false }}
-        onCreated={({ gl }) => {
-          gl.shadowMap.type = THREE.PCFShadowMap;
-        }}
-        camera={{
-          fov: 50,
-          near: 0.1,
-          far: 100,
-          position: [0, CONFIG.camera.startHeight, 0],
-        }}
-        scene={{ background: new THREE.Color("#1A1A1A") }}
-        style={{ width: "100%", height: "100%" }}
+        gl={GL_PROPS}
+        onCreated={onCreated}
+        camera={cameraProps}
+        scene={sceneProps}
+        style={CANVAS_STYLE}
       >
         <SceneContent elapsedRef={elapsedRef} />
       </Canvas>

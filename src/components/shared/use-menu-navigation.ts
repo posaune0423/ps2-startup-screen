@@ -9,9 +9,9 @@ function triggerHaptic(): void {
     return;
   }
   // iOS: input[switch] trick
-  const existing = document.getElementById("_haptic_sw") as HTMLInputElement | null;
+  const existing = document.getElementById("_haptic_sw");
   const input =
-    existing ??
+    (existing instanceof HTMLInputElement ? existing : null) ??
     (() => {
       const el = document.createElement("input");
       el.type = "checkbox";

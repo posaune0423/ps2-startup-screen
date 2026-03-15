@@ -55,7 +55,7 @@ export default function SystemMenu({ onBack }: SystemMenuProps) {
     [playEnter, locale, setLocale, soundEnabled, setSoundEnabled],
   );
 
-  const { activeIndex, selectByIndex } = useMenuNavigation({
+  const { activeIndex, setActiveIndex } = useMenuNavigation({
     itemCount: settings.length,
     direction: "vertical",
     onSelect: handleSelect,
@@ -100,17 +100,17 @@ export default function SystemMenu({ onBack }: SystemMenuProps) {
         {t("system.title")}
       </h1>
 
-      {/* Up arrow */}
+      {/* Up arrow — navigate only, no toggle */}
       <button
         type="button"
-        onClick={() => selectByIndex((activeIndex - 1 + settings.length) % settings.length)}
+        onClick={() => setActiveIndex((activeIndex - 1 + settings.length) % settings.length)}
         style={{
           background: "none",
           border: "none",
           cursor: "pointer",
-          padding: "4px 16px",
+          padding: "8px 24px",
           color: "#555555",
-          fontSize: "20px",
+          fontSize: "24px",
           lineHeight: 1,
         }}
       >
@@ -158,17 +158,17 @@ export default function SystemMenu({ onBack }: SystemMenuProps) {
         </span>
       </button>
 
-      {/* Down arrow */}
+      {/* Down arrow — navigate only, no toggle */}
       <button
         type="button"
-        onClick={() => selectByIndex((activeIndex + 1) % settings.length)}
+        onClick={() => setActiveIndex((activeIndex + 1) % settings.length)}
         style={{
           background: "none",
           border: "none",
           cursor: "pointer",
-          padding: "4px 16px",
+          padding: "8px 24px",
           color: "#555555",
-          fontSize: "20px",
+          fontSize: "24px",
           lineHeight: 1,
         }}
       >

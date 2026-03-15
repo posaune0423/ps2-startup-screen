@@ -2,7 +2,7 @@
 
 import { Environment } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import type * as THREE from "three";
 import { useRouter } from "vinext/shims/navigation";
 

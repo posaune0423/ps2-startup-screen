@@ -1,3 +1,4 @@
+import { ViewTransitions } from "next-view-transitions";
 import React from "react";
 import type { Metadata, Viewport } from "vinext/shims/metadata";
 
@@ -62,7 +63,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <LanguageProvider>{children}</LanguageProvider>
+        <ViewTransitions>
+          <LanguageProvider>{children}</LanguageProvider>
+        </ViewTransitions>
       </body>
     </html>
   );

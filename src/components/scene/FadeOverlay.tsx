@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useRef, useEffect } from "react";
+import React, { memo, useCallback, useRef, useEffect } from "react";
 
-export default function FadeOverlay({ getOpacity }: { getOpacity: () => number }) {
+export default memo(function FadeOverlay({ getOpacity }: { getOpacity: () => number }) {
   const divRef = useRef<HTMLDivElement>(null);
 
   const tick = useCallback(() => {
@@ -34,4 +34,4 @@ export default function FadeOverlay({ getOpacity }: { getOpacity: () => number }
       }}
     />
   );
-}
+});

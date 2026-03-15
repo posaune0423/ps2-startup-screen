@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import React, { memo, useMemo } from "react";
 import * as THREE from "three";
 
 const vertexShader = /* glsl */ `
@@ -19,12 +19,9 @@ uniform vec3 uColorDark;
 varying vec2 vUv;
 
 void main() {
-  // top-left (0, 1) is the light source
   float d = distance(vUv, vec2(0.0, 1.0));
-  // remap: 0 at top-left → ~1.4 at bottom-right
   float t = smoothstep(0.0, 1.5, d);
 
-  // two-step gradient: bright → mid → dark
   vec3 col = mix(uColorBright, uColorMid, smoothstep(0.0, 0.5, t));
   col = mix(col, uColorDark, smoothstep(0.4, 1.0, t));
 
@@ -32,7 +29,8 @@ void main() {
 }
 `;
 
-export default function Ps2BrowserBg() {
+export default memo(function Ps2BrowserBg() {
+  const geometry = useMemo(() => new THREE.PlaneGeometry(2, 2), []);
   const material = useMemo(() => {
     return new THREE.ShaderMaterial({
       vertexShader,
@@ -47,9 +45,5 @@ export default function Ps2BrowserBg() {
     });
   }, []);
 
-  return (
-    <mesh renderOrder={-1} frustumCulled={false} material={material}>
-      <planeGeometry args={[2, 2]} />
-    </mesh>
-  );
-}
+  return <mesh renderOrder={-1} frustumCulled={false} material={material} geometry={geometry} />;
+});
