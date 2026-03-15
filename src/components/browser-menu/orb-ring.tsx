@@ -1,0 +1,176 @@
+"use client";
+
+import React, { useCallback, useEffect, useRef } from "react";
+
+const ORB_COUNT = 7;
+const RING_RADIUS_RATIO = 0.32;
+const TRAIL_LENGTH = 22;
+const TRAIL_FADE = 0.045;
+
+const ORB_COLORS = [
+  "rgba(117, 217, 235, 0.9)",
+  "rgba(140, 200, 255, 0.85)",
+  "rgba(100, 180, 240, 0.85)",
+  "rgba(117, 217, 235, 0.9)",
+  "rgba(160, 210, 255, 0.85)",
+  "rgba(117, 217, 235, 0.9)",
+  "rgba(130, 195, 245, 0.85)",
+];
+
+interface OrbState {
+  baseAngle: number;
+  currentAngle: number;
+  targetAngle: number;
+  trail: Array<{ x: number; y: number; alpha: number }>;
+}
+
+function project3D(angle: number, radius: number, rotX: number, rotY: number): { x: number; y: number; z: number } {
+  const px = Math.cos(angle) * radius;
+  const py = 0;
+  const pz = Math.sin(angle) * radius;
+
+  const cosRx = Math.cos(rotX);
+  const sinRx = Math.sin(rotX);
+  const y1 = py * cosRx - pz * sinRx;
+  const z1 = py * sinRx + pz * cosRx;
+
+  const cosRy = Math.cos(rotY);
+  const sinRy = Math.sin(rotY);
+  const x2 = px * cosRy + z1 * sinRy;
+  const z2 = -px * sinRy + z1 * cosRy;
+
+  return { x: x2, y: y1, z: z2 };
+}
+
+export default function OrbRing({ compact = false }: { compact?: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number>(0);
+
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+    const ringRadius = Math.min(rect.width, rect.height) * RING_RADIUS_RATIO;
+
+    const orbs: OrbState[] = Array.from({ length: ORB_COUNT }, (_, i) => ({
+      baseAngle: (i / ORB_COUNT) * Math.PI * 2,
+      currentAngle: (i / ORB_COUNT) * Math.PI * 2,
+      targetAngle: (i / ORB_COUNT) * Math.PI * 2,
+      trail: [],
+    }));
+
+    let time = 0;
+    let gatherPhase = 0;
+
+    function animate() {
+      if (!ctx || !canvas) return;
+      const w = rect.width;
+      const h = rect.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      time += 0.016;
+      gatherPhase += 0.014;
+
+      const gatherAmount = (Math.sin(gatherPhase) + 1) / 2;
+
+      const rotX = Math.sin(time * 0.8) * 0.6;
+      const rotY = time * 0.5;
+
+      for (let i = 0; i < ORB_COUNT; i++) {
+        const orb = orbs[i];
+        const evenSpacing = (i / ORB_COUNT) * Math.PI * 2 + time * 1.2;
+        const clustered = time * 1.2 + (i < ORB_COUNT / 2 ? 0 : Math.PI);
+        orb.currentAngle = evenSpacing * (1 - gatherAmount) + clustered * gatherAmount;
+
+        const proj = project3D(orb.currentAngle, ringRadius, rotX, rotY);
+        const scale = 1 + proj.z / (ringRadius * 3);
+        const screenX = cx + proj.x * scale;
+        const screenY = cy + proj.y * scale;
+
+        orb.trail.unshift({ x: screenX, y: screenY, alpha: 1 });
+        if (orb.trail.length > TRAIL_LENGTH) {
+          orb.trail.pop();
+        }
+
+        for (let t = orb.trail.length - 1; t >= 0; t--) {
+          const point = orb.trail[t];
+          point.alpha = Math.max(0, point.alpha - TRAIL_FADE);
+
+          if (point.alpha <= 0) continue;
+
+          const orbSize = (6 + scale * 4) * (1 - t / TRAIL_LENGTH);
+          const glowSize = orbSize * 2.25;
+          const gradient = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, orbSize);
+          const glowGradient = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, glowSize);
+
+          const color = ORB_COLORS[i % ORB_COLORS.length];
+          const baseAlpha = point.alpha * (1 - t / TRAIL_LENGTH);
+          const glowAlpha = baseAlpha * 0.48;
+
+          glowGradient.addColorStop(0, color.replace(/[\d.]+\)$/, `${glowAlpha.toFixed(2)})`));
+          glowGradient.addColorStop(0.65, color.replace(/[\d.]+\)$/, `${(glowAlpha * 0.3).toFixed(2)})`));
+          glowGradient.addColorStop(1, color.replace(/[\d.]+\)$/, "0)"));
+
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, glowSize, 0, Math.PI * 2);
+          ctx.fillStyle = glowGradient;
+          ctx.fill();
+
+          gradient.addColorStop(0, color.replace(/[\d.]+\)$/, `${(baseAlpha * 0.9).toFixed(2)})`));
+          gradient.addColorStop(0.5, color.replace(/[\d.]+\)$/, `${(baseAlpha * 0.4).toFixed(2)})`));
+          gradient.addColorStop(1, color.replace(/[\d.]+\)$/, "0)"));
+
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, orbSize, 0, Math.PI * 2);
+          ctx.fillStyle = gradient;
+          ctx.fill();
+        }
+
+        const mainSize = 8 + scale * 5;
+        const mainGradient = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, mainSize);
+        mainGradient.addColorStop(0, "rgba(255, 255, 255, 0.95)");
+        mainGradient.addColorStop(0.3, ORB_COLORS[i % ORB_COLORS.length]);
+        mainGradient.addColorStop(1, "rgba(117, 217, 235, 0)");
+
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, mainSize, 0, Math.PI * 2);
+        ctx.fillStyle = mainGradient;
+        ctx.fill();
+      }
+
+      rafRef.current = requestAnimationFrame(animate);
+    }
+
+    animate();
+  }, []);
+
+  useEffect(() => {
+    draw();
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [draw]);
+
+  const size = compact ? "min(200px, 50vw)" : "300px";
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        width: size,
+        height: size,
+        pointerEvents: "none",
+      }}
+    />
+  );
+}
