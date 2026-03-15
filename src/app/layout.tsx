@@ -1,10 +1,11 @@
 import React from "react";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata, Viewport } from "vinext/shims/metadata";
 
 import "./globals.css";
 import BackButton from "../components/shared/back-button";
 import NavigationOverlay from "../components/shared/navigation-overlay";
-import { siteDescription, siteName, siteUrl } from "../constants/site";
+import { gaMeasurementId, siteDescription, siteName, siteUrl } from "../constants/site";
 import { LanguageProvider } from "../lib/language-context";
 
 export const metadata: Metadata = {
@@ -70,6 +71,7 @@ export default function RootLayout({
           <BackButton />
         </LanguageProvider>
       </body>
+      <GoogleAnalytics gaId={gaMeasurementId} />
     </html>
   );
 }
