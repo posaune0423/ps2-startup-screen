@@ -12,6 +12,10 @@ const MOBILE_TRAIL_FADE = 0.1;
 const MOBILE_MAX_DPR = 0.75;
 const DESKTOP_MAX_DPR = 1.25;
 const MOBILE_FRAME_INTERVAL = 1000 / 30;
+const TIME_SPEED = 1.0;
+const MOBILE_TIME_SPEED = 0.85;
+const GATHER_SPEED = 0.8;
+const MOBILE_GATHER_SPEED = 0.7;
 
 const ORB_COLORS = [
   "rgba(117, 217, 235, 0.9)",
@@ -98,6 +102,7 @@ export default function OrbRing({ compact = false }: { compact?: boolean }) {
         rafRef.current = requestAnimationFrame(animate);
         return;
       }
+      const dt = lastTimestamp ? Math.min((timestamp - lastTimestamp) / 1000, 0.1) : 1 / 60;
       lastTimestamp = timestamp;
 
       const w = rect.width;
@@ -105,8 +110,8 @@ export default function OrbRing({ compact = false }: { compact?: boolean }) {
 
       ctx.clearRect(0, 0, w, h);
 
-      time += compact ? 0.02 : 0.026;
-      gatherPhase += compact ? 0.016 : 0.021;
+      time += dt * (compact ? MOBILE_TIME_SPEED : TIME_SPEED);
+      gatherPhase += dt * (compact ? MOBILE_GATHER_SPEED : GATHER_SPEED);
 
       const gatherAmount = (Math.sin(gatherPhase) + 1) / 2;
 

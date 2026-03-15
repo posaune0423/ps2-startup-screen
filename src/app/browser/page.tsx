@@ -201,6 +201,7 @@ export default function BrowserPage() {
             color: "#C5CF1F",
             letterSpacing: "0.02em",
             whiteSpace: "nowrap",
+            transformOrigin: "right center",
           }}
         >
           {t(CARDS[activeIndex].labelKey)} / {CARDS.length}

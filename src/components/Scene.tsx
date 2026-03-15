@@ -63,10 +63,8 @@ export default function Scene() {
     onplay: () => {
       soundStartedRef.current = true;
       soundPlaybackRequestedRef.current = false;
-      if (!soundPositionSyncedRef.current) {
-        soundRef.current?.seek(elapsedRef.current);
-        soundPositionSyncedRef.current = true;
-      }
+      soundRef.current?.seek(elapsedRef.current);
+      soundPositionSyncedRef.current = true;
     },
     onplayerror: () => {
       soundStartedRef.current = false;
@@ -123,6 +121,7 @@ export default function Scene() {
   const handleStartSound = useCallback(() => {
     initializeSoundEnabled();
     if (!getSoundEnabled()) return;
+    if (soundRef.current?.playing()) return;
     if (soundStartedRef.current) return;
     if (soundPlaybackRequestedRef.current) return;
     soundPositionSyncedRef.current = false;
