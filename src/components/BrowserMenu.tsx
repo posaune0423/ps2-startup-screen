@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useRouter } from "vinext/shims/navigation";
 
 import MenuList from "@/components/browser-menu/menu-list";
@@ -9,6 +9,7 @@ import { navigateWithTransition } from "@/components/shared/navigate-with-transi
 import { useMenuNavigation } from "@/components/shared/use-menu-navigation";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
+import { startAmbientAudio } from "@/lib/ambient-audio";
 import type { TranslationKey } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 
@@ -23,6 +24,10 @@ export default function BrowserMenu() {
   const { isMobile, isPortrait } = useViewport();
   const { t } = useLanguage();
   const compact = isMobile || isPortrait;
+
+  useEffect(() => {
+    startAmbientAudio();
+  }, []);
 
   const handleSelect = useCallback(
     (index: number) => {

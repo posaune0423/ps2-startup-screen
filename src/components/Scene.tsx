@@ -1,22 +1,30 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Canvas } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import type { Howl } from "howler";
+import React, { useCallback, useEffect, useRef } from "react";
+import type { RefObject } from "react";
 import * as THREE from "three";
-import useSound from "use-sound";
-import { CONFIG } from "./scene/config";
-import { startSceneSound } from "./sceneAudio";
-import PrismField from "./scene/PrismField";
-import Lighting from "./scene/Lighting";
+import useSceneSound from "use-sound";
+import { useRouter } from "vinext/shims/navigation";
+
+import { startAmbientAudio } from "@/lib/ambient-audio";
+import { getSoundEnabled, initializeSoundEnabled } from "@/lib/sound-settings";
+
 import CameraRig from "./scene/CameraRig";
 import CentralGlow from "./scene/CentralGlow";
-import FloatingCubes from "./scene/FloatingCubes";
-import ParticleTrails from "./scene/ParticleTrails";
+import { CONFIG } from "./scene/config";
 import FadeOverlay from "./scene/FadeOverlay";
+import FloatingCubes from "./scene/FloatingCubes";
+import Lighting from "./scene/Lighting";
+import ParticleTrails from "./scene/ParticleTrails";
 import PostProcessing from "./scene/PostProcessing";
+import PrismField from "./scene/PrismField";
+import { startSceneSound } from "./sceneAudio";
+import { navigateWithTransition } from "./shared/navigate-with-transition";
 
-function SceneContent({ elapsedRef }: { elapsedRef: React.MutableRefObject<number> }) {
+function SceneContent({ elapsedRef }: { elapsedRef: RefObject<number> }) {
   const sceneGroupRef = useRef<THREE.Group>(null);
 
   return (
@@ -38,76 +46,83 @@ function SceneContent({ elapsedRef }: { elapsedRef: React.MutableRefObject<numbe
 }
 
 export default function Scene() {
+  const router = useRouter();
   const elapsedRef = useRef(0);
   const soundStartedRef = useRef(false);
   const soundPositionSyncedRef = useRef(false);
-  const [finished, setFinished] = useState(false);
-  const [sceneKey, setSceneKey] = useState(0);
-
-  const [play, { stop, sound }] = useSound("/sound/ps2-startup-bgm.mp3", {
+  const soundRef = useRef<Howl | null>(null);
+  const [play, { sound }] = useSceneSound("/sound/ps2-startup-bgm.mp3", {
     volume: 1.0,
     onend: () => {
       soundStartedRef.current = false;
+      soundPositionSyncedRef.current = false;
     },
     onplay: () => {
       soundStartedRef.current = true;
+      if (!soundPositionSyncedRef.current) {
+        soundRef.current?.seek(elapsedRef.current);
+        soundPositionSyncedRef.current = true;
+      }
     },
     onplayerror: () => {
       soundStartedRef.current = false;
     },
     onstop: () => {
       soundStartedRef.current = false;
+      soundPositionSyncedRef.current = false;
     },
   });
+
+  useEffect(() => {
+    soundRef.current = (sound as Howl | null) ?? null;
+  }, [sound]);
+
+  useEffect(() => {
+    const howl = sound as Howl | null;
+    return () => {
+      howl?.stop();
+    };
+  }, [sound]);
+
+  useEffect(() => {
+    startAmbientAudio();
+  }, []);
 
   useEffect(() => {
     let raf: number;
     const check = () => {
       if (elapsedRef.current >= CONFIG.timeline.duration) {
-        setFinished(true);
+        navigateWithTransition(router, "/menu");
+        return;
       }
       raf = requestAnimationFrame(check);
     };
     raf = requestAnimationFrame(check);
     return () => cancelAnimationFrame(raf);
-  }, [sceneKey]);
+  }, [router]);
 
   useEffect(() => {
+    initializeSoundEnabled();
     const nextState = startSceneSound({
       elapsed: elapsedRef.current,
       hasStarted: soundStartedRef.current,
       hasSyncedPosition: soundPositionSyncedRef.current,
       play,
-      sound,
-    });
-    soundStartedRef.current = nextState.hasStarted;
-    soundPositionSyncedRef.current = nextState.hasSyncedPosition;
-  }, [play, sceneKey, sound]);
-
-  const handleStartSound = useCallback(() => {
-    const nextState = startSceneSound({
-      elapsed: elapsedRef.current,
-      hasStarted: soundStartedRef.current,
-      hasSyncedPosition: soundPositionSyncedRef.current,
-      play,
-      sound,
+      sound: sound as Howl | null,
+      soundEnabled: getSoundEnabled(),
     });
     soundStartedRef.current = nextState.hasStarted;
     soundPositionSyncedRef.current = nextState.hasSyncedPosition;
   }, [play, sound]);
 
-  const handleReplay = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      stop();
-      elapsedRef.current = 0;
-      soundStartedRef.current = false;
-      soundPositionSyncedRef.current = false;
-      setFinished(false);
-      setSceneKey((k) => k + 1);
-    },
-    [stop],
-  );
+  const handleStartSound = useCallback(() => {
+    initializeSoundEnabled();
+    if (!getSoundEnabled()) return;
+    if (soundStartedRef.current) return;
+    // Reset sync flag so onplay will seek to the current animation position
+    soundPositionSyncedRef.current = false;
+    play();
+  }, [play]);
 
   const getOverlayOpacity = useCallback(() => {
     const elapsed = elapsedRef.current;
@@ -138,41 +153,9 @@ export default function Scene() {
         scene={{ background: new THREE.Color("#1A1A1A") }}
         style={{ width: "100%", height: "100%" }}
       >
-        <SceneContent key={sceneKey} elapsedRef={elapsedRef} />
+        <SceneContent elapsedRef={elapsedRef} />
       </Canvas>
       <FadeOverlay getOpacity={getOverlayOpacity} />
-      {finished && (
-        <button
-          type="button"
-          onClick={handleReplay}
-          style={{
-            position: "fixed",
-            bottom: "15%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 20,
-            background: "transparent",
-            border: "1px solid rgba(255, 255, 255, 0.3)",
-            borderRadius: 4,
-            color: "rgba(255, 255, 255, 0.7)",
-            fontSize: 14,
-            letterSpacing: "0.2em",
-            padding: "10px 28px",
-            cursor: "pointer",
-            animation: "fade-in 1.5s ease-in",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.6)";
-            e.currentTarget.style.color = "rgba(255, 255, 255, 1)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
-            e.currentTarget.style.color = "rgba(255, 255, 255, 0.7)";
-          }}
-        >
-          REPLAY
-        </button>
-      )}
     </div>
   );
 }

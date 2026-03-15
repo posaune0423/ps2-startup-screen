@@ -36,10 +36,7 @@ test("navigation sound playback is gated by the shared sound setting", () => {
 });
 
 test("ambient audio startup respects the shared sound setting", () => {
-  assert.match(
-    ambientAudioSource,
-    /import \{ getSoundEnabled, initializeSoundEnabled \} from "@\/lib\/sound-settings"/,
-  );
+  assert.match(ambientAudioSource, /import \{ getSoundEnabled, initializeSoundEnabled \} from "\.\/sound-settings"/);
   assert.match(ambientAudioSource, /initializeSoundEnabled\(\);/);
   assert.match(ambientAudioSource, /if \(!getSoundEnabled\(\)\) return;/);
 });

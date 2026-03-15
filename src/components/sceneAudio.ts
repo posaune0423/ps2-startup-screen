@@ -1,20 +1,21 @@
-type SeekableSound = {
+interface SeekableSound {
   playing: () => boolean;
   seek: (seconds: number) => void;
-};
+}
 
-type StartSceneSoundArgs = {
+interface StartSceneSoundArgs {
   elapsed: number;
   hasStarted: boolean;
   hasSyncedPosition: boolean;
   play: () => void;
   sound?: SeekableSound | null;
-};
+  soundEnabled?: boolean;
+}
 
-type StartSceneSoundResult = {
+interface StartSceneSoundResult {
   hasStarted: boolean;
   hasSyncedPosition: boolean;
-};
+}
 
 export function startSceneSound({
   elapsed,
@@ -22,8 +23,9 @@ export function startSceneSound({
   hasSyncedPosition,
   play,
   sound,
+  soundEnabled = true,
 }: StartSceneSoundArgs): StartSceneSoundResult {
-  if (!sound) {
+  if (!soundEnabled || !sound) {
     return {
       hasStarted,
       hasSyncedPosition,

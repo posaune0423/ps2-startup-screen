@@ -2,19 +2,20 @@
 
 import { Environment } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import type * as THREE from "three";
 import { useRouter } from "vinext/shims/navigation";
 
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import HexFlower from "@/components/system/hex-flower";
 import SystemMenu from "@/components/system/system-menu";
+import { startAmbientAudio } from "@/lib/ambient-audio";
 import { createRingFogMaterial } from "@/shaders/ringFog";
 
 function BackgroundHaze() {
   const mats = useMemo(
     () => [
-      // メイン紫リング霧 (#433767 ベース)
+      // Main purple ring fog (#433767 base)
       createRingFogMaterial({
         color: "#433767",
         opacity: 0.95,
@@ -26,7 +27,7 @@ function BackgroundHaze() {
         outerRadius: 0.88,
         ringWidth: 0.22,
       }),
-      // 外側の深い紫 — 広くぼんやり
+      // Outer deep purple — wide and diffuse
       createRingFogMaterial({
         color: "#2A2040",
         opacity: 0.7,
@@ -38,7 +39,7 @@ function BackgroundHaze() {
         outerRadius: 0.95,
         ringWidth: 0.28,
       }),
-      // 明るめ紫 — 霧の薄い層
+      // Lighter purple — thin fog layer
       createRingFogMaterial({
         color: "#6650A0",
         opacity: 0.5,
@@ -103,18 +104,12 @@ function SystemScene() {
   return (
     <>
       <color attach="background" args={["#0D0A18"]} />
-      {/* IBL環境マップ — ガラス反射の光源 */}
-      <Environment preset="studio" environmentIntensity={0.5} />
-      {/* メインライト — #0249A6 青系で手前から */}
-      <pointLight position={[-2, 2, 5]} intensity={8} color="#FFFFFF" distance={18} decay={2} />
-      <pointLight position={[-2.5, 0, 4]} intensity={5} color="#3080FF" distance={14} decay={2} />
-      <pointLight position={[-4, -2, 3]} intensity={3} color="#0249A6" distance={10} decay={2} />
-      {/* プリズム分散カラーライト */}
-      <pointLight position={[-5, 1, 3]} intensity={2} color="#FF6090" distance={10} decay={2} />
-      <pointLight position={[1, 3, 3]} intensity={2} color="#60C8FF" distance={10} decay={2} />
-      <pointLight position={[-2, -3, 2]} intensity={1.5} color="#80FF90" distance={8} decay={2} />
-      <pointLight position={[0, 0, 4]} intensity={1.2} color="#D080FF" distance={8} decay={2} />
-      {/* 奥を暗くするために ambient は最小限 */}
+      {/* IBL — used by MeshTransmissionMaterial for reflections */}
+      <Environment preset="studio" environmentIntensity={0.4} />
+      {/* 3 lights instead of 7: white key + blue fill + pink accent */}
+      <pointLight position={[-2, 2, 5]} intensity={18} color="#FFFFFF" distance={22} decay={2} />
+      <pointLight position={[-2.5, 0, 4]} intensity={12} color="#4A90FF" distance={18} decay={2} />
+      <pointLight position={[-5, 1, 3]} intensity={6} color="#FF6090" distance={12} decay={2} />
       <ambientLight intensity={0.05} color="#0D0A18" />
       <BackgroundHaze />
       <HexFlower />
@@ -126,6 +121,10 @@ export default function SystemPage() {
   const router = useRouter();
   const { playBack } = useNavigationSound();
 
+  useEffect(() => {
+    startAmbientAudio();
+  }, []);
+
   const handleBack = useCallback(() => {
     playBack();
     router.back();
@@ -133,7 +132,12 @@ export default function SystemPage() {
 
   return (
     <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
-      <Canvas camera={{ position: [0, 0, 6], fov: 50 }} style={{ width: "100%", height: "100%" }}>
+      <Canvas
+        camera={{ position: [0, 0, 6], fov: 50 }}
+        style={{ width: "100%", height: "100%" }}
+        dpr={[1, 1.5]}
+        gl={{ antialias: true, powerPreference: "high-performance" }}
+      >
         <SystemScene />
       </Canvas>
       <SystemMenu onBack={handleBack} />
