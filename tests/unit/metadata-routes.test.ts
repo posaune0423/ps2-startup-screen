@@ -5,6 +5,7 @@ import { test } from "vite-plus/test";
 import manifest from "../../src/app/manifest";
 import robots from "../../src/app/robots";
 import sitemap from "../../src/app/sitemap";
+import { siteDescription, siteName, siteThemeColor } from "../../src/constants/site";
 
 const siteUrl = "https://ps2.posaune0423.com";
 
@@ -31,14 +32,13 @@ test("robots allows crawling and points to the sitemap", () => {
 
 test("manifest describes the single-page experience and icons", () => {
   assert.deepEqual(manifest(), {
-    name: "PS2 Startup Screen",
-    short_name: "PS2 Startup",
-    description:
-      "PlayStation 2 の起動画面（タワーシーン）を Three.js でリアルタイム再現。React Three Fiber によるインタラクティブ 3D デモ。",
+    name: siteName,
+    short_name: "posaune0423",
+    description: siteDescription,
     start_url: "/",
     display: "standalone",
-    background_color: "#1A1A1A",
-    theme_color: "#1A1A1A",
+    background_color: siteThemeColor,
+    theme_color: siteThemeColor,
     icons: [
       {
         src: "/icon.svg",
