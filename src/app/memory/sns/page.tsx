@@ -25,5 +25,5 @@ const SNS_ITEMS: GridItem[] = [
 ];
 
 export default function SnsPage() {
-  return <ItemGrid items={SNS_ITEMS} />;
+  return <ItemGrid items={SNS_ITEMS} title="SNS" />;
 }

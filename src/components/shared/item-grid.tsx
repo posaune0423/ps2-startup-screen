@@ -23,6 +23,7 @@ export interface GridItem {
 
 interface ItemGridProps {
   items: GridItem[];
+  title: string;
 }
 
 const ITEM_SPACING = 0.8;
@@ -191,7 +192,18 @@ function GridScene({
   );
 }
 
-export default function ItemGrid({ items }: ItemGridProps) {
+function TinyMemoryCard() {
+  const { scene } = useGLTF("/3d/memorycard.glb");
+  return (
+    <>
+      <ambientLight intensity={0.8} />
+      <directionalLight position={[-2, 3, 2]} intensity={1.5} />
+      <Clone object={scene} rotation={[-0.3, Math.PI / 2, 1.8]} />
+    </>
+  );
+}
+
+export default function ItemGrid({ items, title }: ItemGridProps) {
   const router = useRouter();
   const { playEnter, playSelect, playBack } = useNavigationSound();
   const { isMobile, isPortrait } = useViewport();
@@ -247,6 +259,70 @@ export default function ItemGrid({ items }: ItemGridProps) {
           isMobile={compact}
         />
       </Canvas>
+
+      {/* Top-left: memory card icon + slot label */}
+      <div
+        style={{
+          position: "absolute",
+          top: "clamp(12px, 3vh, 32px)",
+          left: "clamp(16px, 3vw, 40px)",
+          pointerEvents: "none",
+          zIndex: 10,
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+        }}
+      >
+        <div style={{ width: compact ? 56 : 64, height: compact ? 56 : 64, flexShrink: 0 }}>
+          <Canvas
+            camera={{ position: [0, 0, 1.2], fov: 45 }}
+            style={{ width: "100%", height: "100%" }}
+            gl={{ alpha: true }}
+          >
+            <Suspense fallback={null}>
+              <TinyMemoryCard />
+            </Suspense>
+          </Canvas>
+        </div>
+        <span
+          style={{
+            fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+            fontSize: compact ? "clamp(16px, 4vw, 28px)" : "clamp(20px, 2.2vw, 32px)",
+            fontWeight: 700,
+            color: "#FFFFFF",
+            letterSpacing: "0.02em",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Memory Card ({title}) / 1
+        </span>
+      </div>
+
+      {/* Top-right: active item name */}
+      <div
+        style={{
+          position: "absolute",
+          top: "clamp(12px, 3vh, 32px)",
+          right: "clamp(16px, 4vw, 48px)",
+          pointerEvents: "none",
+          zIndex: 10,
+          textAlign: "right",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+            fontSize: compact ? "clamp(18px, 5vw, 32px)" : "clamp(24px, 2.8vw, 40px)",
+            fontWeight: 700,
+            color: "#C5CF1F",
+            letterSpacing: "0.02em",
+            lineHeight: 1.1,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {items[activeIndex].label}
+        </div>
+      </div>
     </div>
   );
 }

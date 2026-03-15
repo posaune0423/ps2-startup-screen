@@ -24,12 +24,12 @@ const WORK_ITEMS: GridItem[] = [
   },
   {
     id: "doom",
-    label: "Doom",
+    label: "DOOM INDEX",
     modelPath: "/3d/work/doom.glb",
     href: "https://doomindex.fun",
   },
 ];
 
 export default function WorkPage() {
-  return <ItemGrid items={WORK_ITEMS} />;
+  return <ItemGrid items={WORK_ITEMS} title="Work" />;
 }
