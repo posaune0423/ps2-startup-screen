@@ -33,6 +33,14 @@ test("browser page also clamps canvas DPR and prefers low-power WebGL settings",
 test("3D pages release GLTF resources on unmount to avoid cache growth across navigation", () => {
   assert.match(itemGridSource, /releaseGLTFAsset\(modelPath, scene, clearGLTF\)/);
   assert.match(browserPageSource, /releaseGLTFAsset\("\/3d\/memorycard\.glb", scene, clearGLTF\)/);
+  assert.match(browserPageSource, /releaseGLTFAsset\("\/3d\/icons\/cd\.glb", scene, clearGLTF\)/);
+  assert.match(browserPageSource, /modelPath:\s*"\/3d\/icons\/cd\.glb"/);
+});
+
+test("browser page includes a dedicated Audio CD entry with its own GLTF asset", () => {
+  assert.match(browserPageSource, /href:\s*"\/memory\/music"/);
+  assert.match(browserPageSource, /label:\s*"Audio CD"/);
+  assert.match(browserPageSource, /modelPath:\s*"\/3d\/icons\/cd\.glb"/);
 });
 
 test("orb ring switches to a lighter mobile profile on phones", () => {

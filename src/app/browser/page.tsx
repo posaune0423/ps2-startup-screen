@@ -3,7 +3,7 @@
 import { Clone, useGLTF } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import React, { memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type * as THREE from "three";
+import * as THREE from "three";
 
 import GlowCursor from "@/components/shared/glow-cursor";
 import Ps2BrowserBg from "@/components/shared/ps2-browser-bg";
@@ -16,40 +16,83 @@ import type { TranslationKey } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import { navigate } from "@/lib/navigate";
 
+interface BrowserCard {
+  href: string;
+  label: string;
+  labelKey: TranslationKey;
+  modelPath: string;
+  modelScaleDesktop: number;
+  modelScaleMobile: number;
+  rotation: [number, number, number];
+  normalizeScale?: boolean;
+}
+
 const CARDS = [
-  { labelKey: "browser.memoryCardWork" as TranslationKey, href: "/memory/work" },
-  { labelKey: "browser.memoryCardSns" as TranslationKey, href: "/memory/sns" },
-] as const;
-
-const CARD_POSITIONS: Array<[number, number, number]> = [
-  [-0.5, 0, 0],
-  [0.5, 0, 0],
-];
-
-const CARD_POSITIONS_MOBILE: Array<[number, number, number]> = [
-  [-0.3, 0, 0],
-  [0.3, 0, 0],
-];
+  {
+    href: "/memory/work",
+    label: "Work",
+    labelKey: "browser.memoryCardWork",
+    modelPath: "/3d/memorycard.glb",
+    modelScaleDesktop: 1,
+    modelScaleMobile: 0.7,
+    normalizeScale: false,
+    rotation: [-0.3, Math.PI / 2, 0.5],
+  },
+  {
+    href: "/memory/sns",
+    label: "SNS",
+    labelKey: "browser.memoryCardSns",
+    modelPath: "/3d/memorycard.glb",
+    modelScaleDesktop: 1,
+    modelScaleMobile: 0.7,
+    normalizeScale: false,
+    rotation: [-0.3, Math.PI / 2, 0.5],
+  },
+  {
+    href: "/memory/music",
+    label: "Audio CD",
+    labelKey: "browser.audioCd",
+    modelPath: "/3d/icons/cd.glb",
+    modelScaleDesktop: 0.95,
+    modelScaleMobile: 0.72,
+    rotation: [0, Math.PI / 2, 0],
+    normalizeScale: true,
+  },
+] as const satisfies readonly BrowserCard[];
 
 const ANIM_DURATION = 0.8;
 const ANIM_STAGGER = 0.15;
 const ANIM_OFFSET_Y = -0.5;
-const CLONE_ROTATION: [number, number, number] = [-0.3, Math.PI / 2, 0.5];
 
 function easeOutCubic(t: number) {
   return 1 - (1 - t) ** 3;
 }
 
-const MemoryCardModel = memo(function MemoryCardModel({
+function createHorizontalPositions(itemCount: number, spacing: number): [number, number, number][] {
+  const centerOffset = (itemCount - 1) / 2;
+  return Array.from({ length: itemCount }, (_, index): [number, number, number] => [
+    (index - centerOffset) * spacing,
+    0,
+    0,
+  ]);
+}
+
+const GenericCardModel = memo(function GenericCardModel({
   position,
-  scale = 1,
+  modelPath,
+  modelScale = 1,
+  modelRotation,
+  normalizeScale = false,
   index = 0,
 }: {
   position: [number, number, number];
-  scale?: number;
+  modelPath: string;
+  modelScale?: number;
+  modelRotation: [number, number, number];
+  normalizeScale?: boolean;
   index?: number;
 }) {
-  const { scene } = useGLTF("/3d/memorycard.glb");
+  const { scene } = useGLTF(modelPath);
   const groupRef = useRef<THREE.Group>(null);
   const elapsed = useRef(0);
   const delay = index * ANIM_STAGGER;
@@ -62,11 +105,25 @@ const MemoryCardModel = memo(function MemoryCardModel({
     [position],
   );
 
+  const normalizedScale = useMemo(() => {
+    if (!normalizeScale) return 1;
+    const box = new THREE.Box3().setFromObject(scene);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const maxDim = Math.max(size.x, size.y, size.z);
+    if (maxDim <= 0) return 1;
+    return 1 / maxDim;
+  }, [normalizeScale, scene]);
+
   useEffect(() => {
     return () => {
-      releaseGLTFAsset("/3d/memorycard.glb", scene, clearGLTF);
+      if (modelPath === "/3d/memorycard.glb") {
+        releaseGLTFAsset("/3d/memorycard.glb", scene, clearGLTF);
+        return;
+      }
+      releaseGLTFAsset("/3d/icons/cd.glb", scene, clearGLTF);
     };
-  }, [clearGLTF, scene]);
+  }, [clearGLTF, modelPath, scene]);
 
   useFrame((_, delta) => {
     elapsed.current += delta;
@@ -75,13 +132,13 @@ const MemoryCardModel = memo(function MemoryCardModel({
 
     if (groupRef.current) {
       groupRef.current.position.y = position[1] + ANIM_OFFSET_Y * (1 - eased);
-      groupRef.current.scale.setScalar(scale * eased);
+      groupRef.current.scale.setScalar(modelScale * normalizedScale * eased);
     }
   });
 
   return (
     <group ref={groupRef} position={initPos} scale={0}>
-      <Clone object={scene} rotation={CLONE_ROTATION} />
+      <Clone object={scene} rotation={modelRotation} />
     </group>
   );
 });
@@ -105,7 +162,7 @@ const POINT_LIGHT_POS: [number, number, number] = [3.5, 1.2, 4.2];
 const HEMI_ARGS: [string, string, number] = ["#F6F9FF", "#070910", 0.75];
 
 const BrowserScene = memo(function BrowserScene({ activeIndex, isMobile }: { activeIndex: number; isMobile: boolean }) {
-  const positions = isMobile ? CARD_POSITIONS_MOBILE : CARD_POSITIONS;
+  const positions = useMemo(() => createHorizontalPositions(CARDS.length, isMobile ? 0.62 : 0.92), [isMobile]);
   const cursorPosition = useMemo((): [number, number, number] => [...positions[activeIndex]], [positions, activeIndex]);
 
   return (
@@ -119,9 +176,21 @@ const BrowserScene = memo(function BrowserScene({ activeIndex, isMobile }: { act
       <pointLight position={POINT_LIGHT_POS} intensity={0.9} color="#7FA9FF" distance={18} decay={1.7} />
 
       <Suspense fallback={null}>
-        {CARDS.map((card, index) => (
-          <MemoryCardModel key={card.href} position={positions[index]} scale={isMobile ? 0.7 : 1} index={index} />
-        ))}
+        {CARDS.map((card, index) => {
+          const modelScale = isMobile ? card.modelScaleMobile : card.modelScaleDesktop;
+
+          return (
+            <GenericCardModel
+              key={card.href}
+              position={positions[index]}
+              modelPath={card.modelPath}
+              modelScale={modelScale}
+              modelRotation={card.rotation}
+              normalizeScale={card.normalizeScale}
+              index={index}
+            />
+          );
+        })}
       </Suspense>
 
       <GlowCursor position={cursorPosition} color="#75D9EB" scale={isMobile ? 0.5 : 0.8} />
