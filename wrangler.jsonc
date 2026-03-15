@@ -27,7 +27,7 @@
     },
   },
   "upload_source_maps": true,
-  "main": "./worker/index.ts",
+  "main": "./src/worker.ts",
   "assets": {
     "not_found_handling": "none",
     "binding": "ASSETS",
