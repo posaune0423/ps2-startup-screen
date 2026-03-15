@@ -7,9 +7,8 @@ import React, { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import type { RefObject } from "react";
 import * as THREE from "three";
 import useSceneSound from "use-sound";
-import { useRouter } from "vinext/shims/navigation";
 
-import { startAmbientAudio } from "@/lib/ambient-audio";
+import { navigate } from "@/lib/navigate";
 import { getSoundEnabled, initializeSoundEnabled } from "@/lib/sound-settings";
 
 import CameraRig from "./scene/CameraRig";
@@ -49,19 +48,21 @@ const CANVAS_STYLE = { width: "100%", height: "100%" } as const;
 const CONTAINER_STYLE = { position: "relative" as const, width: "100vw", height: "100vh", cursor: "pointer" };
 
 export default function Scene() {
-  const router = useRouter();
   const elapsedRef = useRef(0);
   const soundStartedRef = useRef(false);
   const soundPositionSyncedRef = useRef(false);
+  const soundPlaybackRequestedRef = useRef(false);
   const soundRef = useRef<Howl | null>(null);
   const [play, { sound }] = useSceneSound("/sound/ps2-startup-bgm.mp3", {
     volume: 1.0,
     onend: () => {
       soundStartedRef.current = false;
       soundPositionSyncedRef.current = false;
+      soundPlaybackRequestedRef.current = false;
     },
     onplay: () => {
       soundStartedRef.current = true;
+      soundPlaybackRequestedRef.current = false;
       if (!soundPositionSyncedRef.current) {
         soundRef.current?.seek(elapsedRef.current);
         soundPositionSyncedRef.current = true;
@@ -69,10 +70,13 @@ export default function Scene() {
     },
     onplayerror: () => {
       soundStartedRef.current = false;
+      soundPositionSyncedRef.current = false;
+      soundPlaybackRequestedRef.current = false;
     },
     onstop: () => {
       soundStartedRef.current = false;
       soundPositionSyncedRef.current = false;
+      soundPlaybackRequestedRef.current = false;
     },
   });
 
@@ -88,21 +92,17 @@ export default function Scene() {
   }, [sound]);
 
   useEffect(() => {
-    startAmbientAudio();
-  }, []);
-
-  useEffect(() => {
     let raf: number;
     const check = () => {
       if (elapsedRef.current >= CONFIG.timeline.duration) {
-        router.push("/menu");
+        navigate("/menu");
         return;
       }
       raf = requestAnimationFrame(check);
     };
     raf = requestAnimationFrame(check);
     return () => cancelAnimationFrame(raf);
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     initializeSoundEnabled();
@@ -110,19 +110,23 @@ export default function Scene() {
       elapsed: elapsedRef.current,
       hasStarted: soundStartedRef.current,
       hasSyncedPosition: soundPositionSyncedRef.current,
+      hasRequestedPlayback: soundPlaybackRequestedRef.current,
       play,
       sound: sound as Howl | null,
       soundEnabled: getSoundEnabled(),
     });
     soundStartedRef.current = nextState.hasStarted;
     soundPositionSyncedRef.current = nextState.hasSyncedPosition;
+    soundPlaybackRequestedRef.current = nextState.hasRequestedPlayback;
   }, [play, sound]);
 
   const handleStartSound = useCallback(() => {
     initializeSoundEnabled();
     if (!getSoundEnabled()) return;
     if (soundStartedRef.current) return;
+    if (soundPlaybackRequestedRef.current) return;
     soundPositionSyncedRef.current = false;
+    soundPlaybackRequestedRef.current = true;
     play();
   }, [play]);
 

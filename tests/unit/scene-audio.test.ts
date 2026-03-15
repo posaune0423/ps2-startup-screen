@@ -28,6 +28,7 @@ test("starts playback and syncs to the current elapsed time on first run", () =>
   assert.deepEqual(nextState, {
     hasStarted: true,
     hasSyncedPosition: true,
+    hasRequestedPlayback: true,
   });
 });
 
@@ -55,6 +56,7 @@ test("does not replay or reseek once startup audio is already running", () => {
   assert.deepEqual(nextState, {
     hasStarted: true,
     hasSyncedPosition: true,
+    hasRequestedPlayback: false,
   });
 });
 
@@ -75,6 +77,7 @@ test("does not mark startup audio as started before the sound is ready", () => {
   assert.deepEqual(nextState, {
     hasStarted: false,
     hasSyncedPosition: false,
+    hasRequestedPlayback: false,
   });
 });
 
@@ -102,6 +105,7 @@ test("keeps click fallback available when a play attempt does not start playback
   assert.deepEqual(nextState, {
     hasStarted: false,
     hasSyncedPosition: true,
+    hasRequestedPlayback: true,
   });
 });
 
@@ -130,5 +134,36 @@ test("does not start or sync startup audio when shared sound is disabled", () =>
   assert.deepEqual(nextState, {
     hasStarted: false,
     hasSyncedPosition: false,
+    hasRequestedPlayback: false,
+  });
+});
+
+test("does not request startup audio again while an earlier play request is still pending", () => {
+  let playCalls = 0;
+  const seekCalls: number[] = [];
+  const args = {
+    elapsed: 6.4,
+    hasStarted: false,
+    hasSyncedPosition: true,
+    hasRequestedPlayback: true,
+    play: () => {
+      playCalls += 1;
+    },
+    sound: {
+      playing: () => false,
+      seek: (seconds: number) => {
+        seekCalls.push(seconds);
+      },
+    },
+  };
+
+  const nextState = startSceneSound(args);
+
+  assert.equal(playCalls, 0);
+  assert.deepEqual(seekCalls, []);
+  assert.deepEqual(nextState, {
+    hasStarted: false,
+    hasSyncedPosition: true,
+    hasRequestedPlayback: true,
   });
 });

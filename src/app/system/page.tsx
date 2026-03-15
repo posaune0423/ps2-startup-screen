@@ -4,12 +4,12 @@ import { Environment } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import type * as THREE from "three";
-import { useRouter } from "vinext/shims/navigation";
 
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import HexFlower from "@/components/system/hex-flower";
 import SystemMenu from "@/components/system/system-menu";
 import { startAmbientAudio } from "@/lib/ambient-audio";
+import { navigate } from "@/lib/navigate";
 import { createRingFogMaterial } from "@/shaders/ringFog";
 
 function BackgroundHaze() {
@@ -118,7 +118,6 @@ function SystemScene() {
 }
 
 export default function SystemPage() {
-  const router = useRouter();
   const { playBack } = useNavigationSound();
 
   useEffect(() => {
@@ -127,8 +126,8 @@ export default function SystemPage() {
 
   const handleBack = useCallback(() => {
     playBack();
-    router.back();
-  }, [router, playBack]);
+    navigate("/menu");
+  }, [playBack]);
 
   return (
     <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>

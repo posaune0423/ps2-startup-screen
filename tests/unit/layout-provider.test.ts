@@ -10,14 +10,14 @@ test("root layout wraps the app with LanguageProvider", () => {
   assert.match(layoutSource, /<LanguageProvider>[\s\S]*<\/LanguageProvider>/);
 });
 
-test("root layout enables next-view-transitions at the app boundary", () => {
-  assert.match(layoutSource, /import \{ ViewTransitions \} from "next-view-transitions"/);
-  assert.match(layoutSource, /<ViewTransitions>/);
+test("root layout mounts navigation chrome at the app boundary", () => {
+  assert.match(layoutSource, /import NavigationOverlay from "\.\.\/components\/shared\/navigation-overlay"/);
+  assert.match(layoutSource, /import BackButton from "\.\.\/components\/shared\/back-button"/);
 });
 
-test("fixed BackButton stays outside the view transition boundary", () => {
+test("root layout keeps navigation overlay and back button inside the language provider", () => {
   assert.match(
     layoutSource,
-    /<LanguageProvider>\s*<ViewTransitions>\{children\}<\/ViewTransitions>\s*<BackButton \/>\s*<\/LanguageProvider>/,
+    /<LanguageProvider>\s*\{children\}\s*<NavigationOverlay \/>\s*<BackButton \/>\s*<\/LanguageProvider>/,
   );
 });

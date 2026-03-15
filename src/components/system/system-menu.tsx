@@ -103,7 +103,7 @@ export default function SystemMenu({ onBack }: SystemMenuProps) {
       {/* Up arrow — navigate only, no toggle */}
       <button
         type="button"
-        onClick={() => setActiveIndex((activeIndex - 1 + settings.length) % settings.length)}
+        onClick={() => setActiveIndex((prev) => (prev - 1 + settings.length) % settings.length)}
         style={{
           background: "none",
           border: "none",
@@ -161,7 +161,7 @@ export default function SystemMenu({ onBack }: SystemMenuProps) {
       {/* Down arrow — navigate only, no toggle */}
       <button
         type="button"
-        onClick={() => setActiveIndex((activeIndex + 1) % settings.length)}
+        onClick={() => setActiveIndex((prev) => (prev + 1) % settings.length)}
         style={{
           background: "none",
           border: "none",

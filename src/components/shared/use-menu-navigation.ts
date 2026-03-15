@@ -10,6 +10,11 @@ function triggerHaptic(): void {
   }
   // iOS: input[switch] trick
   const existing = document.getElementById("_haptic_sw");
+  if (existing && !(existing instanceof HTMLInputElement)) {
+    existing.remove();
+    const strayLabel = document.querySelector(`label[for="${existing.id}"]`);
+    strayLabel?.remove();
+  }
   const input =
     (existing instanceof HTMLInputElement ? existing : null) ??
     (() => {
