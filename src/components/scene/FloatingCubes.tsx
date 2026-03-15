@@ -30,22 +30,23 @@ export default function FloatingCubes({ elapsedRef }: { elapsedRef: React.RefObj
     const result: CubeData[] = [];
 
     const positions: [number, number, number][] = [
-      [-1.4, 5.0, -0.9],
-      [1.5, 5.5, -0.8],
-      [-0.8, 4.8, 1.2],
-      [1.8, 5.2, 1.0],
+      [-2.0, 5.2, -1.2],
+      [1.8, 5.8, -1.0],
+      [-1.2, 5.0, 1.0],
+      [2.2, 5.4, 0.9],
     ];
 
     for (let i = 0; i < count; i++) {
       const size = sizeRange[0] + rand() * (sizeRange[1] - sizeRange[0]);
       const [minSpd, maxSpd] = rotationSpeed;
+      const sign = () => (rand() > 0.5 ? 1 : -1);
       result.push({
         position: positions[i % positions.length],
         size,
         rotationSpeeds: [
-          minSpd + rand() * (maxSpd - minSpd),
-          minSpd + rand() * (maxSpd - minSpd),
-          minSpd + rand() * (maxSpd - minSpd),
+          sign() * (minSpd + rand() * (maxSpd - minSpd)),
+          sign() * (minSpd + rand() * (maxSpd - minSpd)),
+          sign() * (minSpd + rand() * (maxSpd - minSpd)),
         ],
         bobOffset: rand() * Math.PI * 2,
       });

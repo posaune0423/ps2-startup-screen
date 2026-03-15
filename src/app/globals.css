@@ -9,3 +9,12 @@ body {
   height: 100%;
   background: #000;
 }
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
 import * as THREE from "three";
@@ -21,8 +21,9 @@ function SceneContent({ elapsedRef }: { elapsedRef: React.MutableRefObject<numbe
   return (
     <>
       <color attach="background" args={["#1A1A1A"]} />
+      <fog attach="fog" args={["#1A1A1A", 4, 12]} />
       <CameraRig elapsedRef={elapsedRef} sceneGroupRef={sceneGroupRef} />
-      <Environment preset="warehouse" background={false} environmentIntensity={0.25} />
+      <Environment preset="studio" background={false} environmentIntensity={0.3} />
       <group ref={sceneGroupRef}>
         <Lighting elapsedRef={elapsedRef} />
         <CentralGlow elapsedRef={elapsedRef} />
@@ -38,10 +39,24 @@ function SceneContent({ elapsedRef }: { elapsedRef: React.MutableRefObject<numbe
 export default function Scene() {
   const elapsedRef = useRef(0);
   const soundStartedRef = useRef(false);
+  const [finished, setFinished] = useState(false);
+  const [sceneKey, setSceneKey] = useState(0);
 
-  const [play, { sound }] = useSound("/sound/ps2-startup-bgm.mp3", {
+  const [play, { stop, sound }] = useSound("/sound/ps2-startup-bgm.mp3", {
     volume: 1.0,
   });
+
+  useEffect(() => {
+    let raf: number;
+    const check = () => {
+      if (elapsedRef.current >= CONFIG.timeline.duration) {
+        setFinished(true);
+      }
+      raf = requestAnimationFrame(check);
+    };
+    raf = requestAnimationFrame(check);
+    return () => cancelAnimationFrame(raf);
+  }, [sceneKey]);
 
   const handleInteraction = useCallback(() => {
     if (soundStartedRef.current) return;
@@ -51,6 +66,22 @@ export default function Scene() {
       sound.seek(elapsedRef.current);
     }
   }, [play, sound]);
+
+  const handleReplay = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      stop();
+      elapsedRef.current = 0;
+      soundStartedRef.current = false;
+      setFinished(false);
+      setSceneKey((k) => k + 1);
+      setTimeout(() => {
+        soundStartedRef.current = true;
+        play();
+      }, 100);
+    },
+    [stop, play],
+  );
 
   const getOverlayOpacity = useCallback(() => {
     const elapsed = elapsedRef.current;
@@ -81,9 +112,41 @@ export default function Scene() {
         scene={{ background: new THREE.Color("#1A1A1A") }}
         style={{ width: "100%", height: "100%" }}
       >
-        <SceneContent elapsedRef={elapsedRef} />
+        <SceneContent key={sceneKey} elapsedRef={elapsedRef} />
       </Canvas>
       <FadeOverlay getOpacity={getOverlayOpacity} />
+      {finished && (
+        <button
+          type="button"
+          onClick={handleReplay}
+          style={{
+            position: "fixed",
+            bottom: "15%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 20,
+            background: "transparent",
+            border: "1px solid rgba(255, 255, 255, 0.3)",
+            borderRadius: 4,
+            color: "rgba(255, 255, 255, 0.7)",
+            fontSize: 14,
+            letterSpacing: "0.2em",
+            padding: "10px 28px",
+            cursor: "pointer",
+            animation: "fade-in 1.5s ease-in",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.6)";
+            e.currentTarget.style.color = "rgba(255, 255, 255, 1)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
+            e.currentTarget.style.color = "rgba(255, 255, 255, 0.7)";
+          }}
+        >
+          REPLAY
+        </button>
+      )}
     </div>
   );
 }
