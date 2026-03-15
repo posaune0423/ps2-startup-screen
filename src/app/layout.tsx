@@ -31,7 +31,7 @@ export const metadata: Metadata = {
         url: "/opengraph-image.jpg",
         width: 1200,
         height: 630,
-        alt: "PS2 Startup Screen — posaune0423's Portfolio",
+        alt: siteName,
       },
     ],
   },
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/twitter-image.jpg",
-        alt: "PS2 Startup Screen — posaune0423's Portfolio",
+        alt: siteName,
       },
     ],
   },

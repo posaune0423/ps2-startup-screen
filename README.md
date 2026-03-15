@@ -1,8 +1,8 @@
 <div align="center">
 
-# PS2 Startup Screen
+# posaune0423 Portfolio
 
-**The iconic PlayStation 2 tower sequence, recreated in the browser.**
+**A personal portfolio site inspired by the PlayStation 2 startup and browser UX.**
 
 Built with Three.js, React Three Fiber, and deployed on Cloudflare Workers.
 
@@ -12,53 +12,51 @@ Built with Three.js, React Three Fiber, and deployed on Cloudflare Workers.
 [![Vite](https://img.shields.io/badge/Vite_8-646CFF?style=flat&logo=vite&logoColor=white)](https://vite.dev/)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare_Workers-F38020?style=flat&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 
+**[portfolio.posaune0423.com](https://portfolio.posaune0423.com)**
+
 </div>
 
 ---
 
 <div align="center">
-  <img src="docs/reference-frames/frame_001.png" alt="PS2 Tower Scene — Top-down view" width="720" />
+  <img src="docs/reference-frames/frame_001.png" alt="PS2 Startup Scene" width="720" />
   <br />
-  <sub>Top-down overview at <code>t = 0.0s</code> — prism towers, central glow, floating cubes</sub>
+  <sub>PS2 startup tower animation — the opening experience</sub>
 </div>
 
 ## About
 
-A faithful recreation of the **PlayStation 2 startup tower sequence** (`0.0s` – `9.5s`) — the mesmerizing scene of white prism towers, blue-purple central glow, floating cubes, and laser-like particle trails that every PS2 owner remembers.
+A portfolio website that recreates the **PlayStation 2** experience — from the iconic startup tower animation to the memory card browser interface. Visitors are greeted with the PS2 boot sequence, then navigate through a PS2-style menu to explore work history and social links.
 
-All geometry is procedurally generated. No external 3D models. The visual target is the original PS2's slightly soft, slightly grainy rendering style — not modern and sharp.
+All 3D geometry in the startup scene is procedurally generated. No external 3D models. The visual target is the original PS2's slightly soft, slightly grainy rendering style.
 
-## Scene Progression
+## Site Flow
 
-<table>
-  <tr>
-    <td align="center" width="33%">
-      <img src="docs/reference-frames/frame_001.png" alt="0.0s — Top-down" width="280" />
-      <br />
-      <sub><b>0.0s</b> — Overhead view</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="docs/reference-frames/frame_003.png" alt="4.0s — Mid scene" width="280" />
-      <br />
-      <sub><b>4.0s</b> — Orbital rotation</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="docs/reference-frames/frame_004.png" alt="7.5s — Acceleration" width="280" />
-      <br />
-      <sub><b>7.5s</b> — Camera acceleration</sub>
-    </td>
-  </tr>
-</table>
+```
+/ (PS2 Startup Animation)
+  → /menu (Browser / System Configuration)
+      → /browser (Memory Card Browser)
+          → /memory/work (Work Portfolio Grid)
+          → /memory/sns (SNS Links Grid)
+      → /system (System Configuration)
+```
+
+1. **Startup Animation** — The PS2 tower sequence plays for ~9.5s, then transitions to the menu
+2. **Main Menu** — Choose between "Browser" (portfolio content) and "System Configuration"
+3. **Memory Card Browser** — Two memory cards: Work and SNS
+4. **Work Portfolio** — Project cards displayed as memory card save data
+5. **SNS** — Social links (GitHub, X, LinkedIn) in the same PS2 browser style
 
 ## Features
 
-- **Prism Field** — 60–80 instanced box pillars with varying heights, grid placement with jitter
-- **Central Glow** — Blue-purple point light with additive-blended glow sprites
-- **Floating Cubes** — Dark, semi-transparent cubes drifting between the towers
-- **Particle Trails** — Red, green, and blue-purple laser lines weaving through the scene
-- **Camera Animation** — Scripted orbital motion: slow rotation → acceleration → rush into towers
-- **Fade to Black** — Dual fade via lighting reduction + CSS overlay, complete by `9.5s`
-- **PS2-Style Rendering** — Reduced DPR, disabled antialiasing, film grain, vignette
+- **PS2 Startup Scene** — Prism towers, central glow, floating cubes, particle trails, camera animation, fade to black
+- **PS2 Browser UI** — Memory card browser with glow cursor navigation
+- **3D Portfolio Items** — GLB models for work projects and SNS icons
+- **Keyboard & Gamepad Navigation** — Arrow keys, Enter, Escape for full PS2-like interaction
+- **Haptic Feedback** — Vibration on supported devices
+- **Sound Effects** — PS2-style audio for navigation and ambience
+- **PS2-Style Rendering** — Reduced DPR, film grain, vignette for era-authentic visuals
+- **i18n** — Multi-language support
 
 ## Tech Stack
 
@@ -71,6 +69,8 @@ All geometry is procedurally generated. No external 3D models. The visual target
 | Build           | Vite 8                       |
 | Deploy          | Cloudflare Workers           |
 | Post-Processing | @react-three/postprocessing  |
+| Audio           | use-sound + Howler.js        |
+| Haptics         | use-haptic                   |
 
 ## Getting Started
 
@@ -107,41 +107,33 @@ bun run start
 
 ```
 src/
-├── app/                      # App entry (page.tsx, layout.tsx)
+├── app/                          # Pages (file-based routing)
+│   ├── page.tsx                  # Home — PS2 startup animation
+│   ├── layout.tsx                # Root layout with providers
+│   ├── menu/page.tsx             # Main menu
+│   ├── browser/page.tsx          # Memory card browser
+│   ├── system/page.tsx           # System configuration
+│   └── memory/
+│       ├── work/page.tsx         # Work portfolio grid
+│       └── sns/page.tsx          # SNS links grid
 ├── components/
-│   ├── Scene.tsx             # Canvas setup + orchestration
-│   └── scene/
-│       ├── config.ts         # All tunable parameters
-│       ├── timeline.ts       # Phase / fade / speed helpers
-│       ├── PrismField.tsx    # InstancedMesh tower grid
-│       ├── GroundPlane.tsx   # Dark ground plane
-│       ├── CentralGlow.tsx   # Point light + glow sprites
-│       ├── FloatingCubes.tsx # Semi-transparent drifting cubes
-│       ├── ParticleTrails.tsx# Laser-line particle system
-│       ├── Lighting.tsx      # Directional + ambient lights
-│       ├── CameraRig.tsx     # Scripted camera animation
-│       ├── PostProcessing.tsx# Grain + vignette
-│       └── FadeOverlay.tsx   # CSS black overlay
-├── lib/                      # Texture generation helpers
-└── shaders/                  # Custom shader code
-```
-
-## Verification
-
-Visual accuracy is validated frame-by-frame against the [original PS2 startup video](docs/assets/PS2%20Startup%20Screen.mp4).
-
-| Timestamp | Checkpoint                              |
-| --------- | --------------------------------------- |
-| `0.0s`    | Top-down angle, pillar density          |
-| `1.0s`    | Early rotation, central glow visibility |
-| `4.0s`    | Particle trails, floating cubes         |
-| `7.0s`    | Zoom level before acceleration          |
-| `8.5s`    | Fade progression during rush            |
-| `9.5s`    | Pure black frame                        |
-
-```bash
-# Extract any reference frame
-ffmpeg -ss <seconds> -i "docs/assets/PS2 Startup Screen.mp4" -frames:v 1 -q:v 2 /tmp/ps2-ref.jpg
+│   ├── Scene.tsx                 # Canvas setup + animation orchestration
+│   ├── BrowserMenu.tsx           # Main menu UI
+│   ├── scene/                    # PS2 startup scene components
+│   │   ├── config.ts             # Tunable parameters
+│   │   ├── timeline.ts           # Phase / fade helpers
+│   │   ├── PrismField.tsx        # Instanced tower grid
+│   │   ├── CentralGlow.tsx       # Point light + glow sprites
+│   │   ├── FloatingCubes.tsx     # Drifting cubes
+│   │   ├── ParticleTrails.tsx    # Laser-line particles
+│   │   ├── CameraRig.tsx         # Scripted camera animation
+│   │   └── ...
+│   ├── shared/                   # Reusable UI (grid, cursor, nav)
+│   ├── browser-menu/             # Menu components
+│   └── system/                   # System page components
+├── constants/                    # Site metadata
+├── lib/                          # Texture generation, i18n, audio
+└── shaders/                      # Custom GLSL shaders
 ```
 
 ## License

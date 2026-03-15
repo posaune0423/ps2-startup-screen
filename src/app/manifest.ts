@@ -1,9 +1,9 @@
-import { siteDescription, siteName, siteThemeColor } from "../constants/site";
+import { siteDescription, siteName, siteShortName, siteThemeColor } from "../constants/site";
 
 export default function manifest() {
   return {
     name: siteName,
-    short_name: "posaune0423",
+    short_name: siteShortName,
     description: siteDescription,
     start_url: "/",
     display: "standalone" as const,
