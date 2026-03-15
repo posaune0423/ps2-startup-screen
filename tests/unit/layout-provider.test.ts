@@ -23,13 +23,14 @@ test("root layout keeps navigation overlay and back button inside the language p
 });
 
 test("root layout loads the Google Analytics gtag script with the shared measurement id", () => {
-  assert.match(layoutSource, /import \{ GoogleAnalytics \} from "@next\/third-parties\/google"/);
+  assert.match(layoutSource, /import Script from "vinext\/shims\/script"/);
   assert.match(layoutSource, /gaMeasurementId/);
-  assert.match(layoutSource, /<GoogleAnalytics gaId=\{gaMeasurementId\} \/>/);
+  assert.match(layoutSource, /googletagmanager\.com\/gtag\/js\?id=\$\{gaMeasurementId\}/);
 });
 
 test("root layout initializes Google Analytics after hydration", () => {
-  assert.doesNotMatch(layoutSource, /vinext\/shims\/script/);
-  assert.doesNotMatch(layoutSource, /window\.dataLayer = window\.dataLayer \|\| \[\]/);
-  assert.doesNotMatch(layoutSource, /gtag\("config"/);
+  assert.match(layoutSource, /window\.dataLayer = window\.dataLayer \|\| \[\]/);
+  assert.match(layoutSource, /function gtag\(\)\s*\{\s*dataLayer\.push\(arguments\);\s*\}/);
+  assert.match(layoutSource, /gtag\("js", new Date\(\)\)/);
+  assert.match(layoutSource, /gtag\("config", "\$\{gaMeasurementId\}"\)/);
 });

@@ -1,6 +1,6 @@
-import { GoogleAnalytics } from "@next/third-parties/google";
 import React from "react";
 import type { Metadata, Viewport } from "vinext/shims/metadata";
+import Script from "vinext/shims/script";
 
 import "./globals.css";
 import BackButton from "../components/shared/back-button";
@@ -57,6 +57,13 @@ export const viewport: Viewport = {
   minimumScale: 1,
 };
 
+const googleAnalyticsBootstrap = `
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag("js", new Date());
+  gtag("config", "${gaMeasurementId}");
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -65,13 +72,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`} strategy="afterInteractive" />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {googleAnalyticsBootstrap}
+        </Script>
         <LanguageProvider>
           {children}
           <NavigationOverlay />
           <BackButton />
         </LanguageProvider>
       </body>
-      <GoogleAnalytics gaId={gaMeasurementId} />
     </html>
   );
 }
