@@ -301,7 +301,7 @@ export default function ItemGrid({ items, title }: ItemGridProps) {
         style={{
           position: "absolute",
           top: "clamp(6px, 1.5vh, 16px)",
-          left: "clamp(16px, 3vw, 40px)",
+          left: "clamp(20px, 5vw, 52px)",
           pointerEvents: "none",
           zIndex: 10,
           display: "flex",
@@ -325,7 +325,7 @@ export default function ItemGrid({ items, title }: ItemGridProps) {
         <span
           className="ps2-text"
           style={{
-            fontSize: compact ? "clamp(16px, 4vw, 28px)" : "clamp(20px, 2.2vw, 32px)",
+            fontSize: compact ? "clamp(14px, 3.6vw, 24px)" : "clamp(20px, 2.2vw, 32px)",
             fontWeight: 700,
             color: "#FFFFFF",
             letterSpacing: "0.02em",
@@ -342,16 +342,16 @@ export default function ItemGrid({ items, title }: ItemGridProps) {
         style={{
           position: "absolute",
           top: "clamp(12px, 3vh, 32px)",
-          right: "clamp(16px, 4vw, 48px)",
+          right: "clamp(36px, 8vw, 104px)",
           pointerEvents: "none",
           zIndex: 10,
-          maxWidth: "45vw",
+          maxWidth: "40vw",
         }}
       >
         <div
           className="ps2-text"
           style={{
-            fontSize: compact ? "clamp(16px, 4.2vw, 28px)" : "clamp(20px, 2.4vw, 34px)",
+            fontSize: compact ? "clamp(15px, 3.8vw, 24px)" : "clamp(20px, 2.4vw, 34px)",
             fontWeight: 700,
             color: "#C5CF1F",
             letterSpacing: "0.02em",

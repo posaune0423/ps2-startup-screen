@@ -47,8 +47,23 @@ textarea {
   font-family: inherit;
   display: inline-block;
   transform: scaleX(1.18);
-  transform-origin: left center;
+  transform-origin: center center;
   letter-spacing: -0.02em;
+}
+
+@media (max-width: 768px) {
+  body {
+    -webkit-text-stroke: 1px var(--ps2-text-outline-color);
+    text-shadow:
+      -1px -1px 0 var(--ps2-text-outline-color),
+      0 -1px 0 var(--ps2-text-outline-color),
+      1px -1px 0 var(--ps2-text-outline-color),
+      -1px 0 0 var(--ps2-text-outline-color),
+      1px 0 0 var(--ps2-text-outline-color),
+      -1px 1px 0 var(--ps2-text-outline-color),
+      0 1px 0 var(--ps2-text-outline-color),
+      1px 1px 0 var(--ps2-text-outline-color);
+  }
 }
 
 ::view-transition-old(root),
