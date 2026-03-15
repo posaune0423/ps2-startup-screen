@@ -1,14 +1,14 @@
 import React from "react";
 import type { Metadata, Viewport } from "vinext/shims/metadata";
-import "./globals.css";
 
-const siteUrl = "https://ps2.posaune0423.com";
+import "./globals.css";
+import { siteDescription, siteName, siteUrl } from "../constants/site";
 
 export const metadata: Metadata = {
-  title: "PS2 Startup Screen",
-  description:
-    "PlayStation 2 の起動画面（タワーシーン）を Three.js でリアルタイム再現。React Three Fiber によるインタラクティブ 3D デモ。",
+  title: siteName,
+  description: siteDescription,
   metadataBase: new URL(siteUrl),
+  manifest: "/manifest.webmanifest",
   alternates: {
     canonical: "/",
   },
@@ -17,9 +17,9 @@ export const metadata: Metadata = {
     apple: "/apple-icon.png",
   },
   openGraph: {
-    title: "PS2 Startup Screen",
+    title: siteName,
     description: "PlayStation 2 の起動画面を Three.js で完全再現したインタラクティブ 3D デモ",
-    siteName: "PS2 Startup Screen",
+    siteName,
     locale: "ja_JP",
     type: "website",
     url: siteUrl,
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "PS2 Startup Screen",
+    title: siteName,
     description: "PlayStation 2 の起動画面を Three.js で完全再現したインタラクティブ 3D デモ",
     images: [
       {
