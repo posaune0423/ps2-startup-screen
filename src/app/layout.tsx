@@ -1,5 +1,5 @@
-import React from "react";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import React from "react";
 import type { Metadata, Viewport } from "vinext/shims/metadata";
 
 import "./globals.css";
