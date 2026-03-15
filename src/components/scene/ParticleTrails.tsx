@@ -90,7 +90,7 @@ const Trail = memo(function Trail({
     () =>
       new THREE.SpriteMaterial({
         map: headTexture,
-        color: 0xffffff,
+        color: "#FFFFFF",
         transparent: true,
         opacity: 1.0,
         blending: THREE.AdditiveBlending,
