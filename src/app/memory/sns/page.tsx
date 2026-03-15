@@ -7,20 +7,20 @@ const SNS_ITEMS: GridItem[] = [
   {
     id: "linkedin",
     label: "LinkedIn",
-    modelPath: "",
-    href: "https://linkedin.com",
-  },
-  {
-    id: "github",
-    label: "GitHub",
-    modelPath: "",
-    href: "https://github.com",
+    modelPath: "/3d/sns/linkedin.glb",
+    href: "https://www.linkedin.com/in/posaune0423",
   },
   {
     id: "twitter",
     label: "X (Twitter)",
-    modelPath: "",
-    href: "https://x.com",
+    modelPath: "/3d/sns/twitter.glb",
+    href: "https://x.com/home",
+  },
+  {
+    id: "github",
+    label: "GitHub",
+    modelPath: "/3d/sns/github.glb",
+    href: "https://github.com/posaune0423",
   },
 ];
 

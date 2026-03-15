@@ -1,13 +1,20 @@
+import { getSoundEnabled, initializeSoundEnabled } from "./sound-settings";
+
 let audio: HTMLAudioElement | null = null;
-let started = false;
+let wantsAmbientAudio = false;
 
 export function startAmbientAudio(): void {
-  if (started) return;
-  started = true;
+  wantsAmbientAudio = true;
 
-  audio = new Audio("/sound/ambient.wav");
-  audio.loop = true;
-  audio.volume = 0.4;
+  initializeSoundEnabled();
+  if (!getSoundEnabled()) return;
+
+  if (!audio) {
+    audio = new Audio("/sound/ambient.wav");
+    audio.loop = true;
+    audio.volume = 0.4;
+  }
+
   audio.play().catch(() => {
     const resume = () => {
       audio?.play().catch(() => {});
@@ -20,9 +27,26 @@ export function startAmbientAudio(): void {
 }
 
 export function stopAmbientAudio(): void {
+  wantsAmbientAudio = false;
+
   if (!audio) return;
   audio.pause();
   audio.currentTime = 0;
   audio = null;
-  started = false;
+}
+
+export function syncAmbientAudio(): void {
+  initializeSoundEnabled();
+
+  if (!getSoundEnabled()) {
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
+    audio = null;
+    return;
+  }
+
+  if (wantsAmbientAudio) {
+    startAmbientAudio();
+  }
 }

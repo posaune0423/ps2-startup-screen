@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "vinext/shims/metadata";
 
 import "./globals.css";
 import { siteDescription, siteName, siteUrl } from "../constants/site";
+import { LanguageProvider } from "../lib/language-context";
 
 export const metadata: Metadata = {
   title: siteName,
@@ -18,9 +19,9 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: siteName,
-    description: "PlayStation 2 の起動画面を Three.js で完全再現したインタラクティブ 3D デモ",
+    description: siteDescription,
     siteName,
-    locale: "ja_JP",
+    locale: "en_US",
     type: "website",
     url: siteUrl,
     images: [
@@ -28,18 +29,18 @@ export const metadata: Metadata = {
         url: "/opengraph-image.jpg",
         width: 1200,
         height: 630,
-        alt: "PS2 Startup Screen - Tower Scene",
+        alt: "PS2 Startup Screen — posaune0423's Portfolio",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
     title: siteName,
-    description: "PlayStation 2 の起動画面を Three.js で完全再現したインタラクティブ 3D デモ",
+    description: siteDescription,
     images: [
       {
         url: "/twitter-image.jpg",
-        alt: "PS2 Startup Screen - Tower Scene",
+        alt: "PS2 Startup Screen — posaune0423's Portfolio",
       },
     ],
   },
@@ -59,8 +60,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja">
-      <body>{children}</body>
+    <html lang="en">
+      <body>
+        <LanguageProvider>{children}</LanguageProvider>
+      </body>
     </html>
   );
 }

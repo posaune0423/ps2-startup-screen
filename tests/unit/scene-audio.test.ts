@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+
 import { test } from "vite-plus/test";
+
 import { startSceneSound } from "../../src/components/sceneAudio";
 
 test("starts playback and syncs to the current elapsed time on first run", () => {

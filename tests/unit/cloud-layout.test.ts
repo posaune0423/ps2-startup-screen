@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+
 import { test } from "vite-plus/test";
+
 import {
   generateVaporSprites,
   liftVaporY,
@@ -15,9 +17,7 @@ import {
 test("keeps the vapor field within the configured horizontal spread", () => {
   assert.equal(VAPOR_SPREAD_XZ, 2.8);
 
-  const furthestRadius = Math.max(
-    ...generateVaporSprites().map(({ position: [x, , z] }) => Math.hypot(x, z)),
-  );
+  const furthestRadius = Math.max(...generateVaporSprites().map(({ position: [x, , z] }) => Math.hypot(x, z)));
 
   assert.ok(furthestRadius <= VAPOR_SPREAD_XZ);
 });

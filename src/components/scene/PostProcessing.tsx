@@ -2,16 +2,13 @@
 
 import { EffectComposer, Noise, Vignette } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
+
 import { CONFIG } from "./config";
 
 export default function PostProcessing() {
   return (
     <EffectComposer>
-      <Noise
-        premultiply
-        blendFunction={BlendFunction.OVERLAY}
-        opacity={CONFIG.render.noiseIntensity}
-      />
+      <Noise premultiply blendFunction={BlendFunction.OVERLAY} opacity={CONFIG.render.noiseIntensity} />
       <Vignette offset={CONFIG.render.vignetteOffset} darkness={CONFIG.render.vignetteDarkness} />
     </EffectComposer>
   );

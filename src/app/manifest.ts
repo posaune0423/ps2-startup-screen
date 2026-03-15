@@ -3,7 +3,7 @@ import { siteDescription, siteName, siteThemeColor } from "../constants/site";
 export default function manifest() {
   return {
     name: siteName,
-    short_name: "PS2 Startup",
+    short_name: "posaune0423",
     description: siteDescription,
     start_url: "/",
     display: "standalone" as const,
