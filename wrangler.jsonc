@@ -4,6 +4,29 @@
   "account_id": "7046457855b37423c07b1b0c6014fe33",
   "compatibility_date": "2026-03-14",
   "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "ps2.posaune0423.com",
+      "custom_domain": true,
+    },
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+    },
+  },
+  "upload_source_maps": true,
   "main": "./worker/index.ts",
   "assets": {
     "not_found_handling": "none",

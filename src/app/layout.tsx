@@ -2,13 +2,16 @@ import React from "react";
 import type { Metadata, Viewport } from "vinext/shims/metadata";
 import "./globals.css";
 
-const siteUrl = "https://ps2-startup-screen.yamadaasuma.workers.dev";
+const siteUrl = "https://ps2.posaune0423.com";
 
 export const metadata: Metadata = {
   title: "PS2 Startup Screen",
   description:
     "PlayStation 2 の起動画面（タワーシーン）を Three.js でリアルタイム再現。React Three Fiber によるインタラクティブ 3D デモ。",
   metadataBase: new URL(siteUrl),
+  alternates: {
+    canonical: "/",
+  },
   icons: {
     icon: "/icon.svg",
     apple: "/apple-icon.png",
@@ -19,6 +22,7 @@ export const metadata: Metadata = {
     siteName: "PS2 Startup Screen",
     locale: "ja_JP",
     type: "website",
+    url: siteUrl,
     images: [
       {
         url: "/opengraph-image.jpg",
@@ -32,7 +36,12 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "PS2 Startup Screen",
     description: "PlayStation 2 の起動画面を Three.js で完全再現したインタラクティブ 3D デモ",
-    images: ["/twitter-image.jpg"],
+    images: [
+      {
+        url: "/twitter-image.jpg",
+        alt: "PS2 Startup Screen - Tower Scene",
+      },
+    ],
   },
 };
 
@@ -50,7 +59,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ja">
       <body>{children}</body>
     </html>
   );

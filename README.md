@@ -62,15 +62,15 @@ All geometry is procedurally generated. No external 3D models. The visual target
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| 3D Engine | Three.js + React Three Fiber |
-| Framework | React 19 + vinext |
-| Styling | Tailwind CSS 4 |
-| Language | TypeScript 5.9 |
-| Build | Vite 8 |
-| Deploy | Cloudflare Workers |
-| Post-Processing | @react-three/postprocessing |
+| Layer           | Technology                   |
+| --------------- | ---------------------------- |
+| 3D Engine       | Three.js + React Three Fiber |
+| Framework       | React 19 + vinext            |
+| Styling         | Tailwind CSS 4               |
+| Language        | TypeScript 5.9               |
+| Build           | Vite 8                       |
+| Deploy          | Cloudflare Workers           |
+| Post-Processing | @react-three/postprocessing  |
 
 ## Getting Started
 
@@ -92,16 +92,16 @@ bun run start
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `bun run dev` | Start the development server |
-| `bun run build` | Create a production build |
-| `bun run start` | Run the built app locally |
-| `bun run lint` | Run lint checks |
-| `bun run typecheck` | Run type-aware linting |
-| `bun run check` | Run formatting, lint, and type checks |
-| `bun run fmt` | Check formatting |
-| `bun run fmt:fix` | Auto-fix formatting |
+| Command             | Description                           |
+| ------------------- | ------------------------------------- |
+| `bun run dev`       | Start the development server          |
+| `bun run build`     | Create a production build             |
+| `bun run start`     | Run the built app locally             |
+| `bun run lint`      | Run lint checks                       |
+| `bun run typecheck` | Run type-aware linting                |
+| `bun run check`     | Run formatting, lint, and type checks |
+| `bun run fmt`       | Check formatting                      |
+| `bun run fmt:fix`   | Auto-fix formatting                   |
 
 ## Project Structure
 
@@ -130,14 +130,14 @@ src/
 
 Visual accuracy is validated frame-by-frame against the [original PS2 startup video](docs/assets/PS2%20Startup%20Screen.mp4).
 
-| Timestamp | Checkpoint |
-|-----------|-----------|
-| `0.0s` | Top-down angle, pillar density |
-| `1.0s` | Early rotation, central glow visibility |
-| `4.0s` | Particle trails, floating cubes |
-| `7.0s` | Zoom level before acceleration |
-| `8.5s` | Fade progression during rush |
-| `9.5s` | Pure black frame |
+| Timestamp | Checkpoint                              |
+| --------- | --------------------------------------- |
+| `0.0s`    | Top-down angle, pillar density          |
+| `1.0s`    | Early rotation, central glow visibility |
+| `4.0s`    | Particle trails, floating cubes         |
+| `7.0s`    | Zoom level before acceleration          |
+| `8.5s`    | Fade progression during rush            |
+| `9.5s`    | Pure black frame                        |
 
 ```bash
 # Extract any reference frame
