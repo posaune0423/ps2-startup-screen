@@ -9,6 +9,7 @@ interface StartSceneSoundArgs {
   hasSyncedPosition: boolean;
   play: () => void;
   sound?: SeekableSound | null;
+  soundEnabled?: boolean;
 }
 
 interface StartSceneSoundResult {
@@ -22,8 +23,9 @@ export function startSceneSound({
   hasSyncedPosition,
   play,
   sound,
+  soundEnabled = true,
 }: StartSceneSoundArgs): StartSceneSoundResult {
-  if (!sound) {
+  if (!soundEnabled || !sound) {
     return {
       hasStarted,
       hasSyncedPosition,

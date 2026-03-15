@@ -3,13 +3,14 @@
 import { Environment } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import type { Howl } from "howler";
-import { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import type { RefObject } from "react";
 import * as THREE from "three";
-import useSound from "use-sound";
+import useSceneSound from "use-sound";
 import { useRouter } from "vinext/shims/navigation";
 
 import { startAmbientAudio } from "@/lib/ambient-audio";
+import { getSoundEnabled, initializeSoundEnabled } from "@/lib/sound-settings";
 
 import CameraRig from "./scene/CameraRig";
 import CentralGlow from "./scene/CentralGlow";
@@ -50,7 +51,7 @@ export default function Scene() {
   const soundStartedRef = useRef(false);
   const soundPositionSyncedRef = useRef(false);
   const soundRef = useRef<Howl | null>(null);
-  const [play, { sound }] = useSound("/sound/ps2-startup-bgm.mp3", {
+  const [play, { sound }] = useSceneSound("/sound/ps2-startup-bgm.mp3", {
     volume: 1.0,
     onend: () => {
       soundStartedRef.current = false;
@@ -101,18 +102,22 @@ export default function Scene() {
   }, [router]);
 
   useEffect(() => {
+    initializeSoundEnabled();
     const nextState = startSceneSound({
       elapsed: elapsedRef.current,
       hasStarted: soundStartedRef.current,
       hasSyncedPosition: soundPositionSyncedRef.current,
       play,
       sound: sound as Howl | null,
+      soundEnabled: getSoundEnabled(),
     });
     soundStartedRef.current = nextState.hasStarted;
     soundPositionSyncedRef.current = nextState.hasSyncedPosition;
   }, [play, sound]);
 
   const handleStartSound = useCallback(() => {
+    initializeSoundEnabled();
+    if (!getSoundEnabled()) return;
     if (soundStartedRef.current) return;
     // Reset sync flag so onplay will seek to the current animation position
     soundPositionSyncedRef.current = false;
