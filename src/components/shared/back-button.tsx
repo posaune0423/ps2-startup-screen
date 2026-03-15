@@ -17,6 +17,7 @@ const BACK_ROUTES: Record<string, string> = {
   "/system": "/menu",
   "/memory/work": "/browser",
   "/memory/sns": "/browser",
+  "/memory/music": "/browser",
 };
 
 export default function BackButton() {
