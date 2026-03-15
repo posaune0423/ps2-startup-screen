@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useHaptic } from "use-haptic";
 import { usePathname } from "vinext/shims/navigation";
 
@@ -8,6 +8,8 @@ import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
 import { useLanguage } from "@/lib/language-context";
 import { navigate } from "@/lib/navigate";
+
+const BUTTON_REVEAL_MS = 90;
 
 const BACK_ROUTES: Record<string, string> = {
   "/menu": "/",
@@ -22,12 +24,36 @@ export default function BackButton() {
   const { playBack } = useNavigationSound();
   const { isMobile } = useViewport();
   const { locale } = useLanguage();
-  const { triggerHaptic } = useHaptic(5);
+  const { triggerHaptic } = useHaptic();
+  const [mounted, setMounted] = useState(false);
+  const [isHidden, setIsHidden] = useState(true);
 
   const isJa = locale === "ja";
   const enterIcon = isJa ? "/buttons/circle.png" : "/buttons/x.png";
   const backIcon = isJa ? "/buttons/x.png" : "/buttons/circle.png";
   const backHref = BACK_ROUTES[pathname];
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    function hideButton() {
+      setIsHidden(true);
+    }
+
+    window.addEventListener("app:navigate", hideButton);
+    return () => window.removeEventListener("app:navigate", hideButton);
+  }, [mounted]);
+
+  useEffect(() => {
+    if (!mounted || !backHref) return;
+    setIsHidden(true);
+    const revealTimeout = window.setTimeout(() => setIsHidden(false), BUTTON_REVEAL_MS);
+    return () => window.clearTimeout(revealTimeout);
+  }, [mounted, backHref, pathname]);
 
   const handleBack = useCallback(() => {
     if (!backHref) return;
@@ -41,7 +67,7 @@ export default function BackButton() {
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
   }, [triggerHaptic]);
 
-  if (!backHref) return null;
+  if (!mounted || !backHref || isHidden) return null;
 
   const size = isMobile ? 22 : 30;
   const containerClassName = isMobile
