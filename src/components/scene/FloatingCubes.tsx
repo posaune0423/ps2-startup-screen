@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
+import { useRef, useMemo } from "react";
 import * as THREE from "three";
+
 import { CONFIG } from "./config";
 
 interface CubeData {
@@ -90,8 +91,7 @@ export default function FloatingCubes({ elapsedRef }: { elapsedRef: React.RefObj
 
       mesh.position.y =
         cube.position[1] +
-        Math.sin(t / CONFIG.floatingCubes.bobPeriod + cube.bobOffset) *
-          CONFIG.floatingCubes.bobAmplitude;
+        Math.sin(t / CONFIG.floatingCubes.bobPeriod + cube.bobOffset) * CONFIG.floatingCubes.bobAmplitude;
     });
   });
 

@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 
 import { useMenuNavigation } from "@/components/shared/use-menu-navigation";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
+import { startAmbientAudio, stopAmbientAudio } from "@/lib/ambient-audio";
 import type { Locale, TranslationKey } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
+import { useSoundSettings } from "@/lib/sound-settings";
 
 const SELECTED_COLOR = "#75D9EB";
 const LOCALES: Locale[] = ["ja", "en"];
@@ -20,8 +22,7 @@ export default function SystemMenu({ onBack }: SystemMenuProps) {
   const { isMobile, isPortrait } = useViewport();
   const compact = isMobile || isPortrait;
   const { locale, setLocale, t } = useLanguage();
-
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const { soundEnabled, setSoundEnabled } = useSoundSettings();
 
   const settings = [
     {
@@ -42,10 +43,16 @@ export default function SystemMenu({ onBack }: SystemMenuProps) {
         const nextLocale = LOCALES[(currentIdx + 1) % LOCALES.length];
         setLocale(nextLocale);
       } else {
-        setSoundEnabled((prev) => !prev);
+        const nextSoundEnabled = !soundEnabled;
+        setSoundEnabled(nextSoundEnabled);
+        if (nextSoundEnabled) {
+          startAmbientAudio();
+        } else {
+          stopAmbientAudio();
+        }
       }
     },
-    [playEnter, locale, setLocale],
+    [playEnter, locale, setLocale, soundEnabled, setSoundEnabled],
   );
 
   const { activeIndex, selectByIndex } = useMenuNavigation({

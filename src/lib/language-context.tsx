@@ -15,15 +15,15 @@ interface LanguageContextValue {
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
-function getInitialLocale(): Locale {
-  if (typeof window === "undefined") return "ja";
+function getStoredLocale(): Locale | null {
+  if (typeof window === "undefined") return null;
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored === "ja" || stored === "en") return stored;
-  return "ja";
+  return null;
 }
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(getInitialLocale);
+  const [locale, setLocaleState] = useState<Locale>("ja");
 
   const setLocale = useCallback((next: Locale) => {
     setLocaleState(next);
@@ -31,6 +31,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const storedLocale = getStoredLocale();
+    if (storedLocale && storedLocale !== locale) {
+      setLocaleState(storedLocale);
+      return;
+    }
     document.documentElement.lang = locale === "ja" ? "ja" : "en";
   }, [locale]);
 

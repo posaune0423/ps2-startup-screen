@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import * as THREE from "three";
+import { useRef } from "react";
+import type * as THREE from "three";
+
 import { CONFIG } from "./config";
 import { getCameraParams } from "./timeline";
 

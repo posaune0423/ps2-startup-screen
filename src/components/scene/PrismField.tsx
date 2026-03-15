@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
 import { useThree } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+
 import { CONFIG } from "./config";
 
 interface PrismData {
@@ -28,17 +29,8 @@ function seededRandom(seed: number): () => number {
 }
 
 function generatePrisms(aspect: number): PrismData[] {
-  const {
-    spacing,
-    cullRate,
-    heightMin,
-    heightMax,
-    baseWidth,
-    widthVariance,
-    lightnessJitter,
-    positionJitter,
-    colors,
-  } = CONFIG.prism;
+  const { spacing, cullRate, heightMin, heightMax, baseWidth, widthVariance, lightnessJitter, positionJitter, colors } =
+    CONFIG.prism;
 
   const totalCells = CONFIG.prism.gridCols * CONFIG.prism.gridRows;
 
@@ -59,10 +51,7 @@ function generatePrisms(aspect: number): PrismData[] {
   const culled = new Set<string>();
   const key = (c: number, r: number) => `${c},${r}`;
   const hasAdjacentCull = (c: number, r: number) =>
-    culled.has(key(c - 1, r)) ||
-    culled.has(key(c + 1, r)) ||
-    culled.has(key(c, r - 1)) ||
-    culled.has(key(c, r + 1));
+    culled.has(key(c - 1, r)) || culled.has(key(c + 1, r)) || culled.has(key(c, r - 1)) || culled.has(key(c, r + 1));
 
   for (let col = 0; col < cols; col++) {
     for (let row = 0; row < rows; row++) {
@@ -208,12 +197,7 @@ export default function PrismField() {
 
   return (
     <group>
-      <instancedMesh
-        ref={meshRef}
-        args={[geometry, material, prisms.length]}
-        castShadow
-        receiveShadow
-      />
+      <instancedMesh ref={meshRef} args={[geometry, material, prisms.length]} castShadow receiveShadow />
       {topCapPrisms.map((p, i) => (
         <mesh
           key={`cap-${i}`}

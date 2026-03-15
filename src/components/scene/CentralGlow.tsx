@@ -1,13 +1,15 @@
 "use client";
 
-import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
+import { useRef, useMemo } from "react";
 import * as THREE from "three";
+
+import { createGlowTexture } from "@/lib/glowTexture";
+import { createCloudFogMaterial } from "@/shaders/cloudFog";
+
+import { generateVaporSprites } from "./cloudLayout";
 import { CONFIG } from "./config";
 import { getFadeFactor } from "./timeline";
-import { createGlowTexture } from "@/lib/glowTexture";
-import { generateVaporSprites } from "./cloudLayout";
-import { createCloudFogMaterial } from "@/shaders/cloudFog";
 
 const CORE_GLOW = [
   { scale: 3, alpha: 0.35 },

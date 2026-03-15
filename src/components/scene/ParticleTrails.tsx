@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
+import { useRef, useMemo } from "react";
 import * as THREE from "three";
+
 import { CONFIG } from "./config";
 import { getSpeedMultiplier } from "./timeline";
 
@@ -163,8 +164,7 @@ function Trail({
     geometry.setDrawRange(0, Math.min(len, trailLength));
 
     const { accelStart, duration: dur } = CONFIG.timeline;
-    const alphaDim =
-      elapsed > accelStart ? Math.max(0, 1 - (elapsed - accelStart) / (dur - accelStart)) : 1;
+    const alphaDim = elapsed > accelStart ? Math.max(0, 1 - (elapsed - accelStart) / (dur - accelStart)) : 1;
     material.opacity = 0.9 * alphaDim;
 
     if (headSpriteRef.current) {
@@ -180,12 +180,7 @@ function Trail({
   return (
     <group>
       <primitive object={lineObject} />
-      <sprite
-        ref={headSpriteRef}
-        material={headSpriteMat}
-        scale={[0.08, 0.08, 1]}
-        renderOrder={4}
-      />
+      <sprite ref={headSpriteRef} material={headSpriteMat} scale={[0.08, 0.08, 1]} renderOrder={4} />
       <sprite ref={haloSpriteRef} material={haloSpriteMat} scale={[0.2, 0.2, 1]} renderOrder={3} />
     </group>
   );

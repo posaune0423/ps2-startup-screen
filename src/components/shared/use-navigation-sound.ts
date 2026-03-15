@@ -3,6 +3,8 @@
 import type { RefObject } from "react";
 import { useCallback, useRef } from "react";
 
+import { getSoundEnabled, initializeSoundEnabled } from "@/lib/sound-settings";
+
 const SE_PATHS = {
   select: "/sound/se/select.wav",
   enter: "/sound/se/enter.wav",
@@ -10,6 +12,9 @@ const SE_PATHS = {
 } as const;
 
 function playOnce(audioRef: RefObject<HTMLAudioElement | null>, path: string): void {
+  initializeSoundEnabled();
+  if (!getSoundEnabled()) return;
+
   if (!audioRef.current) {
     audioRef.current = new Audio(path);
     audioRef.current.volume = 0.5;
