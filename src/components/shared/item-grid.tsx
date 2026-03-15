@@ -176,7 +176,7 @@ const DIR_LIGHT_POS: [number, number, number] = [-3.5, 5.5, 5.5];
 const SPOT_LIGHT_POS: [number, number, number] = [0, 5.5, 6];
 const POINT_LIGHT_POS: [number, number, number] = [3.5, 1.8, 4.8];
 const HEMI_ARGS: [string, string, number] = ["#F8FBFF", "#0A0C14", 1.05];
-const GL_PROPS = { antialias: false, alpha: false, powerPreference: "low-power" as const };
+const GL_PROPS = { antialias: true, alpha: false, powerPreference: "high-performance" as const };
 const CANVAS_STYLE = { width: "100%", height: "100%" } as const;
 
 const GridScene = memo(function GridScene({
@@ -225,17 +225,17 @@ const GridScene = memo(function GridScene({
 });
 
 const MEMORY_CARD_ICON_CAMERA = { position: [0, 0, 1.2] as [number, number, number], fov: 45 };
-const MEMORY_CARD_ICON_GL = { alpha: true, antialias: false, powerPreference: "low-power" as const };
+const MEMORY_CARD_ICON_GL = { alpha: true, antialias: true, powerPreference: "high-performance" as const };
 
 const TinyMemoryCard = memo(function TinyMemoryCard() {
   const { scene } = useGLTF("/3d/memorycard.glb");
 
   return (
     <>
-      <ambientLight intensity={1.05} />
-      <directionalLight position={[-2, 3, 2]} intensity={2.2} color="#EEF4FF" />
-      <pointLight position={[1.5, 0.8, 1.8]} intensity={1.05} color="#8FB5FF" distance={4.5} decay={1.6} />
-      <Clone object={scene} rotation={[-0.3, Math.PI / 2, 1.8]} />
+      <ambientLight intensity={1.6} />
+      <directionalLight position={[-2, 3, 2]} intensity={3.2} color="#EEF4FF" />
+      <pointLight position={[1.5, 0.8, 1.8]} intensity={1.6} color="#8FB5FF" distance={4.5} decay={1.6} />
+      <Clone object={scene} position={[0, 0.15, 0.15]} rotation={[-0.3, Math.PI / 2, 1.8]} />
     </>
   );
 });
@@ -287,7 +287,7 @@ export default function ItemGrid({ items, title }: ItemGridProps) {
 
   return (
     <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
-      <Canvas camera={cameraProps} dpr={compact ? 0.8 : 1} gl={GL_PROPS} style={CANVAS_STYLE}>
+      <Canvas camera={cameraProps} dpr={compact ? 1 : 1.5} gl={GL_PROPS} style={CANVAS_STYLE}>
         <GridScene
           items={items}
           activeIndex={activeIndex}
@@ -306,13 +306,14 @@ export default function ItemGrid({ items, title }: ItemGridProps) {
           zIndex: 10,
           display: "flex",
           alignItems: "center",
+          justifyContent: "center",
           gap: "6px",
         }}
       >
         <div style={{ width: compact ? 56 : 64, height: compact ? 56 : 64, flexShrink: 0 }}>
           <Canvas
             camera={MEMORY_CARD_ICON_CAMERA}
-            dpr={compact ? 0.55 : 0.7}
+            dpr={compact ? 1 : 1.25}
             gl={MEMORY_CARD_ICON_GL}
             style={CANVAS_STYLE}
           >
@@ -321,42 +322,71 @@ export default function ItemGrid({ items, title }: ItemGridProps) {
             </Suspense>
           </Canvas>
         </div>
-        <span
+        <div
           style={{
-            fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
-            fontSize: compact ? "clamp(16px, 4vw, 28px)" : "clamp(20px, 2.2vw, 32px)",
-            fontWeight: 700,
-            color: "#FFFFFF",
-            letterSpacing: "0.02em",
-            whiteSpace: "nowrap",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
           }}
         >
-          Memory Card ({title}) / 1
-        </span>
+          <span
+            className="ps2-text"
+            style={{
+              fontSize: compact ? "clamp(16px, 4vw, 28px)" : "clamp(20px, 2.2vw, 32px)",
+              fontWeight: 700,
+              color: "#FFFFFF",
+              letterSpacing: "0.02em",
+              whiteSpace: "nowrap",
+              textAlign: "center",
+              transformOrigin: "left center",
+            }}
+          >
+            Memory Card ({title}) / 1
+          </span>
+        </div>
       </div>
 
       <div
         style={{
           position: "absolute",
           top: "clamp(12px, 3vh, 32px)",
-          right: "clamp(16px, 4vw, 48px)",
+          right: "clamp(28px, 6vw, 88px)",
           pointerEvents: "none",
           zIndex: 10,
-          textAlign: "right",
+          width: "min(42vw, 420px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "hidden",
+          textAlign: "center",
         }}
       >
         <div
           style={{
-            fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
-            fontSize: compact ? "clamp(18px, 5vw, 32px)" : "clamp(24px, 2.8vw, 40px)",
-            fontWeight: 700,
-            color: "#C5CF1F",
-            letterSpacing: "0.02em",
-            lineHeight: 1.1,
-            whiteSpace: "nowrap",
+            width: "calc(100% / 1.18)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
           }}
         >
-          {items[activeIndex].label}
+          <div
+            className="ps2-text"
+            style={{
+              fontSize: compact ? "clamp(16px, 4.2vw, 28px)" : "clamp(20px, 2.4vw, 34px)",
+              fontWeight: 700,
+              color: "#C5CF1F",
+              letterSpacing: "0.02em",
+              lineHeight: 1.1,
+              whiteSpace: "normal",
+              overflowWrap: "anywhere",
+              textAlign: "center",
+              transformOrigin: "right center",
+            }}
+          >
+            {items[activeIndex].label}
+          </div>
         </div>
       </div>
     </div>

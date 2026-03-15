@@ -193,8 +193,8 @@ export default function BrowserPage() {
         }}
       >
         <div
+          className="ps2-text"
           style={{
-            fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
             fontSize: "clamp(16px, 3vw, 36px)",
             fontWeight: 700,
             lineHeight: 1.1,
@@ -210,8 +210,11 @@ export default function BrowserPage() {
       <div
         style={{
           position: "absolute",
-          inset: 0,
+          left: "50%",
+          top: "50%",
+          transform: "translate(-50%, -50%)",
           display: "flex",
+          gap: compact ? "24px" : "48px",
           zIndex: 5,
         }}
       >
@@ -221,7 +224,8 @@ export default function BrowserPage() {
             type="button"
             onClick={selectHandlers[index]}
             style={{
-              flex: 1,
+              width: compact ? "100px" : "140px",
+              height: compact ? "120px" : "160px",
               background: "none",
               border: "none",
               cursor: "pointer",
