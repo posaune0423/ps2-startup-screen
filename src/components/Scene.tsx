@@ -6,6 +6,7 @@ import { Environment } from "@react-three/drei";
 import * as THREE from "three";
 import useSound from "use-sound";
 import { CONFIG } from "./scene/config";
+import { startSceneSound } from "./sceneAudio";
 import PrismField from "./scene/PrismField";
 import Lighting from "./scene/Lighting";
 import CameraRig from "./scene/CameraRig";
@@ -39,11 +40,24 @@ function SceneContent({ elapsedRef }: { elapsedRef: React.MutableRefObject<numbe
 export default function Scene() {
   const elapsedRef = useRef(0);
   const soundStartedRef = useRef(false);
+  const soundPositionSyncedRef = useRef(false);
   const [finished, setFinished] = useState(false);
   const [sceneKey, setSceneKey] = useState(0);
 
   const [play, { stop, sound }] = useSound("/sound/ps2-startup-bgm.mp3", {
     volume: 1.0,
+    onend: () => {
+      soundStartedRef.current = false;
+    },
+    onplay: () => {
+      soundStartedRef.current = true;
+    },
+    onplayerror: () => {
+      soundStartedRef.current = false;
+    },
+    onstop: () => {
+      soundStartedRef.current = false;
+    },
   });
 
   useEffect(() => {
@@ -58,13 +72,28 @@ export default function Scene() {
     return () => cancelAnimationFrame(raf);
   }, [sceneKey]);
 
-  const handleInteraction = useCallback(() => {
-    if (soundStartedRef.current) return;
-    soundStartedRef.current = true;
-    play();
-    if (sound) {
-      sound.seek(elapsedRef.current);
-    }
+  useEffect(() => {
+    const nextState = startSceneSound({
+      elapsed: elapsedRef.current,
+      hasStarted: soundStartedRef.current,
+      hasSyncedPosition: soundPositionSyncedRef.current,
+      play,
+      sound,
+    });
+    soundStartedRef.current = nextState.hasStarted;
+    soundPositionSyncedRef.current = nextState.hasSyncedPosition;
+  }, [play, sceneKey, sound]);
+
+  const handleStartSound = useCallback(() => {
+    const nextState = startSceneSound({
+      elapsed: elapsedRef.current,
+      hasStarted: soundStartedRef.current,
+      hasSyncedPosition: soundPositionSyncedRef.current,
+      play,
+      sound,
+    });
+    soundStartedRef.current = nextState.hasStarted;
+    soundPositionSyncedRef.current = nextState.hasSyncedPosition;
   }, [play, sound]);
 
   const handleReplay = useCallback(
@@ -73,14 +102,11 @@ export default function Scene() {
       stop();
       elapsedRef.current = 0;
       soundStartedRef.current = false;
+      soundPositionSyncedRef.current = false;
       setFinished(false);
       setSceneKey((k) => k + 1);
-      setTimeout(() => {
-        soundStartedRef.current = true;
-        play();
-      }, 100);
     },
-    [stop, play],
+    [stop],
   );
 
   const getOverlayOpacity = useCallback(() => {
@@ -94,7 +120,7 @@ export default function Scene() {
   return (
     <div
       style={{ position: "relative", width: "100vw", height: "100vh", cursor: "pointer" }}
-      onClick={handleInteraction}
+      onClick={handleStartSound}
     >
       <Canvas
         shadows
