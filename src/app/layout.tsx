@@ -64,10 +64,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ViewTransitions>
-          <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>
+          <ViewTransitions>{children}</ViewTransitions>
           <BackButton />
-        </ViewTransitions>
+        </LanguageProvider>
       </body>
     </html>
   );
