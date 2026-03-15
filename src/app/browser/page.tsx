@@ -117,11 +117,7 @@ const GenericCardModel = memo(function GenericCardModel({
 
   useEffect(() => {
     return () => {
-      if (modelPath === "/3d/memorycard.glb") {
-        releaseGLTFAsset("/3d/memorycard.glb", scene, clearGLTF);
-        return;
-      }
-      releaseGLTFAsset("/3d/icons/cd.glb", scene, clearGLTF);
+      releaseGLTFAsset(modelPath, scene, clearGLTF);
     };
   }, [clearGLTF, modelPath, scene]);
 

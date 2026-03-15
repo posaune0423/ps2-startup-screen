@@ -41,8 +41,11 @@ export default function BackButton() {
   useEffect(() => {
     if (!mounted) return;
 
-    function hideButton() {
-      setIsHidden(true);
+    function hideButton(e: Event) {
+      queueMicrotask(() => {
+        if (e instanceof CustomEvent && e.defaultPrevented) return;
+        setIsHidden(true);
+      });
     }
 
     window.addEventListener("app:navigate", hideButton);

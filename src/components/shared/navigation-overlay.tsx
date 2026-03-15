@@ -25,13 +25,16 @@ export default function NavigationOverlay() {
     function handler(e: Event) {
       if (!(e instanceof CustomEvent) || typeof e.detail !== "string") return;
       const href = e.detail;
-      navigatingRef.current = true;
-      setVisible(true);
-      if (pushFrameRef.current !== null) {
-        window.cancelAnimationFrame(pushFrameRef.current);
-      }
-      pushFrameRef.current = window.requestAnimationFrame(() => {
-        router.push(href);
+      queueMicrotask(() => {
+        if (e.defaultPrevented) return;
+        navigatingRef.current = true;
+        setVisible(true);
+        if (pushFrameRef.current !== null) {
+          window.cancelAnimationFrame(pushFrameRef.current);
+        }
+        pushFrameRef.current = window.requestAnimationFrame(() => {
+          router.push(href);
+        });
       });
     }
     window.addEventListener("app:navigate", handler);
