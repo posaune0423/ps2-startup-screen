@@ -3,12 +3,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "vinext/shims/navigation";
 
-const FADE_MS = 150;
+const FADE_MS = 120;
 
 const OVERLAY_STYLE: React.CSSProperties = {
   position: "fixed",
   inset: 0,
-  background: "#000",
+  background: "transparent",
   zIndex: 99999,
   transition: `opacity ${FADE_MS}ms ease`,
 };
@@ -18,8 +18,8 @@ export default function NavigationOverlay() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const navigatingRef = useRef(false);
-  const pushTimeoutRef = useRef<number | null>(null);
-  const hideTimeoutRef = useRef<number | null>(null);
+  const pushFrameRef = useRef<number | null>(null);
+  const hideFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     function handler(e: Event) {
@@ -27,18 +27,18 @@ export default function NavigationOverlay() {
       const href = e.detail;
       navigatingRef.current = true;
       setVisible(true);
-      if (pushTimeoutRef.current !== null) {
-        window.clearTimeout(pushTimeoutRef.current);
+      if (pushFrameRef.current !== null) {
+        window.cancelAnimationFrame(pushFrameRef.current);
       }
-      pushTimeoutRef.current = window.setTimeout(() => {
+      pushFrameRef.current = window.requestAnimationFrame(() => {
         router.push(href);
-      }, FADE_MS);
+      });
     }
     window.addEventListener("app:navigate", handler);
     return () => {
       window.removeEventListener("app:navigate", handler);
-      if (pushTimeoutRef.current !== null) {
-        window.clearTimeout(pushTimeoutRef.current);
+      if (pushFrameRef.current !== null) {
+        window.cancelAnimationFrame(pushFrameRef.current);
       }
     };
   }, [router]);
@@ -46,13 +46,13 @@ export default function NavigationOverlay() {
   useEffect(() => {
     if (!navigatingRef.current) return;
     navigatingRef.current = false;
-    if (hideTimeoutRef.current !== null) {
-      window.clearTimeout(hideTimeoutRef.current);
+    if (hideFrameRef.current !== null) {
+      window.cancelAnimationFrame(hideFrameRef.current);
     }
-    hideTimeoutRef.current = window.setTimeout(() => setVisible(false), 50);
+    hideFrameRef.current = window.requestAnimationFrame(() => setVisible(false));
     return () => {
-      if (hideTimeoutRef.current !== null) {
-        window.clearTimeout(hideTimeoutRef.current);
+      if (hideFrameRef.current !== null) {
+        window.cancelAnimationFrame(hideFrameRef.current);
       }
     };
   }, [pathname]);

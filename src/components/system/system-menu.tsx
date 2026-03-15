@@ -10,7 +10,7 @@ import type { Locale, TranslationKey } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import { useSoundSettings } from "@/lib/sound-settings";
 
-const SELECTED_COLOR = "#75D9EB";
+const SELECTED_COLOR = "#47B6E1";
 const LOCALES: Locale[] = ["ja", "en"];
 
 interface SystemMenuProps {
@@ -87,8 +87,8 @@ export default function SystemMenu({ onBack }: SystemMenuProps) {
       }}
     >
       <h1
+        className="ps2-text"
         style={{
-          fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
           fontSize: "clamp(24px, 3vw, 36px)",
           fontWeight: 400,
           color: "#DDE30F",
@@ -133,8 +133,8 @@ export default function SystemMenu({ onBack }: SystemMenuProps) {
         }}
       >
         <span
+          className="ps2-text"
           style={{
-            fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
             fontSize: "clamp(28px, 3.5vw, 42px)",
             fontWeight: 400,
             letterSpacing: "0.05em",
@@ -145,8 +145,8 @@ export default function SystemMenu({ onBack }: SystemMenuProps) {
           {t(setting.labelKey)}
         </span>
         <span
+          className="ps2-text"
           style={{
-            fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
             fontSize: "clamp(18px, 2.2vw, 28px)",
             fontWeight: 400,
             letterSpacing: "0.08em",

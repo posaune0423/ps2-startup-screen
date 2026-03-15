@@ -7,13 +7,18 @@ const itemGridSource = readFileSync(new URL("../../src/components/shared/item-gr
 const browserPageSource = readFileSync(new URL("../../src/app/browser/page.tsx", import.meta.url), "utf8");
 const orbRingSource = readFileSync(new URL("../../src/components/browser-menu/orb-ring.tsx", import.meta.url), "utf8");
 
-test("memory pages clamp canvas DPR and prefer low-power WebGL settings", () => {
-  assert.match(itemGridSource, /dpr=\{compact \? 0\.8 : 1\}/);
+test("memory pages keep sharper model rendering than the browser card picker", () => {
+  assert.match(itemGridSource, /dpr=\{compact \? 1 : 1\.5\}/);
   assert.match(
     itemGridSource,
-    /const GL_PROPS = \{ antialias: false, alpha: false, powerPreference: "low-power" as const \};/,
+    /const GL_PROPS = \{ antialias: true, alpha: false, powerPreference: "high-performance" as const \};/,
   );
   assert.match(itemGridSource, /gl=\{GL_PROPS\}/);
+  assert.match(itemGridSource, /dpr=\{compact \? 1 : 1\.25\}/);
+  assert.match(
+    itemGridSource,
+    /const MEMORY_CARD_ICON_GL = \{ alpha: true, antialias: true, powerPreference: "high-performance" as const \};/,
+  );
 });
 
 test("browser page also clamps canvas DPR and prefers low-power WebGL settings", () => {
