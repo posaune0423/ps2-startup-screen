@@ -16,3 +16,8 @@ test("startup audio path reads the shared sound setting before autoplay or click
   assert.match(sceneSource, /soundEnabled: getSoundEnabled\(\)/);
   assert.match(sceneSource, /if \(!getSoundEnabled\(\)\) return;/);
 });
+
+test("startup scene leaves ambient audio to the menu screens", () => {
+  assert.doesNotMatch(sceneSource, /import \{ startAmbientAudio \} from "@\/lib\/ambient-audio"/);
+  assert.doesNotMatch(sceneSource, /startAmbientAudio\(\)/);
+});

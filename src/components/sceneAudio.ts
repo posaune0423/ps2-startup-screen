@@ -7,6 +7,7 @@ interface StartSceneSoundArgs {
   elapsed: number;
   hasStarted: boolean;
   hasSyncedPosition: boolean;
+  hasRequestedPlayback?: boolean;
   play: () => void;
   sound?: SeekableSound | null;
   soundEnabled?: boolean;
@@ -15,12 +16,14 @@ interface StartSceneSoundArgs {
 interface StartSceneSoundResult {
   hasStarted: boolean;
   hasSyncedPosition: boolean;
+  hasRequestedPlayback: boolean;
 }
 
 export function startSceneSound({
   elapsed,
   hasStarted,
   hasSyncedPosition,
+  hasRequestedPlayback = false,
   play,
   sound,
   soundEnabled = true,
@@ -29,14 +32,17 @@ export function startSceneSound({
     return {
       hasStarted,
       hasSyncedPosition,
+      hasRequestedPlayback,
     };
   }
 
   let nextHasStarted = hasStarted;
   let nextHasSyncedPosition = hasSyncedPosition;
+  let nextHasRequestedPlayback = hasRequestedPlayback;
 
-  if (!nextHasStarted) {
+  if (!nextHasStarted && !nextHasRequestedPlayback) {
     play();
+    nextHasRequestedPlayback = true;
     nextHasStarted = sound.playing();
   }
 
@@ -52,5 +58,6 @@ export function startSceneSound({
   return {
     hasStarted: nextHasStarted,
     hasSyncedPosition: nextHasSyncedPosition,
+    hasRequestedPlayback: nextHasRequestedPlayback,
   };
 }

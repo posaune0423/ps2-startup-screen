@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useCallback, useEffect } from "react";
-import { useRouter } from "vinext/shims/navigation";
 
 import MenuList from "@/components/browser-menu/menu-list";
 import OrbRing from "@/components/browser-menu/orb-ring";
@@ -11,6 +10,7 @@ import { useViewport } from "@/components/shared/use-viewport";
 import { startAmbientAudio } from "@/lib/ambient-audio";
 import type { TranslationKey } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
+import { navigate } from "@/lib/navigate";
 
 const MENU_ITEMS = [
   { labelKey: "menu.browser" as TranslationKey, href: "/browser" },
@@ -18,7 +18,6 @@ const MENU_ITEMS = [
 ] as const;
 
 export default function BrowserMenu() {
-  const router = useRouter();
   const { playEnter } = useNavigationSound();
   const { isMobile, isPortrait } = useViewport();
   const { t } = useLanguage();
@@ -30,10 +29,12 @@ export default function BrowserMenu() {
 
   const handleSelect = useCallback(
     (index: number) => {
+      const item = MENU_ITEMS[index];
+      if (!item) return;
       playEnter();
-      router.push(MENU_ITEMS[index].href);
+      navigate(item.href);
     },
-    [router, playEnter],
+    [playEnter],
   );
 
   const { activeIndex, selectByIndex } = useMenuNavigation({

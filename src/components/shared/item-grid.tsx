@@ -4,7 +4,6 @@ import { Clone, useGLTF } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import React, { memo, Suspense, useCallback, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { useRouter } from "vinext/shims/navigation";
 
 import GlowCursor from "@/components/shared/glow-cursor";
 import Ps2BrowserBg from "@/components/shared/ps2-browser-bg";
@@ -13,6 +12,7 @@ import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
 import { startAmbientAudio } from "@/lib/ambient-audio";
 import { releaseGLTFAsset } from "@/lib/gltf-memory";
+import { navigate } from "@/lib/navigate";
 
 export interface GridItem {
   id: string;
@@ -241,7 +241,6 @@ const TinyMemoryCard = memo(function TinyMemoryCard() {
 });
 
 export default function ItemGrid({ items, title }: ItemGridProps) {
-  const router = useRouter();
   const { playEnter, playSelect, playBack } = useNavigationSound();
   const { isMobile, isPortrait } = useViewport();
   const compact = isMobile || isPortrait;
@@ -264,8 +263,8 @@ export default function ItemGrid({ items, title }: ItemGridProps) {
 
   const handleBack = useCallback(() => {
     playBack();
-    router.push("/menu");
-  }, [playBack, router]);
+    navigate("/browser");
+  }, [playBack]);
 
   const { activeIndex } = useMenuNavigation({
     itemCount: items.length,

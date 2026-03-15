@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useCallback } from "react";
-import { usePathname, useRouter } from "vinext/shims/navigation";
+import React, { useCallback, useEffect, useState } from "react";
+import { usePathname } from "vinext/shims/navigation";
 
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
+import { useLanguage } from "@/lib/language-context";
+import { navigate } from "@/lib/navigate";
 
 const BACK_ROUTES: Record<string, string> = {
   "/menu": "/",
@@ -14,75 +16,70 @@ const BACK_ROUTES: Record<string, string> = {
   "/memory/sns": "/browser",
 };
 
-const CONTAINER_BASE: React.CSSProperties = {
-  position: "fixed",
-  bottom: "clamp(12px, 3vh, 28px)",
-  left: "50%",
-  transform: "translateX(-50%)",
-  zIndex: 9999,
-  display: "flex",
-  alignItems: "center",
-  color: "gray",
-  fontFamily: "inherit",
-  letterSpacing: "0.04em",
-};
-
-const HINT_BASE: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-};
-
-const IMG_STYLE: React.CSSProperties = {
-  display: "block",
-  clipPath: "circle(50%)",
-};
+const BUTTON_REVEAL_MS = 90;
 
 export default function BackButton() {
   const pathname = usePathname();
-  const router = useRouter();
   const { playBack } = useNavigationSound();
   const { isMobile } = useViewport();
+  const { locale } = useLanguage();
+  const [isHidden, setIsHidden] = useState(false);
+
+  const isJa = locale === "ja";
+  const enterIcon = isJa ? "/buttons/circle.png" : "/buttons/x.png";
+  const backIcon = isJa ? "/buttons/x.png" : "/buttons/circle.png";
 
   const backHref = BACK_ROUTES[pathname];
 
   const handleBack = useCallback(() => {
     if (!backHref) return;
     playBack();
-    router.push(backHref);
-  }, [playBack, router, backHref]);
+    navigate(backHref);
+  }, [playBack, backHref]);
 
-  if (!backHref) return null;
+  const handleEnter = useCallback(() => {
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+  }, []);
+
+  useEffect(() => {
+    const hideButton = () => {
+      setIsHidden(true);
+    };
+
+    window.addEventListener("app:navigate", hideButton);
+    return () => window.removeEventListener("app:navigate", hideButton);
+  }, []);
+
+  useEffect(() => {
+    if (!backHref) {
+      setIsHidden(true);
+      return;
+    }
+
+    const id = window.setTimeout(() => {
+      setIsHidden(false);
+    }, BUTTON_REVEAL_MS);
+
+    return () => window.clearTimeout(id);
+  }, [backHref, pathname]);
+
+  if (!backHref || isHidden) return null;
 
   const size = isMobile ? 22 : 30;
-  const fontSize = isMobile ? 15 : 20;
-  const gap = isMobile ? 6 : 10;
-  const sectionGap = isMobile ? 24 : 36;
-
-  const containerStyle = { ...CONTAINER_BASE, gap: sectionGap, fontSize };
-  const hintStyle = { ...HINT_BASE, gap };
-
+  const containerClassName = isMobile
+    ? "fixed bottom-[clamp(12px,3vh,28px)] left-1/2 z-[9999] flex -translate-x-1/2 items-center gap-6 text-[15px] tracking-[0.04em] text-gray-400"
+    : "fixed bottom-[clamp(12px,3vh,28px)] left-1/2 z-[9999] flex -translate-x-1/2 items-center gap-9 text-[20px] tracking-[0.04em] text-gray-400";
+  const buttonClassName = isMobile
+    ? "flex items-center gap-1.5 cursor-pointer border-none bg-transparent p-0 text-inherit [font:inherit] [letter-spacing:inherit]"
+    : "flex items-center gap-2.5 cursor-pointer border-none bg-transparent p-0 text-inherit [font:inherit] [letter-spacing:inherit]";
   return (
-    <div style={containerStyle}>
-      <span style={hintStyle}>
-        <img src="/buttons/x.png" alt="" width={size} height={size} style={IMG_STYLE} />
+    <div className={containerClassName}>
+      <button type="button" onClick={handleEnter} className={buttonClassName}>
+        <img src={enterIcon} alt="" width={size} height={size} className="block" style={{ clipPath: "circle(40%)" }} />
         <span>Enter</span>
-      </span>
-      <button
-        type="button"
-        onClick={handleBack}
-        style={{
-          ...hintStyle,
-          background: "none",
-          border: "none",
-          padding: 0,
-          cursor: "pointer",
-          color: "inherit",
-          font: "inherit",
-          fontSize: "inherit",
-          letterSpacing: "inherit",
-        }}
-      >
-        <img src="/buttons/circle.png" alt="" width={size} height={size} style={IMG_STYLE} />
+      </button>
+      <button type="button" onClick={handleBack} className={buttonClassName}>
+        <img src={backIcon} alt="" width={size} height={size} className="block" style={{ clipPath: "circle(40%)" }} />
         <span>Back</span>
       </button>
     </div>

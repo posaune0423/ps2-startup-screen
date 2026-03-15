@@ -4,7 +4,6 @@ import { Clone, useGLTF } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import React, { memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type * as THREE from "three";
-import { useRouter } from "vinext/shims/navigation";
 
 import GlowCursor from "@/components/shared/glow-cursor";
 import Ps2BrowserBg from "@/components/shared/ps2-browser-bg";
@@ -15,6 +14,7 @@ import { startAmbientAudio } from "@/lib/ambient-audio";
 import { releaseGLTFAsset } from "@/lib/gltf-memory";
 import type { TranslationKey } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
+import { navigate } from "@/lib/navigate";
 
 const CARDS = [
   { labelKey: "browser.memoryCardWork" as TranslationKey, href: "/memory/work" },
@@ -139,7 +139,6 @@ export default function BrowserPage() {
     setMounted(true);
   }, []);
 
-  const router = useRouter();
   const { playEnter, playSelect, playBack } = useNavigationSound();
   const { t } = useLanguage();
   const { isMobile, isPortrait } = useViewport();
@@ -147,16 +146,18 @@ export default function BrowserPage() {
 
   const handleSelect = useCallback(
     (index: number) => {
+      const card = CARDS[index];
+      if (!card) return;
       playEnter();
-      router.push(CARDS[index].href);
+      navigate(card.href);
     },
-    [router, playEnter],
+    [playEnter],
   );
 
   const handleBack = useCallback(() => {
     playBack();
-    router.back();
-  }, [router, playBack]);
+    navigate("/menu");
+  }, [playBack]);
 
   const { activeIndex, selectByIndex } = useMenuNavigation({
     itemCount: CARDS.length,
