@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback } from "react";
+import { useHaptic } from "use-haptic";
 import { usePathname } from "vinext/shims/navigation";
 
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
@@ -21,6 +22,7 @@ export default function BackButton() {
   const { playBack } = useNavigationSound();
   const { isMobile } = useViewport();
   const { locale } = useLanguage();
+  const { triggerHaptic } = useHaptic(5);
 
   const isJa = locale === "ja";
   const enterIcon = isJa ? "/buttons/circle.png" : "/buttons/x.png";
@@ -29,13 +31,15 @@ export default function BackButton() {
 
   const handleBack = useCallback(() => {
     if (!backHref) return;
+    triggerHaptic();
     playBack();
     navigate(backHref);
-  }, [playBack, backHref]);
+  }, [backHref, playBack, triggerHaptic]);
 
   const handleEnter = useCallback(() => {
+    triggerHaptic();
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
-  }, []);
+  }, [triggerHaptic]);
 
   if (!backHref) return null;
 
