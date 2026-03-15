@@ -7,12 +7,35 @@ import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 
 const HIDDEN_PATHS = new Set(["/"]);
 
+const CONTAINER_STYLE: React.CSSProperties = {
+  position: "fixed",
+  bottom: "clamp(12px, 3vh, 28px)",
+  left: "50%",
+  transform: "translateX(-50%)",
+  zIndex: 9999,
+  display: "flex",
+  alignItems: "center",
+  gap: 24,
+  color: "gray",
+  fontSize: 15,
+  fontFamily: "inherit",
+  letterSpacing: "0.04em",
+};
+
+const HINT_STYLE: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 6,
+};
+
+const IMG_STYLE: React.CSSProperties = { display: "block" };
+
 export default function BackButton() {
   const pathname = usePathname();
   const router = useRouter();
   const { playBack } = useNavigationSound();
 
-  const handleClick = useCallback(() => {
+  const handleBack = useCallback(() => {
     playBack();
     router.back();
   }, [playBack, router]);
@@ -20,33 +43,28 @@ export default function BackButton() {
   if (HIDDEN_PATHS.has(pathname)) return null;
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      style={{
-        position: "fixed",
-        bottom: "clamp(16px, 3vh, 32px)",
-        right: "clamp(16px, 3vw, 32px)",
-        zIndex: 9999,
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        background: "rgba(0, 0, 0, 0.55)",
-        border: "1px solid rgba(255, 255, 255, 0.15)",
-        borderRadius: 8,
-        padding: "8px 18px 8px 12px",
-        cursor: "pointer",
-        color: "rgba(255, 255, 255, 0.85)",
-        fontSize: 14,
-        fontFamily: "inherit",
-        letterSpacing: "0.05em",
-        backdropFilter: "blur(6px)",
-        WebkitBackdropFilter: "blur(6px)",
-        transition: "opacity 0.15s",
-      }}
-    >
-      <img src="/buttons/circle.png" alt="" width={28} height={28} style={{ display: "block" }} />
-      <span>Back</span>
-    </button>
+    <div style={CONTAINER_STYLE}>
+      <span style={HINT_STYLE}>
+        <img src="/buttons/x.png" alt="" width={22} height={22} style={IMG_STYLE} />
+        <span>Enter</span>
+      </span>
+      <button
+        type="button"
+        onClick={handleBack}
+        style={{
+          ...HINT_STYLE,
+          background: "none",
+          border: "none",
+          padding: 0,
+          cursor: "pointer",
+          color: "inherit",
+          font: "inherit",
+          letterSpacing: "inherit",
+        }}
+      >
+        <img src="/buttons/circle.png" alt="" width={22} height={22} style={IMG_STYLE} />
+        <span>Back</span>
+      </button>
+    </div>
   );
 }

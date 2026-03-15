@@ -3,6 +3,7 @@ import React from "react";
 import type { Metadata, Viewport } from "vinext/shims/metadata";
 
 import "./globals.css";
+import BackButton from "../components/shared/back-button";
 import { siteDescription, siteName, siteUrl } from "../constants/site";
 import { LanguageProvider } from "../lib/language-context";
 
@@ -65,6 +66,7 @@ export default function RootLayout({
       <body>
         <ViewTransitions>
           <LanguageProvider>{children}</LanguageProvider>
+          <BackButton />
         </ViewTransitions>
       </body>
     </html>
