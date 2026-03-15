@@ -1,17 +1,19 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useRef } from "react";
+import React, { memo, useMemo, useRef } from "react";
 import type * as THREE from "three";
 
 import { CONFIG } from "./config";
 import { getFadeFactor } from "./timeline";
 
-export default function Lighting({ elapsedRef }: { elapsedRef: React.RefObject<number> }) {
+const { directional, ambient } = CONFIG.lighting;
+
+export default memo(function Lighting({ elapsedRef }: { elapsedRef: React.RefObject<number> }) {
   const dirRef = useRef<THREE.DirectionalLight>(null);
   const ambRef = useRef<THREE.AmbientLight>(null);
 
-  const { directional, ambient } = CONFIG.lighting;
+  const dirPosition = useMemo((): [number, number, number] => [...directional.position], []);
 
   useFrame(() => {
     const fade = getFadeFactor(elapsedRef.current ?? 0);
@@ -23,11 +25,11 @@ export default function Lighting({ elapsedRef }: { elapsedRef: React.RefObject<n
     <>
       <directionalLight
         ref={dirRef}
-        position={[...directional.position]}
+        position={dirPosition}
         intensity={directional.intensity}
         color={directional.color}
       />
       <ambientLight ref={ambRef} intensity={ambient.intensity} color={ambient.color} />
     </>
   );
-}
+});

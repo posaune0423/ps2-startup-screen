@@ -1,30 +1,33 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { useRef } from "react";
+import React, { memo, useRef } from "react";
 import type * as THREE from "three";
 
 import { CONFIG } from "./config";
 import { getCameraParams } from "./timeline";
 
-export default function CameraRig({
+const HALF_PI = -Math.PI / 2;
+
+export default memo(function CameraRig({
   elapsedRef,
   sceneGroupRef,
 }: {
-  elapsedRef: React.MutableRefObject<number>;
+  elapsedRef: React.RefObject<number>;
   sceneGroupRef: React.RefObject<THREE.Group | null>;
 }) {
   const { camera } = useThree();
   const angleRef = useRef(0);
 
   useFrame((_, delta) => {
-    elapsedRef.current += delta;
-    const elapsed = Math.min(elapsedRef.current, CONFIG.timeline.duration);
+    const nextElapsed = (elapsedRef.current ?? 0) + delta;
+    elapsedRef.current = nextElapsed;
+    const elapsed = Math.min(nextElapsed, CONFIG.timeline.duration);
 
     const { angularSpeed, height } = getCameraParams(elapsed);
 
-    camera.position.set(0, height, 0);
-    camera.rotation.set(-Math.PI / 2, 0, 0);
+    camera.position.y = height;
+    camera.rotation.x = HALF_PI;
 
     angleRef.current -= angularSpeed * delta;
     if (sceneGroupRef.current) {
@@ -33,4 +36,4 @@ export default function CameraRig({
   });
 
   return null;
-}
+});

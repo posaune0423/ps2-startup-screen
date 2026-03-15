@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useRef, useMemo } from "react";
+import React, { memo, useCallback, useRef, useMemo } from "react";
 import * as THREE from "three";
 
 import { CONFIG } from "./config";
@@ -21,7 +21,7 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-export default function FloatingCubes({ elapsedRef }: { elapsedRef: React.RefObject<number> }) {
+export default memo(function FloatingCubes({ elapsedRef }: { elapsedRef: React.RefObject<number> }) {
   const groupRef = useRef<THREE.Group>(null);
   const meshRefs = useRef<THREE.Mesh[]>([]);
 
@@ -56,6 +56,8 @@ export default function FloatingCubes({ elapsedRef }: { elapsedRef: React.RefObj
     return result;
   }, []);
 
+  const geometries = useMemo(() => cubes.map((c) => new THREE.BoxGeometry(c.size, c.size, c.size)), [cubes]);
+
   const material = useMemo(() => {
     const cfg = CONFIG.floatingCubes;
     return new THREE.MeshPhysicalMaterial({
@@ -80,35 +82,40 @@ export default function FloatingCubes({ elapsedRef }: { elapsedRef: React.RefObj
     });
   }, []);
 
-  useFrame(() => {
+  const setMeshRef = useCallback(
+    (i: number) => (el: THREE.Mesh | null) => {
+      if (el) meshRefs.current[i] = el;
+    },
+    [],
+  );
+
+  useFrame((_, delta) => {
     const t = elapsedRef.current ?? 0;
-    meshRefs.current.forEach((mesh, i) => {
-      if (!mesh) return;
+    for (let i = 0; i < cubes.length; i++) {
+      const mesh = meshRefs.current[i];
+      if (!mesh) continue;
       const cube = cubes[i];
-      mesh.rotation.x += cube.rotationSpeeds[0] * 0.016;
-      mesh.rotation.y += cube.rotationSpeeds[1] * 0.016;
-      mesh.rotation.z += cube.rotationSpeeds[2] * 0.016;
+      mesh.rotation.x += cube.rotationSpeeds[0] * delta;
+      mesh.rotation.y += cube.rotationSpeeds[1] * delta;
+      mesh.rotation.z += cube.rotationSpeeds[2] * delta;
 
       mesh.position.y =
         cube.position[1] +
         Math.sin(t / CONFIG.floatingCubes.bobPeriod + cube.bobOffset) * CONFIG.floatingCubes.bobAmplitude;
-    });
+    }
   });
 
   return (
     <group ref={groupRef} renderOrder={2}>
       {cubes.map((cube, i) => (
         <mesh
-          key={i}
-          ref={(el) => {
-            if (el) meshRefs.current[i] = el;
-          }}
+          key={`${cube.position.join("-")}-${cube.size}`}
+          ref={setMeshRef(i)}
           position={cube.position}
           material={material}
-        >
-          <boxGeometry args={[cube.size, cube.size, cube.size]} />
-        </mesh>
+          geometry={geometries[i]}
+        />
       ))}
     </group>
   );
-}
+});

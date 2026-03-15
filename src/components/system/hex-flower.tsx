@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useRef } from "react";
+import React, { useRef } from "react";
 import * as THREE from "three";
 
 const PETAL_COUNT = 12;
@@ -50,8 +50,14 @@ export default function HexFlower() {
 
   return (
     <group ref={groupRef} position={[-2.5, 0, -3]}>
-      {PETAL_DATA.map(({ position, rotation }, i) => (
-        <mesh key={i} position={position} rotation={rotation} geometry={sharedGeometry} material={sharedMaterial} />
+      {PETAL_DATA.map(({ position, rotation }) => (
+        <mesh
+          key={`${position.join("-")}-${rotation.join("-")}`}
+          position={position}
+          rotation={rotation}
+          geometry={sharedGeometry}
+          material={sharedMaterial}
+        />
       ))}
     </group>
   );
