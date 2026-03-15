@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 import ItemGrid from "@/components/shared/item-grid";
 import type { GridItem } from "@/components/shared/item-grid";
 

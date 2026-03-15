@@ -1,7 +1,7 @@
 "use client";
 
 import { useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import React, { memo, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
 import { CONFIG } from "./config";
@@ -28,6 +28,10 @@ function seededRandom(seed: number): () => number {
   };
 }
 
+function gridKey(c: number, r: number) {
+  return `${c},${r}`;
+}
+
 function generatePrisms(aspect: number): PrismData[] {
   const { spacing, cullRate, heightMin, heightMax, baseWidth, widthVariance, lightnessJitter, positionJitter, colors } =
     CONFIG.prism;
@@ -49,9 +53,11 @@ function generatePrisms(aspect: number): PrismData[] {
   const rand = seededRandom(42);
 
   const culled = new Set<string>();
-  const key = (c: number, r: number) => `${c},${r}`;
   const hasAdjacentCull = (c: number, r: number) =>
-    culled.has(key(c - 1, r)) || culled.has(key(c + 1, r)) || culled.has(key(c, r - 1)) || culled.has(key(c, r + 1));
+    culled.has(gridKey(c - 1, r)) ||
+    culled.has(gridKey(c + 1, r)) ||
+    culled.has(gridKey(c, r - 1)) ||
+    culled.has(gridKey(c, r + 1));
 
   for (let col = 0; col < cols; col++) {
     for (let row = 0; row < rows; row++) {
@@ -59,7 +65,7 @@ function generatePrisms(aspect: number): PrismData[] {
       const isEdgeBottom = isBottom && (col < cols * 0.4 || col > cols * 0.6);
       const rate = isEdgeBottom ? cullRate * 5.5 : cullRate;
       if (rand() < rate && !hasAdjacentCull(col, row)) {
-        culled.add(key(col, row));
+        culled.add(gridKey(col, row));
       }
     }
   }
@@ -71,7 +77,7 @@ function generatePrisms(aspect: number): PrismData[] {
 
   for (let col = 0; col < cols; col++) {
     for (let row = 0; row < rows; row++) {
-      if (culled.has(key(col, row))) {
+      if (culled.has(gridKey(col, row))) {
         for (let k = 0; k < 6; k++) rand2();
         continue;
       }
@@ -132,7 +138,9 @@ function isCenterBottom(p: PrismData): boolean {
   return Math.abs(p.x) < 0.8 && p.z > 0.4;
 }
 
-export default function PrismField() {
+const TOP_CAP_ROTATION: [number, number, number] = [-Math.PI / 2, 0, 0];
+
+export default memo(function PrismField() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const { viewport } = useThree();
   const aspect = viewport.width / viewport.height;
@@ -164,6 +172,16 @@ export default function PrismField() {
         metalness: CONFIG.prism.metalness,
       }),
     [],
+  );
+
+  const topCapPositions = useMemo(
+    () => topCapPrisms.map((p): [number, number, number] => [p.x, p.height + 0.005, p.z]),
+    [topCapPrisms],
+  );
+
+  const topCapGeometries = useMemo(
+    () => topCapPrisms.map((p) => new THREE.PlaneGeometry(p.width, p.depth)),
+    [topCapPrisms],
   );
 
   useEffect(() => {
@@ -198,16 +216,15 @@ export default function PrismField() {
   return (
     <group>
       <instancedMesh ref={meshRef} args={[geometry, material, prisms.length]} castShadow receiveShadow />
-      {topCapPrisms.map((p, i) => (
+      {topCapPrisms.map((prism, i) => (
         <mesh
-          key={`cap-${i}`}
-          position={[p.x, p.height + 0.005, p.z]}
-          rotation={[-Math.PI / 2, 0, 0]}
+          key={`cap-${prism.x}-${prism.height}-${prism.z}`}
+          position={topCapPositions[i]}
+          rotation={TOP_CAP_ROTATION}
           material={topCapMaterial}
-        >
-          <planeGeometry args={[p.width, p.depth]} />
-        </mesh>
+          geometry={topCapGeometries[i]}
+        />
       ))}
     </group>
   );
-}
+});
