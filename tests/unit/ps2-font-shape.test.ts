@@ -21,7 +21,7 @@ test("shared PS2 text class keeps a Helvetica-based stack with horizontal shapin
   assert.match(globalsCssSource, /font-family:\s*inherit;/);
   assert.match(globalsCssSource, /display:\s*inline-block;/);
   assert.match(globalsCssSource, /transform:\s*scaleX\(1\.18\);/);
-  assert.match(globalsCssSource, /transform-origin:\s*left center;/);
+  assert.match(globalsCssSource, /transform-origin:\s*center center;/);
   assert.match(globalsCssSource, /letter-spacing:\s*-0\.02em;/);
 });
 
