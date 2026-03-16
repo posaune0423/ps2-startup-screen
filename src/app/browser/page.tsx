@@ -60,6 +60,7 @@ const CARDS = [
     normalizeScale: true,
   },
 ] as const satisfies readonly BrowserCard[];
+const PRELOADED_MODEL_PATHS = new Set<string>();
 
 const ANIM_DURATION = 0.8;
 const ANIM_STAGGER = 0.15;
@@ -83,6 +84,12 @@ function createHorizontalPositions(itemCount: number, spacing: number): [number,
   ]);
 }
 
+for (const { modelPath } of CARDS) {
+  if (PRELOADED_MODEL_PATHS.has(modelPath)) continue;
+  PRELOADED_MODEL_PATHS.add(modelPath);
+  useGLTF.preload(modelPath);
+}
+
 const GenericCardModel = memo(function GenericCardModel({
   position,
   modelPath,
@@ -99,8 +106,10 @@ const GenericCardModel = memo(function GenericCardModel({
   index?: number;
 }) {
   const { scene } = useGLTF(modelPath);
+  const invalidate = useThree((state) => state.invalidate);
   const groupRef = useRef<THREE.Group>(null);
   const elapsed = useRef(0);
+  const settledRef = useRef(false);
   const delay = index * ANIM_STAGGER;
   const clearGLTF = useCallback((path: string) => {
     useGLTF.clear(path);
@@ -122,12 +131,20 @@ const GenericCardModel = memo(function GenericCardModel({
   }, [normalizeScale, scene]);
 
   useEffect(() => {
+    elapsed.current = 0;
+    settledRef.current = false;
+    invalidate();
+  }, [invalidate, modelScale, normalizedScale, position]);
+
+  useEffect(() => {
     return () => {
       releaseGLTFAsset(modelPath, scene, clearGLTF);
     };
   }, [clearGLTF, modelPath, scene]);
 
   useFrame((_, delta) => {
+    if (settledRef.current) return;
+
     elapsed.current += delta;
     const t = Math.min(1, Math.max(0, (elapsed.current - delay) / ANIM_DURATION));
     const eased = easeOutCubic(t);
@@ -136,6 +153,13 @@ const GenericCardModel = memo(function GenericCardModel({
       groupRef.current.position.y = position[1] + ANIM_OFFSET_Y * (1 - eased);
       groupRef.current.scale.setScalar(modelScale * normalizedScale * eased);
     }
+
+    if (t < 1) {
+      invalidate();
+      return;
+    }
+
+    settledRef.current = true;
   });
 
   return (
@@ -251,7 +275,7 @@ export default function BrowserPage() {
   return (
     <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
       {mounted && (
-        <Canvas camera={CAMERA_PROPS} dpr={compact ? 0.8 : 1} gl={GL_PROPS} style={CANVAS_STYLE}>
+        <Canvas camera={CAMERA_PROPS} dpr={compact ? 0.8 : 1} frameloop="demand" gl={GL_PROPS} style={CANVAS_STYLE}>
           <BrowserScene activeIndex={activeIndex} isMobile={compact} />
         </Canvas>
       )}
