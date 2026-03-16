@@ -10,7 +10,7 @@ import { MUSIC_TRACKS } from "@/constants/music";
 import type { MusicTrack } from "@/constants/music";
 import { useYoutubeMusicPlayer } from "@/hooks/use-youtube-music-player";
 import { stopAmbientAudio } from "@/lib/ambient-audio";
-import { formatElapsedTime } from "@/lib/youtube";
+import { formatElapsedTime, HIDDEN_YOUTUBE_PLAYER_DIMENSION } from "@/lib/youtube";
 
 const GRID_COLUMNS = { desktop: 5, mobile: 4 } as const;
 const PLAYER_TRANSITION_MS = 760;
@@ -362,7 +362,18 @@ export default function MusicPage() {
         }
       `}</style>
 
-      <div ref={playerHostRef} style={{ height: 0, left: -9999, position: "absolute", top: -9999, width: 0 }} />
+      <div
+        ref={playerHostRef}
+        style={{
+          height: HIDDEN_YOUTUBE_PLAYER_DIMENSION,
+          left: -9999,
+          opacity: 0,
+          pointerEvents: "none",
+          position: "absolute",
+          top: -9999,
+          width: HIDDEN_YOUTUBE_PLAYER_DIMENSION,
+        }}
+      />
 
       <div
         style={{

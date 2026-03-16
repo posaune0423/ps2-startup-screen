@@ -29,7 +29,7 @@ export const MUSIC_TRACKS: MusicTrack[] = [
     id: "track-1",
     number: 1,
     title: "あの夏へ",
-    youtubeUrl: "https://www.youtube.com/watch?v=6f1vVBjftA4",
+    youtubeUrl: "https://www.youtube.com/watch?v=TK1Ij_-mank",
   },
   {
     accentColor: TRACK_COLORS[1],
