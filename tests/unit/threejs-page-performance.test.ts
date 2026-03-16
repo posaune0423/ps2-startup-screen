@@ -23,7 +23,7 @@ test("shared item grid caches normalized GLTF scales and the startup scene avoid
   assert.doesNotMatch(sceneSource, /scene=\{sceneProps\}/);
 });
 
-test("system page keeps the always-animating flower scene on a clamped desktop DPR", () => {
-  assert.match(systemPageSource, /dpr=\{\[1, 1\.25\]\}/);
-  assert.match(systemPageSource, /gl=\{\{ antialias: false, alpha: false, powerPreference: "high-performance" \}\}/);
+test("system page keeps the reference desktop quality profile for the always-animating flower scene", () => {
+  assert.match(systemPageSource, /dpr=\{\[1, 1\.5\]\}/);
+  assert.match(systemPageSource, /gl=\{\{ antialias: true, powerPreference: "high-performance" \}\}/);
 });
