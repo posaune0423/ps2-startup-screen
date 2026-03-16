@@ -8,6 +8,7 @@ import type { RefObject } from "react";
 import * as THREE from "three";
 import useSceneSound from "use-sound";
 
+import { ThreeSceneHelperPanel } from "@/components/shared/three-scene-helper-panel";
 import { navigate } from "@/lib/navigate";
 import { getSoundEnabled, initializeSoundEnabled } from "@/lib/sound-settings";
 
@@ -90,16 +91,10 @@ export default function Scene() {
   }, [sound]);
 
   useEffect(() => {
-    let raf: number;
-    const check = () => {
-      if (elapsedRef.current >= CONFIG.timeline.duration) {
-        navigate("/menu");
-        return;
-      }
-      raf = requestAnimationFrame(check);
-    };
-    raf = requestAnimationFrame(check);
-    return () => cancelAnimationFrame(raf);
+    const timeoutId = window.setTimeout(() => {
+      navigate("/menu");
+    }, CONFIG.timeline.duration * 1000);
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   useEffect(() => {
@@ -151,8 +146,6 @@ export default function Scene() {
     [],
   );
 
-  const sceneProps = useMemo(() => ({ background: new THREE.Color("#1A1A1A") }), []);
-
   return (
     <div style={CONTAINER_STYLE} onClick={handleStartSound}>
       <Canvas
@@ -161,11 +154,11 @@ export default function Scene() {
         gl={GL_PROPS}
         onCreated={onCreated}
         camera={cameraProps}
-        scene={sceneProps}
         style={CANVAS_STYLE}
       >
         <SceneContent elapsedRef={elapsedRef} />
       </Canvas>
+      <ThreeSceneHelperPanel panelStyle={{ bottom: "24px", left: "24px" }} />
       <FadeOverlay getOpacity={getOverlayOpacity} />
     </div>
   );

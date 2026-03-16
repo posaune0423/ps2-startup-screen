@@ -32,3 +32,7 @@ test("button icons use a tighter circular mask to remove the white rim", () => {
   assert.match(backButtonSource, /const iconStyle = \{ clipPath: "circle\(40%\)" \} as const;/);
   assert.doesNotMatch(backButtonSource, /className="overflow-hidden bg-black"/);
 });
+
+test("music route maps back to the browser", () => {
+  assert.match(backButtonSource, /"\/memory\/music":\s*"\/browser"/);
+});

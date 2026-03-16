@@ -27,7 +27,7 @@ export const CONFIG = {
     distance: 15,
     decay: 1.5,
     position: [0, 0.2, 0] as readonly [number, number, number],
-    shadowMapSize: 1024,
+    shadowMapSize: 512,
     shadowBias: -0.001,
   },
   camera: {

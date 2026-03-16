@@ -3,10 +3,11 @@
 import { Clone, useGLTF } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import React, { memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type * as THREE from "three";
+import * as THREE from "three";
 
 import GlowCursor from "@/components/shared/glow-cursor";
 import Ps2BrowserBg from "@/components/shared/ps2-browser-bg";
+import { ThreeSceneHelperPanel } from "@/components/shared/three-scene-helper-panel";
 import { useMenuNavigation } from "@/components/shared/use-menu-navigation";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
@@ -16,42 +17,99 @@ import type { TranslationKey } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import { navigate } from "@/lib/navigate";
 
+interface BrowserCard {
+  href: string;
+  label: string;
+  labelKey: TranslationKey;
+  modelPath: string;
+  modelScaleDesktop: number;
+  modelScaleMobile: number;
+  rotation: [number, number, number];
+  normalizeScale?: boolean;
+}
+
 const CARDS = [
-  { labelKey: "browser.memoryCardWork" as TranslationKey, href: "/memory/work" },
-  { labelKey: "browser.memoryCardSns" as TranslationKey, href: "/memory/sns" },
-] as const;
-
-const CARD_POSITIONS: Array<[number, number, number]> = [
-  [-0.5, 0, 0],
-  [0.5, 0, 0],
-];
-
-const CARD_POSITIONS_MOBILE: Array<[number, number, number]> = [
-  [-0.3, 0, 0],
-  [0.3, 0, 0],
-];
+  {
+    href: "/memory/work",
+    label: "Work",
+    labelKey: "browser.memoryCardWork",
+    modelPath: "/3d/memorycard.glb",
+    modelScaleDesktop: 1,
+    modelScaleMobile: 0.7,
+    normalizeScale: false,
+    rotation: [-0.3, Math.PI / 2, 0.5],
+  },
+  {
+    href: "/memory/sns",
+    label: "SNS",
+    labelKey: "browser.memoryCardSns",
+    modelPath: "/3d/memorycard.glb",
+    modelScaleDesktop: 1,
+    modelScaleMobile: 0.7,
+    normalizeScale: false,
+    rotation: [-0.3, Math.PI / 2, 0.5],
+  },
+  {
+    href: "/memory/music",
+    label: "Audio CD",
+    labelKey: "browser.audioCd",
+    modelPath: "/3d/icons/cd.glb",
+    modelScaleDesktop: 0.95,
+    modelScaleMobile: 0.58,
+    rotation: [0, Math.PI / 2, 0],
+    normalizeScale: true,
+  },
+] as const satisfies readonly BrowserCard[];
+const PRELOADED_MODEL_PATHS = new Set<string>();
 
 const ANIM_DURATION = 0.8;
 const ANIM_STAGGER = 0.15;
 const ANIM_OFFSET_Y = -0.5;
-const CLONE_ROTATION: [number, number, number] = [-0.3, Math.PI / 2, 0.5];
+const MOBILE_CARD_POSITIONS: [number, number, number][] = [
+  [-0.34, 0.24, 0],
+  [0.34, 0.24, 0],
+  [0, -0.28, 0],
+];
 
 function easeOutCubic(t: number) {
   return 1 - (1 - t) ** 3;
 }
 
-const MemoryCardModel = memo(function MemoryCardModel({
+function createHorizontalPositions(itemCount: number, spacing: number): [number, number, number][] {
+  const centerOffset = (itemCount - 1) / 2;
+  return Array.from({ length: itemCount }, (_, index): [number, number, number] => [
+    (index - centerOffset) * spacing,
+    0,
+    0,
+  ]);
+}
+
+for (const { modelPath } of CARDS) {
+  if (PRELOADED_MODEL_PATHS.has(modelPath)) continue;
+  PRELOADED_MODEL_PATHS.add(modelPath);
+  useGLTF.preload(modelPath);
+}
+
+const GenericCardModel = memo(function GenericCardModel({
   position,
-  scale = 1,
+  modelPath,
+  modelScale = 1,
+  modelRotation,
+  normalizeScale = false,
   index = 0,
 }: {
   position: [number, number, number];
-  scale?: number;
+  modelPath: string;
+  modelScale?: number;
+  modelRotation: [number, number, number];
+  normalizeScale?: boolean;
   index?: number;
 }) {
-  const { scene } = useGLTF("/3d/memorycard.glb");
+  const { scene } = useGLTF(modelPath);
+  const invalidate = useThree((state) => state.invalidate);
   const groupRef = useRef<THREE.Group>(null);
   const elapsed = useRef(0);
+  const settledRef = useRef(false);
   const delay = index * ANIM_STAGGER;
   const clearGLTF = useCallback((path: string) => {
     useGLTF.clear(path);
@@ -62,26 +120,51 @@ const MemoryCardModel = memo(function MemoryCardModel({
     [position],
   );
 
+  const normalizedScale = useMemo(() => {
+    if (!normalizeScale) return 1;
+    const box = new THREE.Box3().setFromObject(scene);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const maxDim = Math.max(size.x, size.y, size.z);
+    if (maxDim <= 0) return 1;
+    return 1 / maxDim;
+  }, [normalizeScale, scene]);
+
+  useEffect(() => {
+    elapsed.current = 0;
+    settledRef.current = false;
+    invalidate();
+  }, [invalidate, modelScale, normalizedScale, position]);
+
   useEffect(() => {
     return () => {
-      releaseGLTFAsset("/3d/memorycard.glb", scene, clearGLTF);
+      releaseGLTFAsset(modelPath, scene, clearGLTF);
     };
-  }, [clearGLTF, scene]);
+  }, [clearGLTF, modelPath, scene]);
 
   useFrame((_, delta) => {
+    if (settledRef.current) return;
+
     elapsed.current += delta;
     const t = Math.min(1, Math.max(0, (elapsed.current - delay) / ANIM_DURATION));
     const eased = easeOutCubic(t);
 
     if (groupRef.current) {
       groupRef.current.position.y = position[1] + ANIM_OFFSET_Y * (1 - eased);
-      groupRef.current.scale.setScalar(scale * eased);
+      groupRef.current.scale.setScalar(modelScale * normalizedScale * eased);
     }
+
+    if (t < 1) {
+      invalidate();
+      return;
+    }
+
+    settledRef.current = true;
   });
 
   return (
     <group ref={groupRef} position={initPos} scale={0}>
-      <Clone object={scene} rotation={CLONE_ROTATION} />
+      <Clone object={scene} rotation={modelRotation} />
     </group>
   );
 });
@@ -105,7 +188,10 @@ const POINT_LIGHT_POS: [number, number, number] = [3.5, 1.2, 4.2];
 const HEMI_ARGS: [string, string, number] = ["#F6F9FF", "#070910", 0.75];
 
 const BrowserScene = memo(function BrowserScene({ activeIndex, isMobile }: { activeIndex: number; isMobile: boolean }) {
-  const positions = isMobile ? CARD_POSITIONS_MOBILE : CARD_POSITIONS;
+  const positions = useMemo(
+    () => (isMobile ? MOBILE_CARD_POSITIONS : createHorizontalPositions(CARDS.length, 0.92)),
+    [isMobile],
+  );
   const cursorPosition = useMemo((): [number, number, number] => [...positions[activeIndex]], [positions, activeIndex]);
 
   return (
@@ -119,9 +205,21 @@ const BrowserScene = memo(function BrowserScene({ activeIndex, isMobile }: { act
       <pointLight position={POINT_LIGHT_POS} intensity={0.9} color="#7FA9FF" distance={18} decay={1.7} />
 
       <Suspense fallback={null}>
-        {CARDS.map((card, index) => (
-          <MemoryCardModel key={card.href} position={positions[index]} scale={isMobile ? 0.7 : 1} index={index} />
-        ))}
+        {CARDS.map((card, index) => {
+          const modelScale = isMobile ? card.modelScaleMobile : card.modelScaleDesktop;
+
+          return (
+            <GenericCardModel
+              key={card.href}
+              position={positions[index]}
+              modelPath={card.modelPath}
+              modelScale={modelScale}
+              modelRotation={card.rotation}
+              normalizeScale={card.normalizeScale}
+              index={index}
+            />
+          );
+        })}
       </Suspense>
 
       <GlowCursor position={cursorPosition} color="#75D9EB" scale={isMobile ? 0.5 : 0.8} />
@@ -177,10 +275,11 @@ export default function BrowserPage() {
   return (
     <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
       {mounted && (
-        <Canvas camera={CAMERA_PROPS} dpr={compact ? 0.8 : 1} gl={GL_PROPS} style={CANVAS_STYLE}>
+        <Canvas camera={CAMERA_PROPS} dpr={compact ? 0.8 : 1} frameloop="demand" gl={GL_PROPS} style={CANVAS_STYLE}>
           <BrowserScene activeIndex={activeIndex} isMobile={compact} />
         </Canvas>
       )}
+      <ThreeSceneHelperPanel panelStyle={{ bottom: "24px", left: "24px" }} />
 
       <div
         style={{
@@ -214,8 +313,11 @@ export default function BrowserPage() {
           left: "50%",
           top: "50%",
           transform: "translate(-50%, -50%)",
-          display: "flex",
-          gap: compact ? "24px" : "48px",
+          display: compact ? "grid" : "flex",
+          gap: compact ? "18px 20px" : "48px",
+          gridTemplateColumns: compact ? "repeat(2, minmax(0, 1fr))" : undefined,
+          justifyItems: compact ? "center" : undefined,
+          width: compact ? "min(220px, calc(100vw - 40px))" : undefined,
           zIndex: 5,
         }}
       >
@@ -230,6 +332,7 @@ export default function BrowserPage() {
               background: "none",
               border: "none",
               cursor: "pointer",
+              gridColumn: compact && index === CARDS.length - 1 ? "1 / span 2" : undefined,
             }}
           />
         ))}
