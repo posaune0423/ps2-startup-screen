@@ -39,17 +39,17 @@ test("browser and item-grid canvases use demand frameloops for mostly static 3d 
   assert.match(itemGridSource, /const invalidate = useThree\(\(state\) => state\.invalidate\);/);
 });
 
-test("main scene replaces navigation polling and postprocessing multisampling with cheaper equivalents", () => {
+test("main scene keeps the timeout navigation path while restoring the reference startup quality profile", () => {
   assert.match(sceneSource, /const timeoutId = window\.setTimeout\(\(\) => \{\s*navigate\("\/menu"\);/s);
   assert.doesNotMatch(sceneSource, /requestAnimationFrame\(check\)/);
-  assert.match(postProcessingSource, /<EffectComposer multisampling=\{0\}>/);
-  assert.match(sceneConfigSource, /shadowMapSize:\s*512,/);
-  assert.doesNotMatch(floatingCubesSource, /side:\s*THREE\.DoubleSide,/);
+  assert.doesNotMatch(postProcessingSource, /<EffectComposer multisampling=\{0\}>/);
+  assert.match(sceneConfigSource, /shadowMapSize:\s*1024,/);
+  assert.match(floatingCubesSource, /side:\s*THREE\.DoubleSide,/);
 });
 
-test("system and helper canvases clamp expensive default WebGL settings", () => {
-  assert.match(systemPageSource, /dpr=\{\[1,\s*1\.25\]\}/);
-  assert.match(systemPageSource, /gl=\{\{ antialias: false, alpha: false, powerPreference: "high-performance" \}\}/);
+test("system and helper canvases keep the higher-quality reference desktop settings", () => {
+  assert.match(systemPageSource, /dpr=\{\[1,\s*1\.5\]\}/);
+  assert.match(systemPageSource, /gl=\{\{ antialias: true, powerPreference: "high-performance" \}\}/);
   assert.match(hexFlowerSource, /const petalsRef = useRef<THREE\.InstancedMesh>\(null\);/);
   assert.match(hexFlowerSource, /mesh\.instanceMatrix\.setUsage\(THREE\.StaticDrawUsage\);/);
   assert.match(
