@@ -77,7 +77,6 @@ export default memo(function FloatingCubes({ elapsedRef }: { elapsedRef: React.R
       iridescenceIOR: cfg.iridescenceIOR,
       transparent: true,
       depthWrite: false,
-      side: THREE.DoubleSide,
       envMapIntensity: 1.0,
     });
   }, []);

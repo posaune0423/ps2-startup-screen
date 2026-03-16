@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 const PETAL_COUNT = 12;
@@ -45,6 +45,25 @@ const sharedMaterial = new THREE.MeshPhysicalMaterial({
 
 export default function HexFlower() {
   const groupRef = useRef<THREE.Group>(null);
+  const petalsRef = useRef<THREE.InstancedMesh>(null);
+
+  useEffect(() => {
+    const mesh = petalsRef.current;
+    if (!mesh) return;
+
+    mesh.instanceMatrix.setUsage(THREE.StaticDrawUsage);
+
+    const dummy = new THREE.Object3D();
+
+    PETAL_DATA.forEach(({ position, rotation }, index) => {
+      dummy.position.set(...position);
+      dummy.rotation.set(...rotation);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(index, dummy.matrix);
+    });
+
+    mesh.instanceMatrix.needsUpdate = true;
+  }, []);
 
   useFrame((_, delta) => {
     if (groupRef.current) {
@@ -59,15 +78,7 @@ export default function HexFlower() {
       <pointLight position={[2, 3, 4]} intensity={40} color="#A0D0FF" distance={18} decay={1.5} />
       <pointLight position={[-3, -1, 2]} intensity={25} color="#6090FF" distance={14} decay={1.5} />
       <pointLight position={[0, 0, 0]} intensity={20} color="#7080FF" distance={10} decay={1.8} />
-      {PETAL_DATA.map(({ position, rotation }) => (
-        <mesh
-          key={`${position.join("-")}-${rotation.join("-")}`}
-          position={position}
-          rotation={rotation}
-          geometry={sharedGeometry}
-          material={sharedMaterial}
-        />
-      ))}
+      <instancedMesh ref={petalsRef} args={[sharedGeometry, sharedMaterial, PETAL_DATA.length]} />
     </group>
   );
 }

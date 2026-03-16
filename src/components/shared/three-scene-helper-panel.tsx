@@ -204,6 +204,7 @@ export function ThreeSceneHelperPanel({
       <Canvas
         camera={{ fov: 34, position: cameraPosition }}
         dpr={1}
+        frameloop="demand"
         gl={{ alpha: true, antialias: true }}
         onCreated={({ camera, scene }) => {
           camera.up.set(...cameraUp);
