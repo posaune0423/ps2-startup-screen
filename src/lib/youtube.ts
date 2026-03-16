@@ -3,6 +3,8 @@ export interface ParsedYoutubeTrackSource {
   videoId: string;
 }
 
+export const HIDDEN_YOUTUBE_PLAYER_DIMENSION = 200;
+
 function parseTimeValue(value: string | null): number {
   if (!value) return 0;
 
@@ -56,6 +58,8 @@ export function getYoutubeErrorMessage(errorCode: number): string {
       return "The requested YouTube video is invalid.";
     case 5:
       return "This YouTube video cannot be played in the current browser.";
+    case 153:
+      return "This YouTube video could not be initialized by the embedded player.";
     case 100:
       return "This YouTube video is unavailable.";
     case 101:

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { MusicTrack } from "@/constants/music";
 import { getSoundEnabled, initializeSoundEnabled } from "@/lib/sound-settings";
-import { getYoutubeErrorMessage, parseYoutubeTrackSource } from "@/lib/youtube";
+import { getYoutubeErrorMessage, HIDDEN_YOUTUBE_PLAYER_DIMENSION, parseYoutubeTrackSource } from "@/lib/youtube";
 
 type YoutubePlayerState = "buffering" | "ended" | "error" | "idle" | "loading" | "paused" | "playing" | "ready";
 
@@ -231,7 +231,7 @@ export function useYoutubeMusicPlayer(tracks: readonly MusicTrack[]) {
         const parsed = parseYoutubeTrackSource(nextTrack.youtubeUrl);
 
         if (!player || !isReadyRef.current) {
-          pendingSelectionRef.current = { autoplay, index: nextIndex };
+          pendingSelectionRef.current = { autoplay: false, index: nextIndex };
           setNoticeMessage("Loading YouTube player...");
           setPlayerState("loading");
           return;
@@ -434,7 +434,7 @@ export function useYoutubeMusicPlayer(tracks: readonly MusicTrack[]) {
               }
             },
           },
-          height: "0",
+          height: String(HIDDEN_YOUTUBE_PLAYER_DIMENSION),
           playerVars: {
             autoplay: 0,
             controls: 0,
@@ -442,7 +442,7 @@ export function useYoutubeMusicPlayer(tracks: readonly MusicTrack[]) {
             playsinline: 1,
             rel: 0,
           },
-          width: "0",
+          width: String(HIDDEN_YOUTUBE_PLAYER_DIMENSION),
         });
       })
       .catch((error: unknown) => {

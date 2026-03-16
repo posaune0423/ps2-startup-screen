@@ -41,10 +41,21 @@ test("youtube iframe api loader resets cached load state after failures", () => 
   assert.match(hookSource, /script\.addEventListener\("error", handleScriptError, \{ once: true \}\);/);
 });
 
+test("youtube music player downgrades deferred pre-ready selections to cue-only playback", () => {
+  assert.match(hookSource, /pendingSelectionRef\.current = \{ autoplay: false, index: nextIndex \};/);
+  assert.match(hookSource, /applyTrackSelectionRef\.current\(pending\.index, pending\.autoplay\);/);
+});
+
 test("youtube music player only publishes whole-second progress changes to avoid sub-second page rerenders", () => {
   assert.match(hookSource, /const currentSecondsRef = useRef\(0\);/);
   assert.match(hookSource, /const durationSecondsRef = useRef\(0\);/);
   assert.match(hookSource, /Math\.floor\(Math\.max\(0, absoluteCurrentTime - parsedTrack\.startSeconds\)\)/);
   assert.match(hookSource, /if \(nextCurrentSeconds !== currentSecondsRef\.current\)/);
   assert.match(hookSource, /if \(nextDurationSeconds !== durationSecondsRef\.current\)/);
+});
+
+test("youtube music player keeps the embedded iframe offscreen without collapsing it to zero size", () => {
+  assert.match(hookSource, /HIDDEN_YOUTUBE_PLAYER_DIMENSION/);
+  assert.match(hookSource, /height: String\(HIDDEN_YOUTUBE_PLAYER_DIMENSION\),/);
+  assert.match(hookSource, /width: String\(HIDDEN_YOUTUBE_PLAYER_DIMENSION\),/);
 });

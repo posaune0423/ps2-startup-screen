@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { test } from "vite-plus/test";
 
 import { MUSIC_TRACKS } from "../../src/constants/music";
-import { formatElapsedTime, parseYoutubeTrackSource } from "../../src/lib/youtube";
+import { formatElapsedTime, getYoutubeErrorMessage, parseYoutubeTrackSource } from "../../src/lib/youtube";
 
 test("music constants define the requested ten tracks in order", () => {
   assert.equal(MUSIC_TRACKS.length, 10);
@@ -36,7 +36,7 @@ test("music constants keep artist metadata free of markdown artifacts", () => {
 test("youtube parser extracts the video id and requested start times from authored track URLs", () => {
   assert.deepEqual(parseYoutubeTrackSource(MUSIC_TRACKS[0].youtubeUrl), {
     startSeconds: 0,
-    videoId: "6f1vVBjftA4",
+    videoId: "TK1Ij_-mank",
   });
   assert.deepEqual(parseYoutubeTrackSource(MUSIC_TRACKS[4].youtubeUrl), {
     startSeconds: 0,
@@ -55,4 +55,8 @@ test("youtube parser extracts the video id and requested start times from author
 test("elapsed time formatter keeps the PS2 music screen wording", () => {
   assert.equal(formatElapsedTime(0), "00 min. 00sec.");
   assert.equal(formatElapsedTime(73), "01 min. 13sec.");
+});
+
+test("youtube error messages explain embedded player configuration failures", () => {
+  assert.equal(getYoutubeErrorMessage(153), "This YouTube video could not be initialized by the embedded player.");
 });

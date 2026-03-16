@@ -38,11 +38,22 @@ test("music page abstracts YouTube playback through a dedicated hook and keeps p
   assert.match(musicPageSource, /import \{ useYoutubeMusicPlayer \} from "@\/hooks\/use-youtube-music-player"/);
   assert.match(
     musicPageSource,
+    /import \{ formatElapsedTime, HIDDEN_YOUTUBE_PLAYER_DIMENSION \} from "@\/lib\/youtube";/,
+  );
+  assert.match(
+    musicPageSource,
     /const \{\s*activeTrackIndex,\s*currentSeconds,\s*errorMessage,\s*isReady,[\s\S]*noticeMessage,[\s\S]*playerHostRef,[\s\S]*playerState,/s,
   );
   assert.match(musicPageSource, /aria-live="polite"/);
   assert.doesNotMatch(musicPageSource, /\{activeTrack\.title\}/);
   assert.doesNotMatch(musicPageSource, /\{activeTrack\.artist\}/);
+});
+
+test("music page keeps the hidden YouTube host offscreen without using a zero-sized box", () => {
+  assert.match(musicPageSource, /height: HIDDEN_YOUTUBE_PLAYER_DIMENSION,/);
+  assert.match(musicPageSource, /width: HIDDEN_YOUTUBE_PLAYER_DIMENSION,/);
+  assert.match(musicPageSource, /opacity: 0,/);
+  assert.match(musicPageSource, /pointerEvents: "none",/);
 });
 
 test("music page uses a six-face cube and animates the selected cube into the player pane", () => {
