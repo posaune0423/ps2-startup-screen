@@ -59,7 +59,7 @@ async function loadYoutubeIframeApi(): Promise<YoutubePlayerNamespace> {
   }
 
   youtubeApiPromise = new Promise<YoutubePlayerNamespace>((resolve, reject) => {
-    const existingScript = document.querySelector<HTMLScriptElement>('script[data-youtube-iframe-api="true"]');
+    let script = document.querySelector<HTMLScriptElement>('script[data-youtube-iframe-api="true"]');
     const previousReady = window.onYouTubeIframeAPIReady;
     let settled = false;
     let timeoutId = 0;
@@ -70,12 +70,24 @@ async function loadYoutubeIframeApi(): Promise<YoutubePlayerNamespace> {
       }
     };
 
+    const detachScriptErrorHandler = () => {
+      script?.removeEventListener("error", handleScriptError);
+    };
+
+    const removeFailedScript = () => {
+      if (!script || window.YT?.Player) return;
+      detachScriptErrorHandler();
+      script.remove();
+      script = null;
+    };
+
     const rejectLoad = (error: Error) => {
       if (settled) return;
       settled = true;
       window.clearTimeout(timeoutId);
       youtubeApiPromise = null;
       restoreReadyHandler();
+      removeFailedScript();
       reject(error);
     };
 
@@ -85,6 +97,7 @@ async function loadYoutubeIframeApi(): Promise<YoutubePlayerNamespace> {
         settled = true;
         window.clearTimeout(timeoutId);
         restoreReadyHandler();
+        detachScriptErrorHandler();
         resolve(window.YT);
         return;
       }
@@ -105,14 +118,15 @@ async function loadYoutubeIframeApi(): Promise<YoutubePlayerNamespace> {
       rejectLoad(new Error("Failed to load the YouTube IFrame API."));
     };
 
-    if (!existingScript) {
-      const script = document.createElement("script");
+    if (!script) {
+      script = document.createElement("script");
       script.async = true;
       script.src = "https://www.youtube.com/iframe_api";
       script.dataset.youtubeIframeApi = "true";
-      script.addEventListener("error", handleScriptError, { once: true });
       document.head.appendChild(script);
     }
+
+    script.addEventListener("error", handleScriptError, { once: true });
 
     timeoutId = window.setTimeout(() => {
       if (!window.YT?.Player) {
@@ -134,6 +148,8 @@ export function useYoutubeMusicPlayer(tracks: readonly MusicTrack[]) {
   const playerRef = useRef<YoutubePlayerInstance | null>(null);
   const pendingSelectionRef = useRef<{ autoplay: boolean; index: number } | null>(null);
   const activeTrackIndexRef = useRef(0);
+  const currentSecondsRef = useRef(0);
+  const durationSecondsRef = useRef(0);
   const isReadyRef = useRef(false);
   const suppressEndedRef = useRef(false);
   const tracksRef = useRef(tracks);
@@ -162,6 +178,18 @@ export function useYoutubeMusicPlayer(tracks: readonly MusicTrack[]) {
     isReadyRef.current = isReady;
   }, [isReady]);
 
+  const publishProgress = useCallback((nextCurrentSeconds: number, nextDurationSeconds: number) => {
+    if (nextCurrentSeconds !== currentSecondsRef.current) {
+      currentSecondsRef.current = nextCurrentSeconds;
+      setCurrentSeconds(nextCurrentSeconds);
+    }
+
+    if (nextDurationSeconds !== durationSecondsRef.current) {
+      durationSecondsRef.current = nextDurationSeconds;
+      setDurationSeconds(nextDurationSeconds);
+    }
+  }, []);
+
   const syncProgress = useCallback(() => {
     const player = playerRef.current;
     const active = activeTrack;
@@ -171,13 +199,14 @@ export function useYoutubeMusicPlayer(tracks: readonly MusicTrack[]) {
       const parsedTrack = parseYoutubeTrackSource(active.youtubeUrl);
       const absoluteCurrentTime = player.getCurrentTime() || 0;
       const absoluteDuration = player.getDuration() || 0;
+      const nextCurrentSeconds = Math.floor(Math.max(0, absoluteCurrentTime - parsedTrack.startSeconds));
+      const nextDurationSeconds = Math.floor(Math.max(0, absoluteDuration - parsedTrack.startSeconds));
 
-      setCurrentSeconds(Math.max(0, absoluteCurrentTime - parsedTrack.startSeconds));
-      setDurationSeconds(Math.max(0, absoluteDuration - parsedTrack.startSeconds));
+      publishProgress(nextCurrentSeconds, nextDurationSeconds);
     } catch {
       // Ignore transient YouTube API timing failures during teardown/buffering.
     }
-  }, [activeTrack]);
+  }, [activeTrack, publishProgress]);
 
   const applyTrackSelection = useCallback(
     (index: number, autoplay: boolean) => {
@@ -187,8 +216,7 @@ export function useYoutubeMusicPlayer(tracks: readonly MusicTrack[]) {
 
       initializeSoundEnabled();
       setActiveTrackIndex(nextIndex);
-      setCurrentSeconds(0);
-      setDurationSeconds(0);
+      publishProgress(0, 0);
       setErrorMessage(null);
 
       if (!getSoundEnabled()) {
@@ -223,7 +251,7 @@ export function useYoutubeMusicPlayer(tracks: readonly MusicTrack[]) {
         setPlayerState("error");
       }
     },
-    [tracks],
+    [publishProgress, tracks],
   );
 
   const applyTrackSelectionRef = useRef(applyTrackSelection);
@@ -291,11 +319,11 @@ export function useYoutubeMusicPlayer(tracks: readonly MusicTrack[]) {
       suppressEndedRef.current = true;
       player.stopVideo();
       player.cueVideoById(parsedTrack);
-      setCurrentSeconds(0);
+      publishProgress(0, 0);
       setNoticeMessage("Playback stopped.");
       setPlayerState("idle");
     }, "Failed to stop the current track.");
-  }, [runPlayerCommand]);
+  }, [publishProgress, runPlayerCommand]);
 
   const seekBy = useCallback(
     (seconds: number) => {

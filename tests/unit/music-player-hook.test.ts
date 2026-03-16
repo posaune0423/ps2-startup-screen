@@ -28,6 +28,23 @@ test("youtube music player keeps a stable selection callback for player lifecycl
 });
 
 test("youtube iframe api loader resets cached load state after failures", () => {
+  assert.match(
+    hookSource,
+    /let script = document\.querySelector<HTMLScriptElement>\('script\[data-youtube-iframe-api="true"\]'\);/,
+  );
   assert.match(hookSource, /youtubeApiPromise = null;/);
   assert.match(hookSource, /window\.onYouTubeIframeAPIReady = previousReady;/);
+  assert.match(hookSource, /script\?\.removeEventListener\("error", handleScriptError\);/);
+  assert.match(hookSource, /if \(!script \|\| window\.YT\?\.Player\) return;/);
+  assert.match(hookSource, /script\.remove\(\);/);
+  assert.match(hookSource, /script = null;/);
+  assert.match(hookSource, /script\.addEventListener\("error", handleScriptError, \{ once: true \}\);/);
+});
+
+test("youtube music player only publishes whole-second progress changes to avoid sub-second page rerenders", () => {
+  assert.match(hookSource, /const currentSecondsRef = useRef\(0\);/);
+  assert.match(hookSource, /const durationSecondsRef = useRef\(0\);/);
+  assert.match(hookSource, /Math\.floor\(Math\.max\(0, absoluteCurrentTime - parsedTrack\.startSeconds\)\)/);
+  assert.match(hookSource, /if \(nextCurrentSeconds !== currentSecondsRef\.current\)/);
+  assert.match(hookSource, /if \(nextDurationSeconds !== durationSecondsRef\.current\)/);
 });

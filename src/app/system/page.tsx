@@ -5,6 +5,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import type * as THREE from "three";
 
+import { ThreeSceneHelperPanel } from "@/components/shared/three-scene-helper-panel";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import HexFlower from "@/components/system/hex-flower";
 import SystemMenu from "@/components/system/system-menu";
@@ -139,6 +140,7 @@ export default function SystemPage() {
       >
         <SystemScene />
       </Canvas>
+      <ThreeSceneHelperPanel panelStyle={{ bottom: "24px", left: "24px" }} />
       <SystemMenu onBack={handleBack} />
     </div>
   );

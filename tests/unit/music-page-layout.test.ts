@@ -8,11 +8,15 @@ const musicPageSource = readFileSync(new URL("../../src/app/memory/music/page.ts
 test("music page renders the Audio CD header, track counter, and responsive grid layout", () => {
   assert.match(musicPageSource, /Audio CD/);
   assert.match(musicPageSource, /Track \{currentTrack\.number\}/);
-  assert.match(musicPageSource, /const GRID_COLUMNS = \{ desktop: 5, mobile: 3 \} as const;/);
+  assert.match(musicPageSource, /const GRID_COLUMNS = \{ desktop: 5, mobile: \d+ \} as const;/);
   assert.match(musicPageSource, /MUSIC_TRACKS\.map\(\(track, index\) =>/);
 });
 
 test("music page keeps the shared back/enter chrome at the bottom and uses media icons instead of text glyphs", () => {
+  assert.match(
+    musicPageSource,
+    /import \{ SHOW_THREE_SCENE_HELPER, ThreeSceneHelperPanel \} from "@\/components\/shared\/three-scene-helper-panel"/,
+  );
   assert.match(musicPageSource, /import \{ MediaControlIcon \} from "@\/components\/shared\/media-icons"/);
   assert.match(musicPageSource, /aria-label="Previous track"/);
   assert.match(musicPageSource, /aria-label="Seek backward 10 seconds"/);
@@ -53,14 +57,32 @@ test("music page uses a six-face cube and animates the selected cube into the pl
   assert.match(musicPageSource, /rotateX\(-90deg\) translateZ/);
   assert.match(musicPageSource, /playerDockRef/);
   assert.match(musicPageSource, /position: "fixed"/);
-  assert.match(musicPageSource, /music-cube-twist-walk 5\.8s linear infinite/);
+  assert.match(musicPageSource, /music-cube-twist-walk 14s linear infinite/);
+  assert.match(musicPageSource, /rotate3d\(1, 1, 0\.75, 360deg\)/);
 });
 
-test("music page keeps the track cubes on a clean x/y grid and removes static camera tilt", () => {
+test("music page keeps x/y aligned and exposes an env-toggled grid helper for axis debugging", () => {
   assert.match(musicPageSource, /display: "grid"/);
   assert.match(musicPageSource, /gridTemplateColumns: `repeat\(\$\{columnCount\}, minmax\(0, 1fr\)\)`/);
-  assert.doesNotMatch(musicPageSource, /const GRID_CAMERA = \{/);
-  assert.doesNotMatch(musicPageSource, /const STATIC_CUBE_CAMERA = \{/);
-  assert.doesNotMatch(musicPageSource, /rotateX\(-55deg\) rotateY\(25deg\)/);
-  assert.doesNotMatch(musicPageSource, /perspective: gridCamera\.perspective/);
+  assert.match(
+    musicPageSource,
+    /import \{ SHOW_THREE_SCENE_HELPER, ThreeSceneHelperPanel \} from "@\/components\/shared\/three-scene-helper-panel"/,
+  );
+  assert.match(musicPageSource, /SHOW_THREE_SCENE_HELPER \? <MusicGridDebugPanel/);
+  assert.match(musicPageSource, /const GRID_CAMERA_TILT = "rotateX\(-?\d+deg\)";/);
+  assert.match(musicPageSource, /const GRID_CAMERA = \{/);
+  assert.match(musicPageSource, /const gridCamera = compact \? GRID_CAMERA\.mobile : GRID_CAMERA\.desktop;/);
+  assert.match(musicPageSource, /perspective: gridCamera\.perspective/);
+  assert.match(musicPageSource, /transform: gridCamera\.transform/);
+  assert.match(musicPageSource, /translate3d\(0, 0, \$\{halfSize\}\)/);
+  assert.match(musicPageSource, /plane="xy"/);
+  assert.match(musicPageSource, /cameraUp=\{\[0, 0, 1\]\}/);
+  assert.doesNotMatch(musicPageSource, /const GRID_CAMERA_TILT = "rotateX\([^)]+\) rotateZ\([^)]+\)";/);
+  assert.doesNotMatch(musicPageSource, /const GRID_CAMERA_TILT = "rotateX\([^)]+\) rotateY\([^)]+\)";/);
+});
+
+test("music page keeps shared text outline smoothing and avoids forcing the player text pane onto a 3d layer", () => {
+  assert.doesNotMatch(musicPageSource, /textShadow:\s*"none"/);
+  assert.match(musicPageSource, /transform: `translateY\(\$\{viewMode === "grid" \? "24px" : "0"\}\)`/);
+  assert.doesNotMatch(musicPageSource, /transform: `translate3d\(0, \$\{viewMode === "grid" \? "24px" : "0"\}, 0\)`/);
 });

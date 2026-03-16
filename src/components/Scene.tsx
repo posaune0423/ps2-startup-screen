@@ -8,6 +8,7 @@ import type { RefObject } from "react";
 import * as THREE from "three";
 import useSceneSound from "use-sound";
 
+import { ThreeSceneHelperPanel } from "@/components/shared/three-scene-helper-panel";
 import { navigate } from "@/lib/navigate";
 import { getSoundEnabled, initializeSoundEnabled } from "@/lib/sound-settings";
 
@@ -166,6 +167,7 @@ export default function Scene() {
       >
         <SceneContent elapsedRef={elapsedRef} />
       </Canvas>
+      <ThreeSceneHelperPanel panelStyle={{ bottom: "24px", left: "24px" }} />
       <FadeOverlay getOpacity={getOverlayOpacity} />
     </div>
   );

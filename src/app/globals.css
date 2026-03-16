@@ -16,6 +16,8 @@ body {
 
 body {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   -webkit-text-stroke: 2px var(--ps2-text-outline-color);
   paint-order: stroke fill;
   text-shadow:
@@ -44,7 +46,7 @@ textarea {
 }
 
 .ps2-text {
-  font-family: inherit;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   display: inline-block;
   transform: scaleX(1.18);
   transform-origin: center center;
