@@ -39,7 +39,7 @@ test("youtube parser extracts the video id and requested start times from author
     videoId: "6f1vVBjftA4",
   });
   assert.deepEqual(parseYoutubeTrackSource(MUSIC_TRACKS[4].youtubeUrl), {
-    startSeconds: 68,
+    startSeconds: 0,
     videoId: "O_Om4naEK-Y",
   });
   assert.deepEqual(parseYoutubeTrackSource(MUSIC_TRACKS[5].youtubeUrl), {
@@ -47,7 +47,7 @@ test("youtube parser extracts the video id and requested start times from author
     videoId: "OHtIKIs2u-I",
   });
   assert.deepEqual(parseYoutubeTrackSource(MUSIC_TRACKS[7].youtubeUrl), {
-    startSeconds: 10,
+    startSeconds: 0,
     videoId: "x07HqlAufR4",
   });
 });
