@@ -2,9 +2,10 @@
 
 import { Environment } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import type * as THREE from "three";
+import React, { useCallback, useEffect, useMemo } from "react";
+import * as THREE from "three";
 
+import { ThreeSceneHelperPanel } from "@/components/shared/three-scene-helper-panel";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import HexFlower from "@/components/system/hex-flower";
 import SystemMenu from "@/components/system/system-menu";
@@ -13,6 +14,7 @@ import { navigate } from "@/lib/navigate";
 import { createRingFogMaterial } from "@/shaders/ringFog";
 
 function BackgroundHaze() {
+  const planeGeometry = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
   const mats = useMemo(
     () => [
       // Main purple ring fog (#433767 base)
@@ -55,8 +57,6 @@ function BackgroundHaze() {
     [],
   );
 
-  const meshRefs = useRef<(THREE.Mesh | null)[]>([]);
-
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
     mats.forEach((mat) => {
@@ -66,36 +66,9 @@ function BackgroundHaze() {
 
   return (
     <group>
-      <mesh
-        ref={(el) => {
-          meshRefs.current[0] = el;
-        }}
-        position={[0, 0, -12]}
-        scale={[34, 34, 1]}
-        material={mats[0]}
-      >
-        <planeGeometry args={[1, 1]} />
-      </mesh>
-      <mesh
-        ref={(el) => {
-          meshRefs.current[1] = el;
-        }}
-        position={[0, 0, -15]}
-        scale={[46, 46, 1]}
-        material={mats[1]}
-      >
-        <planeGeometry args={[1, 1]} />
-      </mesh>
-      <mesh
-        ref={(el) => {
-          meshRefs.current[2] = el;
-        }}
-        position={[0, 0, -11]}
-        scale={[28, 28, 1]}
-        material={mats[2]}
-      >
-        <planeGeometry args={[1, 1]} />
-      </mesh>
+      <mesh position={[0, 0, -12]} scale={[34, 34, 1]} material={mats[0]} geometry={planeGeometry} />
+      <mesh position={[0, 0, -15]} scale={[46, 46, 1]} material={mats[1]} geometry={planeGeometry} />
+      <mesh position={[0, 0, -11]} scale={[28, 28, 1]} material={mats[2]} geometry={planeGeometry} />
     </group>
   );
 }
@@ -134,11 +107,12 @@ export default function SystemPage() {
       <Canvas
         camera={{ position: [0, 0, 6], fov: 50 }}
         style={{ width: "100%", height: "100%" }}
-        dpr={[1, 1.5]}
-        gl={{ antialias: true, powerPreference: "high-performance" }}
+        dpr={[1, 1.25]}
+        gl={{ antialias: false, alpha: false, powerPreference: "high-performance" }}
       >
         <SystemScene />
       </Canvas>
+      <ThreeSceneHelperPanel panelStyle={{ bottom: "24px", left: "24px" }} />
       <SystemMenu onBack={handleBack} />
     </div>
   );

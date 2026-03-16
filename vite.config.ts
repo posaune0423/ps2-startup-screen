@@ -10,6 +10,14 @@ export default defineConfig({
     }),
   ],
 
+  optimizeDeps: {
+    include: ["next/navigation"],
+  },
+
+  resolve: {
+    dedupe: ["react", "react-dom"],
+  },
+
   lint: {
     ignorePatterns: [
       "dist/**",

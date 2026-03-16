@@ -7,6 +7,7 @@ import * as THREE from "three";
 
 import GlowCursor from "@/components/shared/glow-cursor";
 import Ps2BrowserBg from "@/components/shared/ps2-browser-bg";
+import { ThreeSceneHelperPanel } from "@/components/shared/three-scene-helper-panel";
 import { useMenuNavigation } from "@/components/shared/use-menu-navigation";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
@@ -30,6 +31,8 @@ const ITEM_SPACING = 0.8;
 const ROW_DEPTH = 0.7;
 const TARGET_SIZE = 0.5;
 const TARGET_SIZE_MOBILE = 0.6;
+const NORMALIZED_SCALE_CACHE = new Map<string, number>();
+const PRELOADED_MODEL_PATHS = new Set<string>(["/3d/memorycard.glb"]);
 
 function calcGridPositions(items: GridItem[]): [number, number, number][] {
   const n = items.length;
@@ -65,14 +68,21 @@ const GlbModel = memo(function GlbModel({ modelPath, isMobile }: { modelPath: st
   }, []);
 
   const normalizedScale = useMemo(() => {
+    const target = isMobile ? TARGET_SIZE_MOBILE : TARGET_SIZE;
+    const cacheKey = `${modelPath}:${target}`;
+    const cachedScale = NORMALIZED_SCALE_CACHE.get(cacheKey);
+    if (cachedScale !== undefined) return cachedScale;
+
     const box = new THREE.Box3().setFromObject(scene);
     const size = new THREE.Vector3();
     box.getSize(size);
     const maxDim = Math.max(size.x, size.y, size.z);
     if (maxDim === 0) return 1;
-    const target = isMobile ? TARGET_SIZE_MOBILE : TARGET_SIZE;
-    return target / maxDim;
-  }, [scene, isMobile]);
+
+    const nextScale = target / maxDim;
+    NORMALIZED_SCALE_CACHE.set(cacheKey, nextScale);
+    return nextScale;
+  }, [modelPath, scene, isMobile]);
 
   useEffect(() => {
     return () => {
@@ -113,9 +123,11 @@ const GridItemModel = memo(function GridItemModel({
   isMobile: boolean;
   isActive: boolean;
 }) {
+  const invalidate = useThree((state) => state.invalidate);
   const groupRef = useRef<THREE.Group>(null);
   const meshRef = useRef<THREE.Mesh>(null);
   const elapsed = useRef(0);
+  const settledRef = useRef(false);
   const delay = index * ANIM_STAGGER;
 
   const fallbackGeo = useMemo(() => new THREE.BoxGeometry(0.8, 0.8, 0.8), []);
@@ -138,6 +150,8 @@ const GridItemModel = memo(function GridItemModel({
   );
 
   useFrame((_, delta) => {
+    if (settledRef.current && modelPath) return;
+
     elapsed.current += delta;
     const t = Math.min(1, Math.max(0, (elapsed.current - delay) / ANIM_DURATION));
     const eased = easeOutCubic(t);
@@ -150,6 +164,13 @@ const GridItemModel = memo(function GridItemModel({
     if (!modelPath && meshRef.current) {
       meshRef.current.rotation.y += delta * 0.5;
     }
+
+    if (t < 1 || !modelPath) {
+      invalidate();
+      return;
+    }
+
+    settledRef.current = true;
   });
 
   return (
@@ -227,6 +248,8 @@ const GridScene = memo(function GridScene({
 const MEMORY_CARD_ICON_CAMERA = { position: [0, 0, 1.2] as [number, number, number], fov: 45 };
 const MEMORY_CARD_ICON_GL = { alpha: true, antialias: true, powerPreference: "high-performance" as const };
 
+useGLTF.preload("/3d/memorycard.glb");
+
 const TinyMemoryCard = memo(function TinyMemoryCard() {
   const { scene } = useGLTF("/3d/memorycard.glb");
 
@@ -277,6 +300,14 @@ export default function ItemGrid({ items, title }: ItemGridProps) {
     startAmbientAudio();
   }, []);
 
+  useEffect(() => {
+    for (const item of items) {
+      if (!item.modelPath || PRELOADED_MODEL_PATHS.has(item.modelPath)) continue;
+      PRELOADED_MODEL_PATHS.add(item.modelPath);
+      useGLTF.preload(item.modelPath);
+    }
+  }, [items]);
+
   const prevIndexRef = useRef(activeIndex);
   useEffect(() => {
     if (prevIndexRef.current !== activeIndex) {
@@ -287,7 +318,7 @@ export default function ItemGrid({ items, title }: ItemGridProps) {
 
   return (
     <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
-      <Canvas camera={cameraProps} dpr={compact ? 1 : 1.5} gl={GL_PROPS} style={CANVAS_STYLE}>
+      <Canvas camera={cameraProps} dpr={compact ? 1 : 1.25} frameloop="demand" gl={GL_PROPS} style={CANVAS_STYLE}>
         <GridScene
           items={items}
           activeIndex={activeIndex}
@@ -296,6 +327,7 @@ export default function ItemGrid({ items, title }: ItemGridProps) {
           isMobile={compact}
         />
       </Canvas>
+      <ThreeSceneHelperPanel panelStyle={{ bottom: "24px", left: "24px" }} />
 
       <div
         style={{
@@ -313,7 +345,8 @@ export default function ItemGrid({ items, title }: ItemGridProps) {
         <div style={{ width: compact ? 40 : 48, height: compact ? 40 : 48, flexShrink: 0, marginTop: "6px" }}>
           <Canvas
             camera={MEMORY_CARD_ICON_CAMERA}
-            dpr={compact ? 1 : 1.25}
+            dpr={compact ? 1 : 1}
+            frameloop="demand"
             gl={MEMORY_CARD_ICON_GL}
             style={CANVAS_STYLE}
           >
