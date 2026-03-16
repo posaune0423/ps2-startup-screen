@@ -7,6 +7,7 @@ import * as THREE from "three";
 
 import GlowCursor from "@/components/shared/glow-cursor";
 import Ps2BrowserBg from "@/components/shared/ps2-browser-bg";
+import { ThreeSceneHelperPanel } from "@/components/shared/three-scene-helper-panel";
 import { useMenuNavigation } from "@/components/shared/use-menu-navigation";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
@@ -296,6 +297,7 @@ export default function ItemGrid({ items, title }: ItemGridProps) {
           isMobile={compact}
         />
       </Canvas>
+      <ThreeSceneHelperPanel panelStyle={{ bottom: "24px", left: "24px" }} />
 
       <div
         style={{

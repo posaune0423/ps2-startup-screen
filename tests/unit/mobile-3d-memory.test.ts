@@ -44,6 +44,21 @@ test("browser page includes a dedicated Audio CD entry with its own GLTF asset",
   assert.match(browserPageSource, /modelPath:\s*"\/3d\/icons\/cd\.glb"/);
 });
 
+test("browser page moves the Audio CD card onto a second mobile row to avoid overflow", () => {
+  assert.match(
+    browserPageSource,
+    /const MOBILE_CARD_POSITIONS: \[number, number, number\]\[\] = \[\s*\[-0\.34,\s*0\.24,\s*0\],\s*\[0\.34,\s*0\.24,\s*0\],\s*\[0,\s*-0\.28,\s*0\],\s*\];/s,
+  );
+  assert.match(browserPageSource, /modelScaleMobile: 0\.58,/);
+  assert.match(
+    browserPageSource,
+    /const positions = useMemo\(\s*\(\) => \(isMobile \? MOBILE_CARD_POSITIONS : createHorizontalPositions\(CARDS\.length,\s*0\.92\)\),\s*\[isMobile\],\s*\);/s,
+  );
+  assert.match(browserPageSource, /display: compact \? "grid" : "flex"/);
+  assert.match(browserPageSource, /gridTemplateColumns: compact \? "repeat\(2, minmax\(0, 1fr\)\)" : undefined/);
+  assert.match(browserPageSource, /gridColumn: compact && index === CARDS\.length - 1 \? "1 \/ span 2" : undefined/);
+});
+
 test("orb ring switches to a lighter mobile profile on phones", () => {
   assert.match(orbRingSource, /const MOBILE_ORB_COUNT = 5;/);
   assert.match(orbRingSource, /const MOBILE_TRAIL_LENGTH = 10;/);

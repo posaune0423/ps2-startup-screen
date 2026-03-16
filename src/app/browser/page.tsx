@@ -7,6 +7,7 @@ import * as THREE from "three";
 
 import GlowCursor from "@/components/shared/glow-cursor";
 import Ps2BrowserBg from "@/components/shared/ps2-browser-bg";
+import { ThreeSceneHelperPanel } from "@/components/shared/three-scene-helper-panel";
 import { useMenuNavigation } from "@/components/shared/use-menu-navigation";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
@@ -54,7 +55,7 @@ const CARDS = [
     labelKey: "browser.audioCd",
     modelPath: "/3d/icons/cd.glb",
     modelScaleDesktop: 0.95,
-    modelScaleMobile: 0.72,
+    modelScaleMobile: 0.58,
     rotation: [0, Math.PI / 2, 0],
     normalizeScale: true,
   },
@@ -63,6 +64,11 @@ const CARDS = [
 const ANIM_DURATION = 0.8;
 const ANIM_STAGGER = 0.15;
 const ANIM_OFFSET_Y = -0.5;
+const MOBILE_CARD_POSITIONS: [number, number, number][] = [
+  [-0.34, 0.24, 0],
+  [0.34, 0.24, 0],
+  [0, -0.28, 0],
+];
 
 function easeOutCubic(t: number) {
   return 1 - (1 - t) ** 3;
@@ -158,7 +164,10 @@ const POINT_LIGHT_POS: [number, number, number] = [3.5, 1.2, 4.2];
 const HEMI_ARGS: [string, string, number] = ["#F6F9FF", "#070910", 0.75];
 
 const BrowserScene = memo(function BrowserScene({ activeIndex, isMobile }: { activeIndex: number; isMobile: boolean }) {
-  const positions = useMemo(() => createHorizontalPositions(CARDS.length, isMobile ? 0.62 : 0.92), [isMobile]);
+  const positions = useMemo(
+    () => (isMobile ? MOBILE_CARD_POSITIONS : createHorizontalPositions(CARDS.length, 0.92)),
+    [isMobile],
+  );
   const cursorPosition = useMemo((): [number, number, number] => [...positions[activeIndex]], [positions, activeIndex]);
 
   return (
@@ -246,6 +255,7 @@ export default function BrowserPage() {
           <BrowserScene activeIndex={activeIndex} isMobile={compact} />
         </Canvas>
       )}
+      <ThreeSceneHelperPanel panelStyle={{ bottom: "24px", left: "24px" }} />
 
       <div
         style={{
@@ -279,8 +289,11 @@ export default function BrowserPage() {
           left: "50%",
           top: "50%",
           transform: "translate(-50%, -50%)",
-          display: "flex",
-          gap: compact ? "24px" : "48px",
+          display: compact ? "grid" : "flex",
+          gap: compact ? "18px 20px" : "48px",
+          gridTemplateColumns: compact ? "repeat(2, minmax(0, 1fr))" : undefined,
+          justifyItems: compact ? "center" : undefined,
+          width: compact ? "min(220px, calc(100vw - 40px))" : undefined,
           zIndex: 5,
         }}
       >
@@ -295,6 +308,7 @@ export default function BrowserPage() {
               background: "none",
               border: "none",
               cursor: "pointer",
+              gridColumn: compact && index === CARDS.length - 1 ? "1 / span 2" : undefined,
             }}
           />
         ))}

@@ -3,6 +3,7 @@
 import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { MediaControlIcon } from "@/components/shared/media-icons";
+import { SHOW_THREE_SCENE_HELPER, ThreeSceneHelperPanel } from "@/components/shared/three-scene-helper-panel";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
 import { MUSIC_TRACKS } from "@/constants/music";
@@ -11,9 +12,39 @@ import { useYoutubeMusicPlayer } from "@/hooks/use-youtube-music-player";
 import { stopAmbientAudio } from "@/lib/ambient-audio";
 import { formatElapsedTime } from "@/lib/youtube";
 
-const GRID_COLUMNS = { desktop: 5, mobile: 3 } as const;
+const GRID_COLUMNS = { desktop: 5, mobile: 4 } as const;
 const PLAYER_TRANSITION_MS = 760;
 const PLAYER_CUBE_SIZE = { desktop: 188, mobile: 128 } as const;
+const GRID_LAYOUT = {
+  desktop: {
+    boxSize: 98,
+    gapX: 28,
+    gapY: 46,
+  },
+  mobile: {
+    boxSize: 64,
+    gapX: 14,
+    gapY: 32,
+  },
+} as const;
+const GRID_CAMERA_TILT = "rotateX(38deg)";
+const GRID_CAMERA = {
+  desktop: {
+    perspective: "1600px",
+    perspectiveOrigin: "50% 36%",
+    transform: GRID_CAMERA_TILT,
+  },
+  mobile: {
+    perspective: "1200px",
+    perspectiveOrigin: "50% 32%",
+    transform: "rotateX(34deg) scale(0.98)",
+  },
+} as const;
+const PLAYER_CAMERA = {
+  perspective: "1160px",
+  perspectiveOrigin: "50% 36%",
+  transform: GRID_CAMERA_TILT,
+} as const;
 const SR_ONLY_STYLE = {
   border: 0,
   clip: "rect(0 0 0 0)",
@@ -70,11 +101,14 @@ export default function MusicPage() {
   const { isMobile, isPortrait } = useViewport();
   const compact = isMobile || isPortrait;
   const columnCount = compact ? GRID_COLUMNS.mobile : GRID_COLUMNS.desktop;
+  const gridLayout = compact ? GRID_LAYOUT.mobile : GRID_LAYOUT.desktop;
+  const gridCamera = compact ? GRID_CAMERA.mobile : GRID_CAMERA.desktop;
   const playerCubeSize = compact ? PLAYER_CUBE_SIZE.mobile : PLAYER_CUBE_SIZE.desktop;
   const [cursorIndex, setCursorIndex] = useState(0);
   const [viewMode, setViewMode] = useState<"grid" | "player" | "transition">("grid");
   const [transportIndex, setTransportIndex] = useState(4);
   const [transitionCube, setTransitionCube] = useState<TransitionCubeState | null>(null);
+  const [enteredCount, setEnteredCount] = useState(0);
   const {
     activeTrackIndex,
     currentSeconds,
@@ -114,6 +148,14 @@ export default function MusicPage() {
   useEffect(() => {
     stopAmbientAudio();
   }, []);
+
+  useEffect(() => {
+    if (enteredCount >= MUSIC_TRACKS.length) return;
+    const timer = window.setTimeout(() => {
+      setEnteredCount((c) => c + 1);
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [enteredCount]);
 
   const handleBackToGrid = useCallback(() => {
     stop();
@@ -315,9 +357,8 @@ export default function MusicPage() {
     >
       <style>{`
         @keyframes music-cube-twist-walk {
-          0%   { transform: scale(1); }
-          50%  { transform: scale(1.03); }
-          100% { transform: scale(1); }
+          0%   { transform: rotate3d(1, 1, 0.75, 0deg); }
+          100% { transform: rotate3d(1, 1, 0.75, 360deg); }
         }
       `}</style>
 
@@ -372,7 +413,7 @@ export default function MusicPage() {
             left: "50%",
             maxWidth: compact ? "min(92vw, 440px)" : "min(76vw, 980px)",
             opacity: viewMode === "grid" ? 1 : 0,
-            paddingTop: compact ? "72px" : "144px",
+            paddingTop: compact ? "28vh" : "22vh",
             pointerEvents: viewMode === "grid" ? "auto" : "none",
             position: "absolute",
             top: 0,
@@ -383,44 +424,65 @@ export default function MusicPage() {
         >
           <div
             style={{
-              display: "grid",
-              gap: compact ? "18px 22px" : "22px 28px",
-              gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+              display: "flex",
+              justifyContent: "center",
+              perspective: gridCamera.perspective,
+              perspectiveOrigin: gridCamera.perspectiveOrigin,
+              width: "100%",
             }}
           >
-            {MUSIC_TRACKS.map((track, index) => {
-              const hiddenForTravel = transitionCube?.track.id === track.id;
+            <div
+              style={{
+                position: "relative",
+                transform: gridCamera.transform,
+                transformStyle: "preserve-3d",
+              }}
+            >
+              <div
+                style={{
+                  display: "grid",
+                  gap: `${gridLayout.gapY}px ${gridLayout.gapX}px`,
+                  gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+                  transformStyle: "preserve-3d",
+                }}
+              >
+                {MUSIC_TRACKS.map((track, index) => {
+                  const hiddenForTravel = transitionCube?.track.id === track.id;
 
-              return (
-                <button
-                  key={track.id}
-                  ref={(node) => {
-                    trackButtonRefs.current[index] = node;
-                  }}
-                  type="button"
-                  onClick={() => handleActivateTrack(index)}
-                  style={{
-                    alignItems: "center",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    display: "flex",
-                    justifyContent: "center",
-                    opacity: hiddenForTravel ? 0 : 1,
-                    padding: 0,
-                    transition: "opacity 120ms linear",
-                  }}
-                >
-                  <TrackCube
-                    boxSize={compact ? 82 : 98}
-                    color={track.accentColor}
-                    isCursor={index === cursorIndex}
-                    isSpinning={false}
-                    number={track.number}
-                  />
-                </button>
-              );
-            })}
+                  return (
+                    <button
+                      key={track.id}
+                      ref={(node) => {
+                        trackButtonRefs.current[index] = node;
+                      }}
+                      type="button"
+                      onClick={() => handleActivateTrack(index)}
+                      style={{
+                        alignItems: "center",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        display: "flex",
+                        justifyContent: "center",
+                        opacity: hiddenForTravel ? 0 : 1,
+                        padding: 0,
+                        transition: "opacity 120ms linear",
+                        transformStyle: "preserve-3d",
+                      }}
+                    >
+                      <TrackCube
+                        boxSize={gridLayout.boxSize}
+                        color={track.accentColor}
+                        entered={index < enteredCount}
+                        isCursor={index === cursorIndex}
+                        isSpinning={false}
+                        number={track.number}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -428,20 +490,20 @@ export default function MusicPage() {
           style={{
             alignItems: "center",
             display: "flex",
-            gap: compact ? "16px" : "96px",
+            gap: compact ? "72px" : "64px",
             inset: 0,
-            justifyContent: "center",
+            justifyContent: compact ? "center" : "center",
             opacity: viewMode === "grid" ? 0 : 1,
-            padding: compact ? "64px 26px 48px" : "112px 64px 108px",
+            padding: compact ? "0 26px 48px" : "80px 64px 108px",
             pointerEvents: viewMode === "player" ? "auto" : "none",
             position: "absolute",
-            transform: `translate3d(0, ${viewMode === "grid" ? "24px" : "0"}, 0)`,
+            transform: `translateY(${viewMode === "grid" ? "24px" : "0"})`,
             transition: "opacity 360ms ease, transform 620ms cubic-bezier(0.22, 1, 0.36, 1)",
             flexDirection: compact ? "column" : "row",
           }}
         >
           <div
-            style={{ alignItems: "center", display: "flex", justifyContent: "center", minHeight: compact ? 136 : 320 }}
+            style={{ alignItems: "center", display: "flex", justifyContent: "center", minHeight: compact ? 0 : 280 }}
           >
             <div
               ref={playerDockRef}
@@ -514,40 +576,42 @@ export default function MusicPage() {
               {formatElapsedTime(currentSeconds)}
             </div>
 
-            <div style={{ alignItems: "center", display: "flex", gap: compact ? "10px" : "14px" }}>
+            <div style={{ alignItems: "center", display: "flex", gap: compact ? "8px" : "12px" }}>
               <TransportButton aria-label="Previous track" isCursor={transportIndex === 0} onClick={prevTrack}>
-                <MediaControlIcon active={transportIndex === 0} name="previous" />
+                <MediaControlIcon active={transportIndex === 0} name="previous" size={compact ? 22 : 28} />
               </TransportButton>
               <TransportButton
                 aria-label="Seek backward 10 seconds"
                 isCursor={transportIndex === 1}
                 onClick={() => seekBy(-10)}
               >
-                <MediaControlIcon active={transportIndex === 1} name="seekBack" />
+                <MediaControlIcon active={transportIndex === 1} name="seekBack" size={compact ? 22 : 28} />
               </TransportButton>
               <TransportButton
                 aria-label="Seek forward 10 seconds"
                 isCursor={transportIndex === 2}
                 onClick={() => seekBy(10)}
               >
-                <MediaControlIcon active={transportIndex === 2} name="seekForward" />
+                <MediaControlIcon active={transportIndex === 2} name="seekForward" size={compact ? 22 : 28} />
               </TransportButton>
               <TransportButton aria-label="Next track" isCursor={transportIndex === 3} onClick={nextTrack}>
-                <MediaControlIcon active={transportIndex === 3} name="next" />
+                <MediaControlIcon active={transportIndex === 3} name="next" size={compact ? 22 : 28} />
               </TransportButton>
               <TransportButton aria-label="Play" isCursor={transportIndex === 4} onClick={errorMessage ? retry : play}>
-                <MediaControlIcon active={transportIndex === 4} name="play" />
+                <MediaControlIcon active={transportIndex === 4} name="play" size={compact ? 22 : 28} />
               </TransportButton>
               <TransportButton aria-label="Pause" isCursor={transportIndex === 5} onClick={pause}>
-                <MediaControlIcon active={transportIndex === 5} name="pause" />
+                <MediaControlIcon active={transportIndex === 5} name="pause" size={compact ? 22 : 28} />
               </TransportButton>
               <TransportButton aria-label="Stop" isCursor={transportIndex === 6} onClick={stop}>
-                <MediaControlIcon active={transportIndex === 6} name="stop" />
+                <MediaControlIcon active={transportIndex === 6} name="stop" size={compact ? 22 : 28} />
               </TransportButton>
             </div>
           </div>
         </div>
       </div>
+
+      {SHOW_THREE_SCENE_HELPER ? <MusicGridDebugPanel columnCount={columnCount} /> : null}
 
       {transitionCube ? <TransitioningTrackCube track={transitionCube.track} transitionCube={transitionCube} /> : null}
 
@@ -588,6 +652,47 @@ function TransitioningTrackCube({ track, transitionCube }: { track: MusicTrack; 
   );
 }
 
+function MusicGridDebugPanel({ columnCount }: { columnCount: number }) {
+  const rows = Math.ceil(MUSIC_TRACKS.length / columnCount);
+  const debugCubes = useMemo(() => {
+    const stepX = 1.35;
+    const stepY = 1.7;
+    const size = 0.88;
+    const xOffset = ((columnCount - 1) * stepX) / 2;
+    const yOffset = ((rows - 1) * stepY) / 2;
+
+    return MUSIC_TRACKS.map((track, index) => {
+      const column = index % columnCount;
+      const row = Math.floor(index / columnCount);
+
+      return {
+        color: track.accentColor,
+        position: [column * stepX - xOffset, row * stepY - yOffset, size / 2] as const,
+      };
+    });
+  }, [columnCount, rows]);
+
+  return (
+    <ThreeSceneHelperPanel
+      axesSize={4}
+      cameraPosition={[3.2, -3.5, 8.5]}
+      cameraUp={[0, 0, 1]}
+      lookAt={[0, -0.5, 0]}
+      panelStyle={{ bottom: "88px", left: "20px" }}
+      plane="xy"
+      size={12}
+      divisions={12}
+    >
+      {debugCubes.map((cube) => (
+        <mesh key={`${cube.color}-${cube.position.join("-")}`} position={cube.position}>
+          <boxGeometry args={[0.88, 0.88, 0.88]} />
+          <meshStandardMaterial color={cube.color} opacity={0.7} transparent />
+        </mesh>
+      ))}
+    </ThreeSceneHelperPanel>
+  );
+}
+
 function TransportButton({
   "aria-label": ariaLabel,
   children,
@@ -624,15 +729,17 @@ function TransportButton({
   );
 }
 
-function TrackCube({
+const TrackCube = React.memo(function TrackCube({
   boxSize,
   color,
+  entered = true,
   isCursor,
   isSpinning,
   number,
 }: {
   boxSize: number;
   color: string;
+  entered?: boolean;
   isCursor: boolean;
   isSpinning: boolean;
   number: number;
@@ -640,15 +747,21 @@ function TrackCube({
   const sizeValue = `${boxSize}px`;
   const halfSize = `calc(${sizeValue} / 2)`;
 
+  const enteredTransform = isCursor ? `translate3d(0, -6px, ${halfSize})` : `translate3d(0, 0, ${halfSize})`;
+  const transform = entered ? enteredTransform : `translate3d(0, 30px, ${halfSize}) scale(0)`;
+
   return (
     <div
       style={{
         boxShadow: isCursor ? "0 0 22px 6px rgba(255,255,255,0.5)" : "none",
         height: sizeValue,
+        perspective: isSpinning ? PLAYER_CAMERA.perspective : undefined,
+        perspectiveOrigin: isSpinning ? PLAYER_CAMERA.perspectiveOrigin : undefined,
         position: "relative",
-        transform: isCursor ? "translateY(-6px)" : "translateY(0)",
-        transition: "transform 320ms ease, box-shadow 260ms ease",
+        transform,
+        transition: "transform 600ms cubic-bezier(0.33, 1, 0.68, 1), box-shadow 260ms ease",
         transformStyle: "preserve-3d",
+        willChange: isCursor || isSpinning ? "transform" : undefined,
         width: sizeValue,
       }}
     >
@@ -656,20 +769,22 @@ function TrackCube({
         style={{
           height: "100%",
           position: "relative",
+          transform: isSpinning ? PLAYER_CAMERA.transform : undefined,
           transformStyle: "preserve-3d",
           width: "100%",
         }}
       >
         <div
           style={{
-            animation: isSpinning ? "music-cube-twist-walk 5.8s linear infinite" : undefined,
+            animation: isSpinning ? "music-cube-twist-walk 14s linear infinite" : undefined,
             height: "100%",
             position: "relative",
             transformStyle: "preserve-3d",
+            willChange: isSpinning ? "transform" : undefined,
             width: "100%",
           }}
         >
-          {/* front */}
+          {/* front (+Z) */}
           <CubeFace
             background={`linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(0,0,0,0.06) 46%, rgba(0,0,0,0.28) 100%), ${color}`}
             transform={`translateZ(${halfSize})`}
@@ -678,12 +793,12 @@ function TrackCube({
               className="ps2-text"
               style={{
                 color: "#F3F8FF",
-                fontSize: "clamp(20px, 2.6vw, 34px)",
+                fontSize: `${Math.round(boxSize * 0.42)}px`,
                 fontWeight: 700,
                 left: "50%",
                 position: "absolute",
                 textShadow:
-                  "0 0 4px rgba(0,0,0,0.4), 1px 1px 0 rgba(0,0,0,0.28), -1px 1px 0 rgba(0,0,0,0.2), 0 1px 0 rgba(0,0,0,0.24)",
+                  "0 0 6px rgba(0,0,0,0.5), 1px 1px 0 rgba(0,0,0,0.35), -1px 1px 0 rgba(0,0,0,0.25), 0 2px 0 rgba(0,0,0,0.3)",
                 top: "50%",
                 transform: "translate(-50%, -50%)",
               }}
@@ -720,7 +835,7 @@ function TrackCube({
       </div>
     </div>
   );
-}
+});
 
 function CubeFace({
   background,
@@ -734,7 +849,7 @@ function CubeFace({
   return (
     <div
       style={{
-        backdropFilter: "blur(0.3px)",
+        backfaceVisibility: "hidden",
         background,
         boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08), 0 10px 16px rgba(0,0,0,0.08)",
         height: "100%",

@@ -53,7 +53,7 @@ export const MUSIC_TRACKS: MusicTrack[] = [
     id: "track-4",
     number: 4,
     title: "Believe me",
-    youtubeUrl: "https://www.youtube.com/watch?v=758vUmu7F-Y&list=OLAK5uy_n0CRnD6-tU6k_N60zQVFSBnxQzbBSgaQU&index=18",
+    youtubeUrl: "https://www.youtube.com/watch?v=758vUmu7F-Y",
   },
   {
     accentColor: TRACK_COLORS[4],
@@ -61,7 +61,7 @@ export const MUSIC_TRACKS: MusicTrack[] = [
     id: "track-5",
     number: 5,
     title: "憧れの非日常",
-    youtubeUrl: "https://www.youtube.com/watch?v=O_Om4naEK-Y&t=68s",
+    youtubeUrl: "https://www.youtube.com/watch?v=O_Om4naEK-Y",
   },
   {
     accentColor: TRACK_COLORS[5],
@@ -69,7 +69,7 @@ export const MUSIC_TRACKS: MusicTrack[] = [
     id: "track-6",
     number: 6,
     title: "Deux Danses",
-    youtubeUrl: "https://www.youtube.com/watch?v=OHtIKIs2u-I&list=RDMM&start_radio=1&rv=cKQc-cbAvdQ",
+    youtubeUrl: "https://www.youtube.com/watch?v=OHtIKIs2u-I",
   },
   {
     accentColor: TRACK_COLORS[6],
@@ -85,7 +85,7 @@ export const MUSIC_TRACKS: MusicTrack[] = [
     id: "track-8",
     number: 8,
     title: "白虎野の娘",
-    youtubeUrl: "https://www.youtube.com/watch?v=x07HqlAufR4&t=10s",
+    youtubeUrl: "https://www.youtube.com/watch?v=x07HqlAufR4",
   },
   {
     accentColor: TRACK_COLORS[8],
