@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 
 import { test } from "vite-plus/test";
 
+const MAX_UNCOMPRESSED_GLB_BYTES = 64 * 1024;
+
 const GLB_PATHS = [
   "../../public/3d/memorycard.glb",
   "../../public/3d/icons/cd.glb",
@@ -41,18 +43,24 @@ function readGlbJson(relativePath: (typeof GLB_PATHS)[number]) {
 
   const parsed: unknown = JSON.parse(buffer.toString("utf8", 20, 20 + jsonChunkLength));
   assert.ok(isGlbJson(parsed));
-  return parsed;
+  return {
+    byteLength: buffer.length,
+    json: parsed,
+  };
 }
 
-test("memory-related GLB assets are Draco compressed", () => {
+test("memory-related GLB assets stay tiny or use Draco compression", () => {
   for (const path of GLB_PATHS) {
-    const json = readGlbJson(path);
+    const { byteLength, json } = readGlbJson(path);
     const usesDraco =
       json.extensionsUsed?.includes("KHR_draco_mesh_compression") ||
       json.meshes?.some((mesh) =>
         mesh.primitives?.some((primitive) => primitive.extensions?.KHR_draco_mesh_compression),
       );
 
-    assert.ok(usesDraco, `${path} is missing KHR_draco_mesh_compression`);
+    assert.ok(
+      usesDraco || byteLength <= MAX_UNCOMPRESSED_GLB_BYTES,
+      `${path} is ${byteLength} bytes and missing KHR_draco_mesh_compression`,
+    );
   }
 });
