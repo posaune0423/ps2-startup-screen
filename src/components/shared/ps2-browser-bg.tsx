@@ -3,6 +3,9 @@
 import React, { memo, useMemo } from "react";
 import * as THREE from "three";
 
+export const PS2_BROWSER_BG_FALLBACK =
+  "radial-gradient(circle at 0% 100%, #B0B0AE 0%, #9A9A98 28%, #7E7E7C 56%, #5C5C5A 100%)";
+
 const vertexShader = /* glsl */ `
 varying vec2 vUv;
 void main() {

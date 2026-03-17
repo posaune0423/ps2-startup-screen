@@ -44,9 +44,10 @@ test("shared three scene helper panel is mounted on the main three.js pages", ()
   assert.match(sceneSource, /<ThreeSceneHelperPanel/);
   assert.match(
     browserPageSource,
-    /import \{ ThreeSceneHelperPanel \} from "@\/components\/shared\/three-scene-helper-panel"/,
+    /import \{ SHOW_THREE_SCENE_HELPER, ThreeSceneHelperPanel \} from "@\/components\/shared\/three-scene-helper-panel"/,
   );
-  assert.match(browserPageSource, /<ThreeSceneHelperPanel/);
+  assert.match(browserPageSource, /function BrowserMemoryCardDebugPanel/);
+  assert.match(browserPageSource, /SHOW_THREE_SCENE_HELPER \? <BrowserMemoryCardDebugPanel/);
   assert.match(
     systemPageSource,
     /import \{ ThreeSceneHelperPanel \} from "@\/components\/shared\/three-scene-helper-panel"/,
@@ -57,4 +58,15 @@ test("shared three scene helper panel is mounted on the main three.js pages", ()
     /import \{ ThreeSceneHelperPanel \} from "@\/components\/shared\/three-scene-helper-panel"/,
   );
   assert.match(itemGridSource, /<ThreeSceneHelperPanel/);
+});
+
+test("browser memory card page helper reuses the card positions and renders an xy-plane debug view", () => {
+  assert.match(browserPageSource, /function getBrowserCardPositions\(isMobile: boolean\)/);
+  assert.match(
+    browserPageSource,
+    /const positions = useMemo\(\(\) => getBrowserCardPositions\(isMobile\), \[isMobile\]\);/,
+  );
+  assert.match(browserPageSource, /plane="xy"/);
+  assert.match(browserPageSource, /cameraPosition=\{\[0, 0, 7\.2\]\}/);
+  assert.match(browserPageSource, /boxGeometry args=\{\[0\.6, 0\.42, 0\.16\]\}/);
 });

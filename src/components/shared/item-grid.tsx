@@ -6,7 +6,7 @@ import React, { memo, Suspense, useCallback, useEffect, useMemo, useRef } from "
 import * as THREE from "three";
 
 import GlowCursor from "@/components/shared/glow-cursor";
-import Ps2BrowserBg from "@/components/shared/ps2-browser-bg";
+import Ps2BrowserBg, { PS2_BROWSER_BG_FALLBACK } from "@/components/shared/ps2-browser-bg";
 import { ThreeSceneHelperPanel } from "@/components/shared/three-scene-helper-panel";
 import { useMenuNavigation } from "@/components/shared/use-menu-navigation";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
@@ -14,6 +14,7 @@ import { useViewport } from "@/components/shared/use-viewport";
 import { startAmbientAudio } from "@/lib/ambient-audio";
 import { releaseGLTFAsset } from "@/lib/gltf-memory";
 import { navigate } from "@/lib/navigate";
+import { markRouteReady } from "@/lib/route-transition-ready";
 
 export interface GridItem {
   id: string;
@@ -24,6 +25,7 @@ export interface GridItem {
 
 interface ItemGridProps {
   items: GridItem[];
+  readyRoute: string;
   title: string;
 }
 
@@ -61,7 +63,15 @@ const CameraSetup = memo(function CameraSetup({ camPos }: { camPos: [number, num
   return null;
 });
 
-const GlbModel = memo(function GlbModel({ modelPath, isMobile }: { modelPath: string; isMobile: boolean }) {
+const GlbModel = memo(function GlbModel({
+  modelPath,
+  isMobile,
+  onModelReady,
+}: {
+  modelPath: string;
+  isMobile: boolean;
+  onModelReady?: (modelPath: string) => void;
+}) {
   const { scene } = useGLTF(modelPath);
   const clearGLTF = useCallback((path: string) => {
     useGLTF.clear(path);
@@ -83,6 +93,10 @@ const GlbModel = memo(function GlbModel({ modelPath, isMobile }: { modelPath: st
     NORMALIZED_SCALE_CACHE.set(cacheKey, nextScale);
     return nextScale;
   }, [modelPath, scene, isMobile]);
+
+  useEffect(() => {
+    onModelReady?.(modelPath);
+  }, [modelPath, onModelReady, scene]);
 
   useEffect(() => {
     return () => {
@@ -112,6 +126,7 @@ const GridItemModel = memo(function GridItemModel({
   position,
   modelPath,
   onClick,
+  onModelReady,
   index,
   isMobile,
   isActive,
@@ -119,6 +134,7 @@ const GridItemModel = memo(function GridItemModel({
   position: [number, number, number];
   modelPath: string;
   onClick: () => void;
+  onModelReady?: (modelPath: string) => void;
   index: number;
   isMobile: boolean;
   isActive: boolean;
@@ -184,7 +200,7 @@ const GridItemModel = memo(function GridItemModel({
     >
       {modelPath ? (
         <Suspense fallback={null}>
-          <GlbModel modelPath={modelPath} isMobile={isMobile} />
+          <GlbModel modelPath={modelPath} isMobile={isMobile} onModelReady={onModelReady} />
         </Suspense>
       ) : (
         <mesh ref={meshRef} castShadow geometry={fallbackGeo} material={fallbackMaterial} />
@@ -197,7 +213,7 @@ const DIR_LIGHT_POS: [number, number, number] = [-3.5, 5.5, 5.5];
 const SPOT_LIGHT_POS: [number, number, number] = [0, 5.5, 6];
 const POINT_LIGHT_POS: [number, number, number] = [3.5, 1.8, 4.8];
 const HEMI_ARGS: [string, string, number] = ["#F8FBFF", "#0A0C14", 1.05];
-const GL_PROPS = { antialias: true, alpha: false, powerPreference: "high-performance" as const };
+const GL_PROPS = { antialias: true, alpha: true, powerPreference: "high-performance" as const };
 const CANVAS_STYLE = { width: "100%", height: "100%" } as const;
 
 const GridScene = memo(function GridScene({
@@ -205,12 +221,14 @@ const GridScene = memo(function GridScene({
   activeIndex,
   camPos,
   onItemClick,
+  onModelReady,
   isMobile,
 }: {
   items: GridItem[];
   activeIndex: number;
   camPos: [number, number, number];
   onItemClick: (index: number) => void;
+  onModelReady: (modelPath: string) => void;
   isMobile: boolean;
 }) {
   const positions = useMemo(() => calcGridPositions(items), [items]);
@@ -234,6 +252,7 @@ const GridScene = memo(function GridScene({
           position={positions[i]}
           modelPath={item.modelPath}
           onClick={clickHandlers[i]}
+          onModelReady={onModelReady}
           index={i}
           isMobile={isMobile}
           isActive={i === activeIndex}
@@ -263,15 +282,16 @@ const TinyMemoryCard = memo(function TinyMemoryCard() {
   );
 });
 
-export default function ItemGrid({ items, title }: ItemGridProps) {
+export default function ItemGrid({ items, readyRoute, title }: ItemGridProps) {
   const { playEnter, playSelect, playBack } = useNavigationSound();
   const { isMobile, isPortrait } = useViewport();
   const compact = isMobile || isPortrait;
+  const readyModelPathCount = useMemo(() => new Set(items.map((item) => item.modelPath)).size, [items]);
 
   const camPos = useMemo((): [number, number, number] => {
     const zBase = items.length > 3 ? 6 : 4.5;
     const zScale = compact ? 1.3 : 1;
-    return [0, 3.5, zBase * zScale];
+    return [0, 3.9, zBase * zScale];
   }, [items.length, compact]);
 
   const cameraProps = useMemo(() => ({ position: camPos, fov: 50 }), [camPos]);
@@ -308,6 +328,17 @@ export default function ItemGrid({ items, title }: ItemGridProps) {
     }
   }, [items]);
 
+  const loadedModelPathsRef = useRef(new Set<string>());
+  const handleModelReady = useCallback(
+    (modelPath: string) => {
+      loadedModelPathsRef.current.add(modelPath);
+      if (loadedModelPathsRef.current.size >= readyModelPathCount) {
+        markRouteReady(readyRoute);
+      }
+    },
+    [readyModelPathCount, readyRoute],
+  );
+
   const prevIndexRef = useRef(activeIndex);
   useEffect(() => {
     if (prevIndexRef.current !== activeIndex) {
@@ -317,13 +348,14 @@ export default function ItemGrid({ items, title }: ItemGridProps) {
   }, [activeIndex, playSelect]);
 
   return (
-    <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
+    <div style={{ width: "100vw", height: "100dvh", position: "relative", background: PS2_BROWSER_BG_FALLBACK }}>
       <Canvas camera={cameraProps} dpr={compact ? 1 : 1.25} frameloop="demand" gl={GL_PROPS} style={CANVAS_STYLE}>
         <GridScene
           items={items}
           activeIndex={activeIndex}
           camPos={camPos}
           onItemClick={handleSelect}
+          onModelReady={handleModelReady}
           isMobile={compact}
         />
       </Canvas>
