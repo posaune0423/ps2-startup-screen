@@ -22,6 +22,10 @@ test("root layout keeps navigation overlay and back button inside the language p
   );
 });
 
+test("root layout opts same-origin document navigations into view transitions", () => {
+  assert.match(layoutSource, /<head>\s*<meta name="view-transition" content="same-origin" \/>\s*<\/head>/);
+});
+
 test("root layout loads the Google Analytics gtag script with the shared measurement id", () => {
   assert.match(layoutSource, /import Script from "vinext\/shims\/script"/);
   assert.match(layoutSource, /gaMeasurementId/);

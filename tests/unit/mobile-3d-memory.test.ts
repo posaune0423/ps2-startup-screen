@@ -10,12 +10,13 @@ const orbRingSource = readFileSync(new URL("../../src/components/browser-menu/or
 test("memory pages keep sharper model rendering than the browser card picker", () => {
   assert.match(
     itemGridSource,
-    /const GL_PROPS = \{ antialias: true, alpha: false, powerPreference: "high-performance" as const \};/,
+    /const GL_PROPS = \{ antialias: true, alpha: true, powerPreference: "high-performance" as const \};/,
   );
   assert.match(itemGridSource, /frameloop="demand"/);
   assert.match(itemGridSource, /gl=\{GL_PROPS\}/);
   assert.match(itemGridSource, /dpr=\{compact \? 1 : 1\.25\}/);
   assert.match(itemGridSource, /dpr=\{compact \? 1 : 1\}/);
+  assert.match(itemGridSource, /background: PS2_BROWSER_BG_FALLBACK/);
   assert.match(
     itemGridSource,
     /const MEMORY_CARD_ICON_GL = \{ alpha: true, antialias: true, powerPreference: "high-performance" as const \};/,
@@ -27,9 +28,10 @@ test("browser page also clamps canvas DPR and prefers low-power WebGL settings",
   assert.match(browserPageSource, /frameloop="demand"/);
   assert.match(
     browserPageSource,
-    /const GL_PROPS = \{ antialias: false, alpha: false, powerPreference: "low-power" as const \};/,
+    /const GL_PROPS = \{ antialias: false, alpha: true, powerPreference: "low-power" as const \};/,
   );
   assert.match(browserPageSource, /gl=\{GL_PROPS\}/);
+  assert.match(browserPageSource, /background: PS2_BROWSER_BG_FALLBACK/);
 });
 
 test("3D pages release GLTF resources on unmount to avoid cache growth across navigation", () => {
@@ -52,9 +54,14 @@ test("browser page moves the Audio CD card onto a second mobile row to avoid ove
     /const MOBILE_CARD_POSITIONS: \[number, number, number\]\[\] = \[\s*\[-0\.34,\s*0\.24,\s*0\],\s*\[0\.34,\s*0\.24,\s*0\],\s*\[0,\s*-0\.28,\s*0\],\s*\];/s,
   );
   assert.match(browserPageSource, /modelScaleMobile: 0\.58,/);
+  assert.match(browserPageSource, /function getBrowserCardPositions\(isMobile: boolean\)/);
   assert.match(
     browserPageSource,
-    /const positions = useMemo\(\s*\(\) => \(isMobile \? MOBILE_CARD_POSITIONS : createHorizontalPositions\(CARDS\.length,\s*0\.92\)\),\s*\[isMobile\],\s*\);/s,
+    /return isMobile \? MOBILE_CARD_POSITIONS : createHorizontalPositions\(CARDS\.length, 0\.92\);/,
+  );
+  assert.match(
+    browserPageSource,
+    /const positions = useMemo\(\(\) => getBrowserCardPositions\(isMobile\), \[isMobile\]\);/,
   );
   assert.match(browserPageSource, /display: compact \? "grid" : "flex"/);
   assert.match(browserPageSource, /gridTemplateColumns: compact \? "repeat\(2, minmax\(0, 1fr\)\)" : undefined/);

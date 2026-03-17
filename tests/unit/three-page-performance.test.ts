@@ -37,6 +37,8 @@ test("browser and item-grid canvases use demand frameloops for mostly static 3d 
   );
   assert.match(browserPageSource, /const invalidate = useThree\(\(state\) => state\.invalidate\);/);
   assert.match(itemGridSource, /const invalidate = useThree\(\(state\) => state\.invalidate\);/);
+  assert.doesNotMatch(browserPageSource, /const \[mounted, setMounted\] = useState\(false\);/);
+  assert.doesNotMatch(browserPageSource, /\{mounted && \(/);
 });
 
 test("main scene keeps the timeout navigation path while restoring the reference startup quality profile", () => {

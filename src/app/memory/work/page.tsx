@@ -33,5 +33,5 @@ const WORK_ITEMS: GridItem[] = [
 ];
 
 export default function WorkPage() {
-  return <ItemGrid items={WORK_ITEMS} title="Work" />;
+  return <ItemGrid items={WORK_ITEMS} readyRoute="/memory/work" title="Work" />;
 }

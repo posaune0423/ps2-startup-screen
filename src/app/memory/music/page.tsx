@@ -129,6 +129,8 @@ export default function MusicPage() {
   const trackButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const playerDockRef = useRef<HTMLDivElement | null>(null);
   const transitionTimerRef = useRef<number | null>(null);
+  const spinStartTimeRef = useRef(0);
+  const playerSpinOffsetRef = useRef(0);
   const viewModeRef = useRef(viewMode);
   viewModeRef.current = viewMode;
 
@@ -188,6 +190,7 @@ export default function MusicPage() {
 
   const completeTransition = useCallback(() => {
     clearTransitionTimer();
+    playerSpinOffsetRef.current = performance.now() - spinStartTimeRef.current;
     setTransitionCube(null);
     setViewMode("player");
   }, [clearTransitionTimer]);
@@ -212,6 +215,7 @@ export default function MusicPage() {
       }
 
       clearTransitionTimer();
+      spinStartTimeRef.current = performance.now();
       startTransition(() => {
         setViewMode("transition");
         setTransitionCube({
@@ -534,6 +538,7 @@ export default function MusicPage() {
                   isCursor={false}
                   isSpinning
                   number={activeTrack.number}
+                  spinOffset={playerSpinOffsetRef.current}
                 />
               ) : (
                 <div
@@ -747,6 +752,7 @@ const TrackCube = React.memo(function TrackCube({
   isCursor,
   isSpinning,
   number,
+  spinOffset = 0,
 }: {
   boxSize: number;
   color: string;
@@ -754,6 +760,7 @@ const TrackCube = React.memo(function TrackCube({
   isCursor: boolean;
   isSpinning: boolean;
   number: number;
+  spinOffset?: number;
 }) {
   const sizeValue = `${boxSize}px`;
   const halfSize = `calc(${sizeValue} / 2)`;
@@ -788,6 +795,7 @@ const TrackCube = React.memo(function TrackCube({
         <div
           style={{
             animation: isSpinning ? "music-cube-twist-walk 14s linear infinite" : undefined,
+            animationDelay: isSpinning && spinOffset > 0 ? `${-spinOffset}ms` : undefined,
             height: "100%",
             position: "relative",
             transformStyle: "preserve-3d",
