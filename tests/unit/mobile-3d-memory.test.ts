@@ -37,9 +37,9 @@ test("browser page also clamps canvas DPR and prefers low-power WebGL settings",
   assert.doesNotMatch(browserPageSource, /background: PS2_BROWSER_BG_FALLBACK/);
 });
 
-test("3D pages keep warmed GLTF assets mounted in cache for faster return transitions", () => {
-  assert.doesNotMatch(itemGridSource, /releaseGLTFAsset\(modelPath, scene, clearGLTF\)/);
-  assert.doesNotMatch(browserPageSource, /releaseGLTFAsset\(modelPath, scene, clearGLTF\)/);
+test("3D pages do not contain explicit GLTF release calls so assets stay cached", () => {
+  assert.doesNotMatch(itemGridSource, /releaseGLTFAsset/);
+  assert.doesNotMatch(browserPageSource, /releaseGLTFAsset/);
   assert.match(browserPageSource, /modelPath:\s*"\/3d\/icons\/cd\.glb"/);
 });
 

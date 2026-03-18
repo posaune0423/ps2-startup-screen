@@ -50,10 +50,7 @@ async function warmAsset(path: string) {
   }
 }
 
-class SceneErrorBoundary extends Component<
-  { children: ReactNode },
-  { hasError: boolean }
-> {
+class SceneErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
 
   static getDerivedStateFromError() {
@@ -64,7 +61,7 @@ class SceneErrorBoundary extends Component<
     console.error("[SceneErrorBoundary]", error, info.componentStack);
   }
 
-  render() {
+  render(): ReactNode {
     if (this.state.hasError) {
       return <div style={HYDRATION_PLACEHOLDER_STYLE} />;
     }
