@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import React, { memo, useEffect, useRef } from "react";
+import React, { memo, useLayoutEffect, useRef } from "react";
 import * as THREE from "three";
 
 const PETAL_COUNT = 12;
@@ -47,7 +47,7 @@ const HexFlower = memo(function HexFlower() {
   const groupRef = useRef<THREE.Group>(null);
   const petalsRef = useRef<THREE.InstancedMesh>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (groupRef.current) {
       groupRef.current.rotation.set(-0.25, 0, 0.3);
     }

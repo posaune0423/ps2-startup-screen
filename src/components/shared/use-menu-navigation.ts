@@ -88,15 +88,15 @@ export function useMenuNavigation({
   }, [activeIndex, initialIndex, itemCount, screenId, setScreenActiveIndex]);
 
   const movePrev = useCallback(() => {
-    setScreenActiveIndex(screenId, Math.max(0, activeIndex - 1));
     if (activeIndex <= 0) return;
+    setScreenActiveIndex(screenId, activeIndex - 1);
     triggerHaptic();
     onMove?.();
   }, [activeIndex, onMove, screenId, setScreenActiveIndex]);
 
   const moveNext = useCallback(() => {
-    setScreenActiveIndex(screenId, Math.min(itemCount - 1, activeIndex + 1));
     if (activeIndex >= itemCount - 1) return;
+    setScreenActiveIndex(screenId, activeIndex + 1);
     triggerHaptic();
     onMove?.();
   }, [activeIndex, itemCount, onMove, screenId, setScreenActiveIndex]);

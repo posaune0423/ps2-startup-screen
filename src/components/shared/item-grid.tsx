@@ -223,7 +223,11 @@ export const ItemGridStage = memo(function ItemGridStage({
   active?: boolean;
 }) {
   const positions = useMemo(() => calcGridPositions(items), [items]);
-  const cursorPos = useMemo((): [number, number, number] => [...positions[activeIndex]], [positions, activeIndex]);
+  const safeIndex = items.length === 0 ? 0 : Math.min(activeIndex, items.length - 1);
+  const cursorPos = useMemo(
+    (): [number, number, number] => (positions[safeIndex] ? [...positions[safeIndex]] : [0, 0, 0]),
+    [positions, safeIndex],
+  );
 
   const clickHandlers = useMemo(() => items.map((_, i) => () => onItemClick(i)), [items, onItemClick]);
 
@@ -244,7 +248,7 @@ export const ItemGridStage = memo(function ItemGridStage({
           onClick={clickHandlers[i]}
           index={i}
           isMobile={isMobile}
-          isActive={i === activeIndex}
+          isActive={i === safeIndex}
           active={active}
         />
       ))}
@@ -296,7 +300,7 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
     navigate("/browser");
   }, [playBack]);
 
-  const { activeIndex } = useMenuNavigation({
+  const { activeIndex: rawActiveIndex } = useMenuNavigation({
     screenId,
     itemCount: items.length,
     direction: "horizontal",
@@ -305,6 +309,7 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
     onMove: playSelect,
     enabled: active,
   });
+  const activeIndex = items.length === 0 ? 0 : Math.min(rawActiveIndex, items.length - 1);
 
   useEffect(() => {
     if (!active) return;
@@ -397,7 +402,7 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
             transformOrigin: "right center",
           }}
         >
-          {items[activeIndex].label}
+          {items[activeIndex]?.label}
         </div>
       </div>
     </div>
