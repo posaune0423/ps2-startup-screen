@@ -8,6 +8,7 @@ import { usePathname, useRouter } from "vinext/shims/navigation";
 import { StartupScreen } from "@/components/screens/startup-screen";
 import MemoryShell from "@/components/shared/memory-shell";
 import MenuShell from "@/components/shared/menu-shell";
+import { MOBILE_BREAKPOINT } from "@/components/shared/use-viewport";
 import { getScreenCluster, getScreenFromPath, WARMUP_ASSET_PATHS } from "@/lib/app-screen";
 import { useAppStore } from "@/lib/app-store";
 
@@ -171,6 +172,14 @@ export default function AppShell() {
 
     warmupStartedRef.current = true;
     let cancelled = false;
+
+    if (window.innerWidth < MOBILE_BREAKPOINT) {
+      startWarmup(0);
+      finishWarmup();
+      return () => {
+        cancelled = true;
+      };
+    }
 
     startWarmup(WARMUP_ASSET_PATHS.length);
 

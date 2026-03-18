@@ -17,10 +17,10 @@ test("app shell owns the transition overlay and keeps it at the runtime boundary
 });
 
 test("memory shell keeps browser/work/sns/music mounted and only swaps active visibility", () => {
-  assert.match(memoryShellSource, /<BrowserScreen active=\{browserActive\} \/>/);
-  assert.match(memoryShellSource, /<WorkScreen active=\{workActive\} \/>/);
-  assert.match(memoryShellSource, /<SnsScreen active=\{snsActive\} \/>/);
-  assert.match(memoryShellSource, /<MusicScreen active=\{musicActive\} transparentBackground \/>/);
+  assert.match(memoryShellSource, /<BrowserScreen active=\{active\} \/>/);
+  assert.match(memoryShellSource, /<WorkScreen active=\{active\} \/>/);
+  assert.match(memoryShellSource, /<SnsScreen active=\{active\} \/>/);
+  assert.match(memoryShellSource, /<MusicScreen active=\{active\} transparentBackground \/>/);
   assert.match(memoryShellSource, /opacity: active \? 1 : 0/);
   assert.match(memoryShellSource, /visibility: active \? "visible" : "hidden"/);
 });
