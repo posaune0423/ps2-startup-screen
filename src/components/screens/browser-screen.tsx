@@ -305,7 +305,14 @@ export function BrowserScreen({ active = true }: { active?: boolean }) {
 
   return (
     <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
-      <Canvas camera={CAMERA_PROPS} dpr={compact ? 0.8 : 1} frameloop="demand" resize={{ offsetSize: true }} gl={GL_PROPS} style={CANVAS_STYLE}>
+      <Canvas
+        camera={CAMERA_PROPS}
+        dpr={compact ? 0.8 : 1}
+        frameloop="demand"
+        resize={{ offsetSize: true }}
+        gl={GL_PROPS}
+        style={CANVAS_STYLE}
+      >
         <BrowserStage activeIndex={activeIndex} isMobile={compact} />
       </Canvas>
       {SHOW_THREE_SCENE_HELPER ? <BrowserMemoryCardDebugPanel activeIndex={activeIndex} isMobile={compact} /> : null}

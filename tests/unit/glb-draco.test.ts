@@ -13,8 +13,9 @@ const GLB_PATHS = [
   "../../public/3d/work/daiko.glb",
   "../../public/3d/work/doom.glb",
   "../../public/3d/sns/linkedin.glb",
-  "../../public/3d/sns/twitter.glb",
-  "../../public/3d/sns/github.glb",
+  "../../public/3d/sns/twitter_blue_bird.glb",
+  "../../public/3d/sns/github_octcat.glb",
+  "../../public/3d/sns/instagram.glb",
 ] as const;
 
 interface GlbJson {

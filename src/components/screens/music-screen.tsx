@@ -1,6 +1,7 @@
 "use client";
 
 import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 
 import { MediaControlIcon } from "@/components/shared/media-icons";
 import { SHOW_THREE_SCENE_HELPER, ThreeSceneHelperPanel } from "@/components/shared/three-scene-helper-panel";
@@ -14,7 +15,7 @@ import { useAppStore } from "@/lib/app-store";
 import { formatElapsedTime, HIDDEN_YOUTUBE_PLAYER_DIMENSION } from "@/lib/youtube";
 
 const GRID_COLUMNS = { desktop: 5, mobile: 4 } as const;
-const PLAYER_TRANSITION_MS = 760;
+const PLAYER_TRANSITION_MS = 900;
 const PLAYER_CUBE_SIZE = { desktop: 188, mobile: 128 } as const;
 const GRID_LAYOUT = {
   desktop: {
@@ -67,6 +68,10 @@ interface CubeRect {
 
 interface TransitionCubeState {
   fromRect: CubeRect;
+  gridPerspective?: string;
+  gridPerspectiveOrigin?: string;
+  returning?: boolean;
+  returnSpinAngle?: number;
   settled: boolean;
   spinOffset: number;
   toRect: CubeRect;
@@ -195,42 +200,52 @@ export function MusicScreen({
     clearTransitionTimer();
 
     const sourceRect = toViewportRect(source.getBoundingClientRect());
-    const returnSpinOffset = performance.now() - spinStartTimeRef.current;
+    const elapsedMs = performance.now() - spinStartTimeRef.current;
+    let spinAngle = ((elapsedMs / 14000) * 360) % 360;
+    if (spinAngle > 180) spinAngle -= 360;
 
-    setMusicState({ viewMode: "returning", cursorIndex: targetIndex });
-    setTransitionCube({
-      fromRect: sourceRect,
-      settled: false,
-      spinOffset: returnSpinOffset,
-      toRect: sourceRect,
-      track,
-    });
-
-    window.requestAnimationFrame(() => {
-      const targetButton = trackButtonRefs.current[targetIndex];
-      if (!targetButton) {
-        setTransitionCube(null);
-        setMusicState({ transportIndex: 4, viewMode: "grid" });
-        return;
-      }
-      const targetRect = toViewportRect(targetButton.getBoundingClientRect());
-      setTransitionCube((current) =>
-        current && current.track.id === track.id ? { ...current, toRect: targetRect } : current,
-      );
-
-      window.requestAnimationFrame(() => {
-        setTransitionCube((current) =>
-          current && current.track.id === track.id ? { ...current, settled: true } : current,
-        );
-
-        transitionTimerRef.current = window.setTimeout(() => {
-          clearTransitionTimer();
-          setTransitionCube(null);
-          setMusicState({ transportIndex: 4, viewMode: "grid" });
-        }, PLAYER_TRANSITION_MS + 20);
+    flushSync(() => {
+      setMusicState({ viewMode: "returning", cursorIndex: targetIndex });
+      setTransitionCube({
+        fromRect: sourceRect,
+        gridPerspective: gridCamera.perspective,
+        gridPerspectiveOrigin: gridCamera.perspectiveOrigin,
+        returning: true,
+        returnSpinAngle: spinAngle,
+        settled: false,
+        spinOffset: 0,
+        toRect: sourceRect,
+        track,
       });
     });
-  }, [activeTrackIndex, clearTransitionTimer, setMusicState, stop]);
+
+    const targetButton = trackButtonRefs.current[targetIndex];
+    if (!targetButton) {
+      setTransitionCube(null);
+      setMusicState({ transportIndex: 4, viewMode: "grid" });
+      return;
+    }
+    const targetRect = toViewportRect(targetButton.getBoundingClientRect());
+
+    window.requestAnimationFrame(() => {
+      setTransitionCube((current) =>
+        current && current.track.id === track.id ? { ...current, toRect: targetRect, settled: true } : current,
+      );
+
+      transitionTimerRef.current = window.setTimeout(() => {
+        clearTransitionTimer();
+        setTransitionCube(null);
+        setMusicState({ transportIndex: 4, viewMode: "grid" });
+      }, PLAYER_TRANSITION_MS + 60);
+    });
+  }, [
+    activeTrackIndex,
+    clearTransitionTimer,
+    gridCamera.perspective,
+    gridCamera.perspectiveOrigin,
+    setMusicState,
+    stop,
+  ]);
 
   useEffect(() => {
     function interceptBack(e: Event) {
@@ -277,26 +292,29 @@ export function MusicScreen({
 
       clearTransitionTimer();
       spinStartTimeRef.current = performance.now();
-      startTransition(() => {
+
+      const fromRect = toViewportRect(source.getBoundingClientRect());
+
+      flushSync(() => {
         setMusicState({ viewMode: "transition" });
         setTransitionCube({
-          fromRect: toViewportRect(source.getBoundingClientRect()),
+          fromRect,
           settled: false,
           spinOffset: 0,
-          toRect: toViewportRect(target.getBoundingClientRect()),
+          toRect: fromRect,
           track: selectedTrack,
         });
       });
 
+      const toRect = toViewportRect(target.getBoundingClientRect());
+
       window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => {
-          setTransitionCube((current) =>
-            current && current.track.id === selectedTrack.id ? { ...current, settled: true } : current,
-          );
-        });
+        setTransitionCube((current) =>
+          current && current.track.id === selectedTrack.id ? { ...current, toRect, settled: true } : current,
+        );
       });
 
-      transitionTimerRef.current = window.setTimeout(completeTransition, PLAYER_TRANSITION_MS);
+      transitionTimerRef.current = window.setTimeout(completeTransition, PLAYER_TRANSITION_MS + 60);
     },
     [clearTransitionTimer, completeTransition, playEnter, selectTrack, setMusicState],
   );
@@ -535,7 +553,10 @@ export function MusicScreen({
                 }}
               >
                 {MUSIC_TRACKS.map((track, index) => {
-                  const hiddenForTravel = transitionCube?.track.id === track.id;
+                  const isTravelTarget = transitionCube?.track.id === track.id;
+                  const returningSettled =
+                    isTravelTarget && transitionCube?.returning === true && transitionCube?.settled;
+                  const hiddenForTravel = isTravelTarget && !returningSettled;
 
                   return (
                     <button
@@ -555,6 +576,7 @@ export function MusicScreen({
                         opacity: hiddenForTravel ? 0 : 1,
                         padding: 0,
                         transformStyle: "preserve-3d",
+                        transition: returningSettled ? `opacity 0s linear ${RETURN_CROSSFADE_DELAY_MS}ms` : undefined,
                       }}
                     >
                       <TrackCube
@@ -713,8 +735,15 @@ export function MusicScreen({
   );
 }
 
+const RETURN_EASING = `cubic-bezier(0.2, 0.9, 0.2, 1)`;
+const RETURN_CROSSFADE_DELAY_MS = Math.round(PLAYER_TRANSITION_MS * 0.88);
+const RETURN_CROSSFADE_MS = 60;
+
 function TransitioningTrackCube({ track, transitionCube }: { track: MusicTrack; transitionCube: TransitionCubeState }) {
   const currentRect = transitionCube.settled ? transitionCube.toRect : transitionCube.fromRect;
+  const isReturning = transitionCube.returning === true;
+
+  const fadeOut = isReturning && transitionCube.settled;
 
   return (
     <div
@@ -724,22 +753,68 @@ function TransitioningTrackCube({ track, transitionCube }: { track: MusicTrack; 
           : "drop-shadow(0 10px 16px rgba(0,0,0,0.16))",
         height: currentRect.height,
         left: currentRect.left,
+        opacity: fadeOut ? 0 : 1,
         pointerEvents: "none",
         position: "fixed",
         top: currentRect.top,
-        transition: `left ${PLAYER_TRANSITION_MS}ms cubic-bezier(0.2, 0.9, 0.2, 1), top ${PLAYER_TRANSITION_MS}ms cubic-bezier(0.2, 0.9, 0.2, 1), width ${PLAYER_TRANSITION_MS}ms cubic-bezier(0.2, 0.9, 0.2, 1), height ${PLAYER_TRANSITION_MS}ms cubic-bezier(0.2, 0.9, 0.2, 1), filter 420ms ease`,
+        transition: `left ${PLAYER_TRANSITION_MS}ms ${RETURN_EASING}, top ${PLAYER_TRANSITION_MS}ms ${RETURN_EASING}, width ${PLAYER_TRANSITION_MS}ms ${RETURN_EASING}, height ${PLAYER_TRANSITION_MS}ms ${RETURN_EASING}, filter 420ms ease${fadeOut ? `, opacity ${RETURN_CROSSFADE_MS}ms ease ${RETURN_CROSSFADE_DELAY_MS}ms` : ""}`,
         width: currentRect.width,
         zIndex: 18,
       }}
     >
-      <TrackCube
-        boxSize={currentRect.width}
-        color={track.accentColor}
-        isCursor={false}
-        isSpinning
-        number={track.number}
-        spinOffset={transitionCube.spinOffset}
-      />
+      {isReturning ? (
+        <div
+          style={{
+            height: "100%",
+            perspective: transitionCube.settled
+              ? (transitionCube.gridPerspective ?? "1600px")
+              : PLAYER_CAMERA.perspective,
+            perspectiveOrigin: transitionCube.settled
+              ? (transitionCube.gridPerspectiveOrigin ?? "50% 36%")
+              : PLAYER_CAMERA.perspectiveOrigin,
+            transition: `perspective ${PLAYER_TRANSITION_MS}ms ${RETURN_EASING}, perspective-origin ${PLAYER_TRANSITION_MS}ms ${RETURN_EASING}`,
+            width: "100%",
+          }}
+        >
+          <div
+            style={{
+              height: "100%",
+              transform: PLAYER_CAMERA.transform,
+              transformStyle: "preserve-3d",
+              width: "100%",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                transform: transitionCube.settled
+                  ? "rotate3d(1, 1, 0.75, 0deg)"
+                  : `rotate3d(1, 1, 0.75, ${transitionCube.returnSpinAngle ?? 0}deg)`,
+                transformStyle: "preserve-3d",
+                transition: `transform ${PLAYER_TRANSITION_MS}ms ${RETURN_EASING}`,
+                width: "100%",
+              }}
+            >
+              <TrackCube
+                boxSize={currentRect.width}
+                color={track.accentColor}
+                isCursor={false}
+                isSpinning={false}
+                number={track.number}
+              />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <TrackCube
+          boxSize={currentRect.width}
+          color={track.accentColor}
+          isCursor={false}
+          isSpinning
+          number={track.number}
+          spinOffset={transitionCube.spinOffset}
+        />
+      )}
     </div>
   );
 }

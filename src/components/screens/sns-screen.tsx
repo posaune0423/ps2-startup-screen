@@ -15,14 +15,20 @@ const SNS_ITEMS: GridItem[] = [
   {
     id: "twitter",
     label: "X (Twitter)",
-    modelPath: "/3d/sns/twitter.glb",
+    modelPath: "/3d/sns/twitter_blue_bird.glb",
     href: "https://x.com/home",
   },
   {
     id: "github",
     label: "GitHub",
-    modelPath: "/3d/sns/github.glb",
+    modelPath: "/3d/sns/github_octcat.glb",
     href: "https://github.com/posaune0423",
+  },
+  {
+    id: "instagram",
+    label: "Instagram",
+    modelPath: "/3d/sns/instagram.glb",
+    href: "https://www.instagram.com/posaune0131",
   },
 ];
 export const MEMORY_SNS_ITEMS = SNS_ITEMS;
