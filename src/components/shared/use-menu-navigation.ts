@@ -1,6 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
+
+import type { ActiveIndexScreenId } from "@/lib/app-screen";
+import { useAppStore } from "@/lib/app-store";
 
 function triggerHaptic(): void {
   if (typeof window === "undefined") return;
@@ -37,43 +40,66 @@ function triggerHaptic(): void {
 type Direction = "horizontal" | "vertical";
 
 interface UseMenuNavigationOptions {
+  screenId: ActiveIndexScreenId;
   itemCount: number;
   direction: Direction;
   onSelect: (index: number) => void;
   onBack?: () => void;
   initialIndex?: number;
+  enabled?: boolean;
 }
 
 export function useMenuNavigation({
+  screenId,
   itemCount,
   direction,
   onSelect,
   onBack,
   initialIndex = 0,
+  enabled = true,
 }: UseMenuNavigationOptions) {
-  const [activeIndex, setActiveIndex] = useState(initialIndex);
+  const activeIndex = useAppStore((state) => state.screenState[screenId].activeIndex);
+  const setScreenActiveIndex = useAppStore((state) => state.setScreenActiveIndex);
+  const inputLocked = useAppStore((state) => state.inputLocked);
 
   const prevKey = direction === "horizontal" ? "ArrowLeft" : "ArrowUp";
   const nextKey = direction === "horizontal" ? "ArrowRight" : "ArrowDown";
 
+  const setActiveIndex = useCallback(
+    (next: number | ((current: number) => number)) => {
+      const nextIndex = typeof next === "function" ? next(activeIndex) : next;
+      const clampedIndex = Math.max(0, Math.min(itemCount - 1, nextIndex));
+      setScreenActiveIndex(screenId, clampedIndex);
+    },
+    [activeIndex, itemCount, screenId, setScreenActiveIndex],
+  );
+
+  useEffect(() => {
+    if (activeIndex >= itemCount) {
+      setScreenActiveIndex(screenId, Math.max(0, itemCount - 1));
+      return;
+    }
+    if (activeIndex < 0) {
+      setScreenActiveIndex(screenId, initialIndex);
+    }
+  }, [activeIndex, initialIndex, itemCount, screenId, setScreenActiveIndex]);
+
   const movePrev = useCallback(() => {
-    setActiveIndex((i) => {
-      if (i <= 0) return i;
-      triggerHaptic();
-      return i - 1;
-    });
-  }, []);
+    setScreenActiveIndex(screenId, Math.max(0, activeIndex - 1));
+    if (activeIndex <= 0) return;
+    triggerHaptic();
+  }, [activeIndex, screenId, setScreenActiveIndex]);
 
   const moveNext = useCallback(() => {
-    setActiveIndex((i) => {
-      if (i >= itemCount - 1) return i;
-      triggerHaptic();
-      return i + 1;
-    });
-  }, [itemCount]);
+    setScreenActiveIndex(screenId, Math.min(itemCount - 1, activeIndex + 1));
+    if (activeIndex >= itemCount - 1) return;
+    triggerHaptic();
+  }, [activeIndex, itemCount, screenId, setScreenActiveIndex]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      if (!enabled || inputLocked) return;
+
       switch (e.key) {
         case prevKey: {
           e.preventDefault();
@@ -105,15 +131,16 @@ export function useMenuNavigation({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [prevKey, nextKey, movePrev, moveNext, onSelect, onBack, activeIndex]);
+  }, [activeIndex, enabled, inputLocked, moveNext, movePrev, nextKey, onBack, onSelect, prevKey]);
 
   const selectByIndex = useCallback(
     (index: number) => {
+      const clampedIndex = Math.max(0, Math.min(itemCount - 1, index));
       triggerHaptic();
-      setActiveIndex(index);
-      onSelect(index);
+      setScreenActiveIndex(screenId, clampedIndex);
+      onSelect(clampedIndex);
     },
-    [onSelect],
+    [itemCount, onSelect, screenId, setScreenActiveIndex],
   );
 
   return { activeIndex, setActiveIndex, selectByIndex } as const;

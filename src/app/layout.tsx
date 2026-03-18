@@ -3,8 +3,8 @@ import type { Metadata, Viewport } from "vinext/shims/metadata";
 import Script from "vinext/shims/script";
 
 import "./globals.css";
+import AppShell from "../components/shared/app-shell";
 import BackButton from "../components/shared/back-button";
-import NavigationOverlay from "../components/shared/navigation-overlay";
 import { gaMeasurementId, siteDescription, siteName, siteUrl } from "../constants/site";
 import { LanguageProvider } from "../lib/language-context";
 
@@ -65,23 +65,20 @@ const googleAnalyticsBootstrap = `
 `;
 
 export default function RootLayout({
-  children,
+  children: _children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
     <html lang="en">
-      <head>
-        <meta name="view-transition" content="same-origin" />
-      </head>
+      <head />
       <body>
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`} strategy="afterInteractive" />
         <Script id="google-analytics" strategy="afterInteractive">
           {googleAnalyticsBootstrap}
         </Script>
         <LanguageProvider>
-          {children}
-          <NavigationOverlay />
+          <AppShell />
           <BackButton />
         </LanguageProvider>
       </body>

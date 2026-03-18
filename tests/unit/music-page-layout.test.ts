@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 
 import { test } from "vite-plus/test";
 
-const musicPageSource = readFileSync(new URL("../../src/app/memory/music/page.tsx", import.meta.url), "utf8");
+const musicPageSource = readFileSync(new URL("../../src/components/screens/music-screen.tsx", import.meta.url), "utf8");
 
 test("music page renders the Audio CD header, track counter, and responsive grid layout", () => {
   assert.match(musicPageSource, /Audio CD/);
@@ -57,10 +57,8 @@ test("music page keeps the hidden YouTube host offscreen without using a zero-si
 });
 
 test("music page uses a six-face cube and animates the selected cube into the player pane", () => {
-  assert.match(
-    musicPageSource,
-    /const \[viewMode, setViewMode\] = useState<"grid" \| "player" \| "transition">\("grid"\);/,
-  );
+  assert.match(musicPageSource, /const viewMode = useAppStore\(\(state\) => state\.screenState\.music\.viewMode\);/);
+  assert.match(musicPageSource, /const setMusicState = useAppStore\(\(state\) => state\.setMusicState\);/);
   assert.match(musicPageSource, /rotateY\(180deg\) translateZ/);
   assert.match(musicPageSource, /rotateY\(90deg\) translateZ/);
   assert.match(musicPageSource, /rotateY\(-90deg\) translateZ/);

@@ -10,20 +10,19 @@ test("root layout wraps the app with LanguageProvider", () => {
   assert.match(layoutSource, /<LanguageProvider>[\s\S]*<\/LanguageProvider>/);
 });
 
-test("root layout mounts navigation chrome at the app boundary", () => {
-  assert.match(layoutSource, /import NavigationOverlay from "\.\.\/components\/shared\/navigation-overlay"/);
+test("root layout mounts the persistent app shell and back button at the app boundary", () => {
+  assert.match(layoutSource, /import AppShell from "\.\.\/components\/shared\/app-shell"/);
   assert.match(layoutSource, /import BackButton from "\.\.\/components\/shared\/back-button"/);
 });
 
-test("root layout keeps navigation overlay and back button inside the language provider", () => {
-  assert.match(
-    layoutSource,
-    /<LanguageProvider>\s*\{children\}\s*<NavigationOverlay \/>\s*<BackButton \/>\s*<\/LanguageProvider>/,
-  );
+test("root layout keeps the app shell and back button inside the language provider without rendering route children", () => {
+  assert.match(layoutSource, /<LanguageProvider>\s*<AppShell \/>\s*<BackButton \/>\s*<\/LanguageProvider>/);
+  assert.doesNotMatch(layoutSource, /\{children\}/);
 });
 
-test("root layout opts same-origin document navigations into view transitions", () => {
-  assert.match(layoutSource, /<head>\s*<meta name="view-transition" content="same-origin" \/>\s*<\/head>/);
+test("root layout no longer opts into native document view transitions", () => {
+  assert.match(layoutSource, /<head \/>/);
+  assert.doesNotMatch(layoutSource, /name="view-transition"/);
 });
 
 test("root layout loads the Google Analytics gtag script with the shared measurement id", () => {

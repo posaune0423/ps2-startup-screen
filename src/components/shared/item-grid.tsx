@@ -6,15 +6,13 @@ import React, { memo, Suspense, useCallback, useEffect, useMemo, useRef } from "
 import * as THREE from "three";
 
 import GlowCursor from "@/components/shared/glow-cursor";
-import Ps2BrowserBg, { PS2_BROWSER_BG_FALLBACK } from "@/components/shared/ps2-browser-bg";
 import { ThreeSceneHelperPanel } from "@/components/shared/three-scene-helper-panel";
 import { useMenuNavigation } from "@/components/shared/use-menu-navigation";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
 import { startAmbientAudio } from "@/lib/ambient-audio";
-import { releaseGLTFAsset } from "@/lib/gltf-memory";
+import type { ActiveIndexScreenId } from "@/lib/app-screen";
 import { navigate } from "@/lib/navigate";
-import { markRouteReady } from "@/lib/route-transition-ready";
 
 export interface GridItem {
   id: string;
@@ -25,8 +23,9 @@ export interface GridItem {
 
 interface ItemGridProps {
   items: GridItem[];
-  readyRoute: string;
+  screenId: ActiveIndexScreenId;
   title: string;
+  active?: boolean;
 }
 
 const ITEM_SPACING = 0.8;
@@ -34,7 +33,6 @@ const ROW_DEPTH = 0.7;
 const TARGET_SIZE = 0.5;
 const TARGET_SIZE_MOBILE = 0.6;
 const NORMALIZED_SCALE_CACHE = new Map<string, number>();
-const PRELOADED_MODEL_PATHS = new Set<string>(["/3d/memorycard.glb"]);
 
 function calcGridPositions(items: GridItem[]): [number, number, number][] {
   const n = items.length;
@@ -63,19 +61,8 @@ const CameraSetup = memo(function CameraSetup({ camPos }: { camPos: [number, num
   return null;
 });
 
-const GlbModel = memo(function GlbModel({
-  modelPath,
-  isMobile,
-  onModelReady,
-}: {
-  modelPath: string;
-  isMobile: boolean;
-  onModelReady?: (modelPath: string) => void;
-}) {
+const GlbModel = memo(function GlbModel({ modelPath, isMobile }: { modelPath: string; isMobile: boolean }) {
   const { scene } = useGLTF(modelPath);
-  const clearGLTF = useCallback((path: string) => {
-    useGLTF.clear(path);
-  }, []);
 
   const normalizedScale = useMemo(() => {
     const target = isMobile ? TARGET_SIZE_MOBILE : TARGET_SIZE;
@@ -93,16 +80,6 @@ const GlbModel = memo(function GlbModel({
     NORMALIZED_SCALE_CACHE.set(cacheKey, nextScale);
     return nextScale;
   }, [modelPath, scene, isMobile]);
-
-  useEffect(() => {
-    onModelReady?.(modelPath);
-  }, [modelPath, onModelReady, scene]);
-
-  useEffect(() => {
-    return () => {
-      releaseGLTFAsset(modelPath, scene, clearGLTF);
-    };
-  }, [clearGLTF, modelPath, scene]);
 
   return <Clone object={scene} scale={normalizedScale} />;
 });
@@ -126,25 +103,37 @@ const GridItemModel = memo(function GridItemModel({
   position,
   modelPath,
   onClick,
-  onModelReady,
   index,
   isMobile,
   isActive,
+  active,
 }: {
   position: [number, number, number];
   modelPath: string;
   onClick: () => void;
-  onModelReady?: (modelPath: string) => void;
   index: number;
   isMobile: boolean;
   isActive: boolean;
+  active: boolean;
 }) {
   const invalidate = useThree((state) => state.invalidate);
   const groupRef = useRef<THREE.Group>(null);
   const meshRef = useRef<THREE.Mesh>(null);
   const elapsed = useRef(0);
   const settledRef = useRef(false);
+  const prevActiveRef = useRef(active);
   const delay = index * ANIM_STAGGER;
+
+  if (active && !prevActiveRef.current) {
+    elapsed.current = 0;
+    settledRef.current = false;
+    if (groupRef.current) {
+      groupRef.current.scale.setScalar(0);
+      groupRef.current.position.y = position[1] + ANIM_OFFSET_Y;
+    }
+    invalidate();
+  }
+  prevActiveRef.current = active;
 
   const fallbackGeo = useMemo(() => new THREE.BoxGeometry(0.8, 0.8, 0.8), []);
 
@@ -200,7 +189,7 @@ const GridItemModel = memo(function GridItemModel({
     >
       {modelPath ? (
         <Suspense fallback={null}>
-          <GlbModel modelPath={modelPath} isMobile={isMobile} onModelReady={onModelReady} />
+          <GlbModel modelPath={modelPath} isMobile={isMobile} />
         </Suspense>
       ) : (
         <mesh ref={meshRef} castShadow geometry={fallbackGeo} material={fallbackMaterial} />
@@ -216,20 +205,20 @@ const HEMI_ARGS: [string, string, number] = ["#F8FBFF", "#0A0C14", 1.05];
 const GL_PROPS = { antialias: true, alpha: true, powerPreference: "high-performance" as const };
 const CANVAS_STYLE = { width: "100%", height: "100%" } as const;
 
-const GridScene = memo(function GridScene({
+export const ItemGridStage = memo(function ItemGridStage({
   items,
   activeIndex,
   camPos,
   onItemClick,
-  onModelReady,
   isMobile,
+  active = true,
 }: {
   items: GridItem[];
   activeIndex: number;
   camPos: [number, number, number];
   onItemClick: (index: number) => void;
-  onModelReady: (modelPath: string) => void;
   isMobile: boolean;
+  active?: boolean;
 }) {
   const positions = useMemo(() => calcGridPositions(items), [items]);
   const cursorPos = useMemo((): [number, number, number] => [...positions[activeIndex]], [positions, activeIndex]);
@@ -239,7 +228,6 @@ const GridScene = memo(function GridScene({
   return (
     <>
       <CameraSetup camPos={camPos} />
-      <Ps2BrowserBg />
       <ambientLight intensity={0.52} />
       <hemisphereLight args={HEMI_ARGS} />
       <directionalLight position={DIR_LIGHT_POS} intensity={2.6} color="#D5E4FF" />
@@ -252,10 +240,10 @@ const GridScene = memo(function GridScene({
           position={positions[i]}
           modelPath={item.modelPath}
           onClick={clickHandlers[i]}
-          onModelReady={onModelReady}
           index={i}
           isMobile={isMobile}
           isActive={i === activeIndex}
+          active={active}
         />
       ))}
 
@@ -266,8 +254,6 @@ const GridScene = memo(function GridScene({
 
 const MEMORY_CARD_ICON_CAMERA = { position: [0, 0, 1.2] as [number, number, number], fov: 45 };
 const MEMORY_CARD_ICON_GL = { alpha: true, antialias: true, powerPreference: "high-performance" as const };
-
-useGLTF.preload("/3d/memorycard.glb");
 
 const TinyMemoryCard = memo(function TinyMemoryCard() {
   const { scene } = useGLTF("/3d/memorycard.glb");
@@ -282,11 +268,10 @@ const TinyMemoryCard = memo(function TinyMemoryCard() {
   );
 });
 
-export default function ItemGrid({ items, readyRoute, title }: ItemGridProps) {
+export default function ItemGrid({ items, screenId, title, active = true }: ItemGridProps) {
   const { playEnter, playSelect, playBack } = useNavigationSound();
   const { isMobile, isPortrait } = useViewport();
   const compact = isMobile || isPortrait;
-  const readyModelPathCount = useMemo(() => new Set(items.map((item) => item.modelPath)).size, [items]);
 
   const camPos = useMemo((): [number, number, number] => {
     const zBase = items.length > 3 ? 6 : 4.5;
@@ -310,34 +295,18 @@ export default function ItemGrid({ items, readyRoute, title }: ItemGridProps) {
   }, [playBack]);
 
   const { activeIndex } = useMenuNavigation({
+    screenId,
     itemCount: items.length,
     direction: "horizontal",
     onSelect: handleSelect,
     onBack: handleBack,
+    enabled: active,
   });
 
   useEffect(() => {
+    if (!active) return;
     startAmbientAudio();
-  }, []);
-
-  useEffect(() => {
-    for (const item of items) {
-      if (!item.modelPath || PRELOADED_MODEL_PATHS.has(item.modelPath)) continue;
-      PRELOADED_MODEL_PATHS.add(item.modelPath);
-      useGLTF.preload(item.modelPath);
-    }
-  }, [items]);
-
-  const loadedModelPathsRef = useRef(new Set<string>());
-  const handleModelReady = useCallback(
-    (modelPath: string) => {
-      loadedModelPathsRef.current.add(modelPath);
-      if (loadedModelPathsRef.current.size >= readyModelPathCount) {
-        markRouteReady(readyRoute);
-      }
-    },
-    [readyModelPathCount, readyRoute],
-  );
+  }, [active]);
 
   const prevIndexRef = useRef(activeIndex);
   useEffect(() => {
@@ -348,15 +317,15 @@ export default function ItemGrid({ items, readyRoute, title }: ItemGridProps) {
   }, [activeIndex, playSelect]);
 
   return (
-    <div style={{ width: "100vw", height: "100dvh", position: "relative", background: PS2_BROWSER_BG_FALLBACK }}>
+    <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
       <Canvas camera={cameraProps} dpr={compact ? 1 : 1.25} frameloop="demand" gl={GL_PROPS} style={CANVAS_STYLE}>
-        <GridScene
+        <ItemGridStage
           items={items}
           activeIndex={activeIndex}
           camPos={camPos}
           onItemClick={handleSelect}
-          onModelReady={handleModelReady}
           isMobile={compact}
+          active={active}
         />
       </Canvas>
       <ThreeSceneHelperPanel panelStyle={{ bottom: "24px", left: "24px" }} />

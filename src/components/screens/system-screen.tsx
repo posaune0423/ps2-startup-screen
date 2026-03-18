@@ -13,7 +13,7 @@ import { startAmbientAudio } from "@/lib/ambient-audio";
 import { navigate } from "@/lib/navigate";
 import { createRingFogMaterial } from "@/shaders/ringFog";
 
-function BackgroundHaze() {
+function BackgroundHaze({ active }: { active: boolean }) {
   const planeGeometry = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
   const mats = useMemo(
     () => [
@@ -58,6 +58,7 @@ function BackgroundHaze() {
   );
 
   useFrame(({ clock }) => {
+    if (!active) return;
     const t = clock.getElapsedTime();
     mats.forEach((mat) => {
       mat.uniforms.uTime.value = t;
@@ -73,10 +74,10 @@ function BackgroundHaze() {
   );
 }
 
-function SystemScene() {
+function SystemScene({ active, transparentBackground }: { active: boolean; transparentBackground: boolean }) {
   return (
     <>
-      <color attach="background" args={["#0D0A18"]} />
+      {transparentBackground ? null : <color attach="background" args={["#0D0A18"]} />}
       {/* IBL — used by MeshTransmissionMaterial for reflections */}
       <Environment preset="studio" environmentIntensity={0.4} />
       {/* 3 lights instead of 7: white key + blue fill + pink accent */}
@@ -84,18 +85,25 @@ function SystemScene() {
       <pointLight position={[-2.5, 0, 4]} intensity={12} color="#4A90FF" distance={18} decay={2} />
       <pointLight position={[-5, 1, 3]} intensity={6} color="#FF6090" distance={12} decay={2} />
       <ambientLight intensity={0.05} color="#0D0A18" />
-      <BackgroundHaze />
+      <BackgroundHaze active={active} />
       <HexFlower />
     </>
   );
 }
 
-export default function SystemPage() {
+export function SystemScreen({
+  active = true,
+  transparentBackground = false,
+}: {
+  active?: boolean;
+  transparentBackground?: boolean;
+}) {
   const { playBack } = useNavigationSound();
 
   useEffect(() => {
+    if (!active) return;
     startAmbientAudio();
-  }, []);
+  }, [active]);
 
   const handleBack = useCallback(() => {
     playBack();
@@ -103,17 +111,25 @@ export default function SystemPage() {
   }, [playBack]);
 
   return (
-    <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
+    <div
+      style={{
+        width: "100vw",
+        height: "100dvh",
+        position: "relative",
+        background: transparentBackground ? "transparent" : "#0D0A18",
+      }}
+    >
       <Canvas
         camera={{ position: [0, 0, 6], fov: 50 }}
         style={{ width: "100%", height: "100%" }}
         dpr={[1, 1.5]}
-        gl={{ antialias: true, powerPreference: "high-performance" }}
+        frameloop={active ? "always" : "never"}
+        gl={{ alpha: transparentBackground, antialias: true, powerPreference: "high-performance" }}
       >
-        <SystemScene />
+        <SystemScene active={active} transparentBackground={transparentBackground} />
       </Canvas>
       <ThreeSceneHelperPanel panelStyle={{ bottom: "24px", left: "24px" }} />
-      <SystemMenu onBack={handleBack} />
+      <SystemMenu onBack={handleBack} active={active} />
     </div>
   );
 }
