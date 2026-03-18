@@ -68,6 +68,7 @@ interface CubeRect {
 interface TransitionCubeState {
   fromRect: CubeRect;
   settled: boolean;
+  spinOffset: number;
   toRect: CubeRect;
   track: MusicTrack;
 }
@@ -173,12 +174,67 @@ export function MusicScreen({
     return () => window.clearTimeout(timer);
   }, [enteredCount, active]);
 
+  const clearTransitionTimer = useCallback(() => {
+    if (transitionTimerRef.current === null) return;
+    window.clearTimeout(transitionTimerRef.current);
+    transitionTimerRef.current = null;
+  }, []);
+
   const handleBackToGrid = useCallback(() => {
     stop();
+
+    const source = playerDockRef.current;
+    const targetIndex = activeTrackIndex;
+    const track = MUSIC_TRACKS[targetIndex];
+
+    if (!source || !track) {
+      startTransition(() => {
+        setMusicState({ transportIndex: 4, viewMode: "grid" });
+      });
+      return;
+    }
+
+    clearTransitionTimer();
+
+    const sourceRect = toViewportRect(source.getBoundingClientRect());
+    const returnSpinOffset = performance.now() - spinStartTimeRef.current;
+
     startTransition(() => {
-      setMusicState({ transportIndex: 4, viewMode: "grid" });
+      setMusicState({ viewMode: "returning", cursorIndex: targetIndex });
+      setTransitionCube({
+        fromRect: sourceRect,
+        settled: false,
+        spinOffset: returnSpinOffset,
+        toRect: sourceRect,
+        track,
+      });
     });
-  }, [setMusicState, stop]);
+
+    window.requestAnimationFrame(() => {
+      const targetButton = trackButtonRefs.current[targetIndex];
+      if (!targetButton) {
+        setTransitionCube(null);
+        setMusicState({ transportIndex: 4, viewMode: "grid" });
+        return;
+      }
+      const targetRect = toViewportRect(targetButton.getBoundingClientRect());
+      setTransitionCube((current) =>
+        current && current.track.id === track.id ? { ...current, toRect: targetRect } : current,
+      );
+
+      window.requestAnimationFrame(() => {
+        setTransitionCube((current) =>
+          current && current.track.id === track.id ? { ...current, settled: true } : current,
+        );
+      });
+    });
+
+    transitionTimerRef.current = window.setTimeout(() => {
+      clearTransitionTimer();
+      setTransitionCube(null);
+      setMusicState({ transportIndex: 4, viewMode: "grid" });
+    }, PLAYER_TRANSITION_MS);
+  }, [activeTrackIndex, clearTransitionTimer, setMusicState, stop]);
 
   useEffect(() => {
     function interceptBack(e: Event) {
@@ -190,12 +246,6 @@ export function MusicScreen({
     window.addEventListener("app:navigate", interceptBack);
     return () => window.removeEventListener("app:navigate", interceptBack);
   }, [active, handleBackToGrid]);
-
-  const clearTransitionTimer = useCallback(() => {
-    if (transitionTimerRef.current === null) return;
-    window.clearTimeout(transitionTimerRef.current);
-    transitionTimerRef.current = null;
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -236,6 +286,7 @@ export function MusicScreen({
         setTransitionCube({
           fromRect: toViewportRect(source.getBoundingClientRect()),
           settled: false,
+          spinOffset: 0,
           toRect: toViewportRect(target.getBoundingClientRect()),
           track: selectedTrack,
         });
@@ -272,7 +323,7 @@ export function MusicScreen({
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (!active) return;
-      if (viewMode === "transition") {
+      if (viewMode === "transition" || viewMode === "returning") {
         return;
       }
 
@@ -403,7 +454,7 @@ export function MusicScreen({
         style={{
           alignItems: "flex-start",
           display: "flex",
-          justifyContent: viewMode === "grid" ? "space-between" : "flex-end",
+          justifyContent: viewMode === "grid" || viewMode === "returning" ? "space-between" : "flex-end",
           left: 0,
           padding: compact ? "16px 20px 0" : "28px 52px 0",
           pointerEvents: "none",
@@ -413,7 +464,7 @@ export function MusicScreen({
           zIndex: 20,
         }}
       >
-        {viewMode === "grid" ? (
+        {viewMode === "grid" || viewMode === "returning" ? (
           <div
             className="ps2-text"
             style={{
@@ -447,13 +498,19 @@ export function MusicScreen({
           style={{
             left: "50%",
             maxWidth: compact ? "min(92vw, 440px)" : "min(76vw, 980px)",
-            opacity: viewMode === "grid" ? 1 : 0,
+            opacity: viewMode === "grid" || viewMode === "returning" ? 1 : 0,
             paddingTop: compact ? "28vh" : "22vh",
             pointerEvents: viewMode === "grid" ? "auto" : "none",
             position: "absolute",
             top: 0,
-            transform: viewMode === "grid" ? "translateX(-50%)" : "translateX(-50%) translateY(24px)",
-            transition: "opacity 220ms ease, transform 520ms cubic-bezier(0.22, 1, 0.36, 1)",
+            transform:
+              viewMode === "grid" || viewMode === "returning"
+                ? "translateX(-50%)"
+                : "translateX(-50%) translateY(24px)",
+            transition:
+              viewMode === "returning"
+                ? "opacity 300ms ease"
+                : "opacity 220ms ease, transform 520ms cubic-bezier(0.22, 1, 0.36, 1)",
             width: "100%",
           }}
         >
@@ -528,11 +585,11 @@ export function MusicScreen({
             gap: compact ? "72px" : "64px",
             inset: 0,
             justifyContent: compact ? "center" : "center",
-            opacity: viewMode === "grid" ? 0 : 1,
+            opacity: viewMode === "player" || viewMode === "transition" ? 1 : 0,
             padding: compact ? "0 26px 48px" : "80px 64px 108px",
             pointerEvents: viewMode === "player" ? "auto" : "none",
             position: "absolute",
-            transform: `translateY(${viewMode === "grid" ? "24px" : "0"})`,
+            transform: `translateY(${viewMode === "player" || viewMode === "transition" || viewMode === "returning" ? "0" : "24px"})`,
             transition: "opacity 360ms ease, transform 620ms cubic-bezier(0.22, 1, 0.36, 1)",
             flexDirection: compact ? "column" : "row",
           }}
@@ -683,6 +740,7 @@ function TransitioningTrackCube({ track, transitionCube }: { track: MusicTrack; 
         isCursor={false}
         isSpinning
         number={track.number}
+        spinOffset={transitionCube.spinOffset}
       />
     </div>
   );

@@ -121,19 +121,21 @@ const GridItemModel = memo(function GridItemModel({
   const meshRef = useRef<THREE.Mesh>(null);
   const elapsed = useRef(0);
   const settledRef = useRef(false);
-  const prevActiveRef = useRef(active);
+  const prevActiveRef = useRef<boolean | null>(null);
   const delay = index * ANIM_STAGGER;
 
-  if (active && !prevActiveRef.current) {
-    elapsed.current = 0;
-    settledRef.current = false;
-    if (groupRef.current) {
-      groupRef.current.scale.setScalar(0);
-      groupRef.current.position.y = position[1] + ANIM_OFFSET_Y;
+  useEffect(() => {
+    if (active && prevActiveRef.current === false) {
+      elapsed.current = 0;
+      settledRef.current = false;
+      if (groupRef.current) {
+        groupRef.current.scale.setScalar(0);
+        groupRef.current.position.y = position[1] + ANIM_OFFSET_Y;
+      }
+      invalidate();
     }
-    invalidate();
-  }
-  prevActiveRef.current = active;
+    prevActiveRef.current = active;
+  }, [active, invalidate, position]);
 
   const fallbackGeo = useMemo(() => new THREE.BoxGeometry(0.8, 0.8, 0.8), []);
 

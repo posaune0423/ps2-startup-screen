@@ -94,27 +94,30 @@ export default function AppShell() {
       const targetScreen = getScreenFromPath(href);
       const crossCluster = getScreenCluster(currentScreen) !== getScreenCluster(targetScreen);
       navigationRef.current = true;
-      beginNavigation(targetScreen, reason);
-      if (crossCluster) {
-        setOverlayVisible(true);
-        await wait(LEAVE_MS);
-      }
+      try {
+        beginNavigation(targetScreen, reason);
+        if (crossCluster) {
+          setOverlayVisible(true);
+          await wait(LEAVE_MS);
+        }
 
-      resetScreenState(targetScreen);
-      router.push(href);
-      commitNavigation(targetScreen);
+        resetScreenState(targetScreen);
+        router.push(href);
+        commitNavigation(targetScreen);
 
-      if (crossCluster) {
-        await wait(SETTLE_MS);
-        window.requestAnimationFrame(() => {
-          setOverlayVisible(false);
-        });
-        await wait(ENTER_MS);
-      } else {
-        await wait(INTRA_CLUSTER_FADE_MS);
+        if (crossCluster) {
+          await wait(SETTLE_MS);
+          window.requestAnimationFrame(() => {
+            setOverlayVisible(false);
+          });
+          await wait(ENTER_MS);
+        } else {
+          await wait(INTRA_CLUSTER_FADE_MS);
+        }
+      } finally {
+        completeNavigation();
+        navigationRef.current = false;
       }
-      completeNavigation();
-      navigationRef.current = false;
     },
     [
       beginNavigation,

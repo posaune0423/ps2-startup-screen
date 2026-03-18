@@ -16,7 +16,7 @@ export type TransitionPreset = "startupFade" | "orbMenu" | "browserSlide" | "mem
 
 export interface MusicScreenState {
   cursorIndex: number;
-  viewMode: "grid" | "player" | "transition";
+  viewMode: "grid" | "player" | "transition" | "returning";
   transportIndex: number;
 }
 
