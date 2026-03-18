@@ -17,7 +17,6 @@ const SELECTED_COLOR = "#47B6E1";
 const UNSELECTED_COLOR = "#8A8A9A";
 
 export default function MenuList({ items, activeIndex, onItemClick }: MenuListProps) {
-
   return (
     <ul
       style={{

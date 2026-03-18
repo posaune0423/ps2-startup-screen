@@ -26,7 +26,13 @@ export const SCREEN_ASSETS: Record<AppScreenId, readonly string[]> = {
     "/3d/work/daiko.glb",
     "/3d/work/doom.glb",
   ],
-  memorySns: ["/3d/memorycard.glb", "/3d/sns/linkedin.glb", "/3d/sns/twitter.glb", "/3d/sns/github.glb"],
+  memorySns: [
+    "/3d/memorycard.glb",
+    "/3d/sns/linkedin.glb",
+    "/3d/sns/twitter_blue_bird.glb",
+    "/3d/sns/github_octcat.glb",
+    "/3d/sns/instagram.glb",
+  ],
   music: ["/3d/icons/cd.glb"],
   system: [],
 };
