@@ -93,6 +93,7 @@ const GenericCardModel = memo(function GenericCardModel({
   modelRotation,
   normalizeScale = false,
   index = 0,
+  active = true,
 }: {
   position: [number, number, number];
   modelPath: string;
@@ -100,12 +101,14 @@ const GenericCardModel = memo(function GenericCardModel({
   modelRotation: [number, number, number];
   normalizeScale?: boolean;
   index?: number;
+  active?: boolean;
 }) {
   const { scene } = useGLTF(modelPath);
   const invalidate = useThree((state) => state.invalidate);
   const groupRef = useRef<THREE.Group>(null);
   const elapsed = useRef(0);
   const settledRef = useRef(false);
+  const prevActiveRef = useRef<boolean | null>(null);
   const delay = index * ANIM_STAGGER;
 
   const initPos = useMemo(
@@ -124,10 +127,17 @@ const GenericCardModel = memo(function GenericCardModel({
   }, [normalizeScale, scene]);
 
   useEffect(() => {
-    elapsed.current = 0;
-    settledRef.current = false;
-    invalidate();
-  }, [invalidate, modelScale, normalizedScale, position]);
+    if (active && prevActiveRef.current === false) {
+      elapsed.current = 0;
+      settledRef.current = false;
+      if (groupRef.current) {
+        groupRef.current.scale.setScalar(0);
+        groupRef.current.position.y = position[1] + ANIM_OFFSET_Y;
+      }
+      invalidate();
+    }
+    prevActiveRef.current = active;
+  }, [active, invalidate, position]);
 
   useFrame((_, delta) => {
     if (settledRef.current) return;
@@ -177,9 +187,11 @@ const HEMI_ARGS: [string, string, number] = ["#F6F9FF", "#070910", 0.9];
 export const BrowserStage = memo(function BrowserStage({
   activeIndex,
   isMobile,
+  active = true,
 }: {
   activeIndex: number;
   isMobile: boolean;
+  active?: boolean;
 }) {
   const positions = useMemo(() => getBrowserCardPositions(isMobile), [isMobile]);
   const cursorPosition = useMemo((): [number, number, number] => [...positions[activeIndex]], [positions, activeIndex]);
@@ -206,6 +218,7 @@ export const BrowserStage = memo(function BrowserStage({
               modelRotation={card.rotation}
               normalizeScale={card.normalizeScale}
               index={index}
+              active={active}
             />
           );
         })}
@@ -313,7 +326,7 @@ export function BrowserScreen({ active = true }: { active?: boolean }) {
         gl={GL_PROPS}
         style={CANVAS_STYLE}
       >
-        <BrowserStage activeIndex={activeIndex} isMobile={compact} />
+        <BrowserStage activeIndex={activeIndex} isMobile={compact} active={active} />
       </Canvas>
       {SHOW_THREE_SCENE_HELPER ? <BrowserMemoryCardDebugPanel activeIndex={activeIndex} isMobile={compact} /> : null}
 

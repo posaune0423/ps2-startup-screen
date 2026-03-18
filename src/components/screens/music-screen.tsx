@@ -725,7 +725,7 @@ export function MusicScreen({
 
       {transitionCube ? <TransitioningTrackCube track={transitionCube.track} transitionCube={transitionCube} /> : null}
 
-      <div aria-live="polite" style={SR_ONLY_STYLE}>
+      <div aria-live={active ? "polite" : "off"} aria-hidden={!active} style={SR_ONLY_STYLE}>
         {liveRegionMessage}
       </div>
     </div>

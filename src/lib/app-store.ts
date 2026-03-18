@@ -227,18 +227,23 @@ export const useAppStore = create<AppStore>((set, get) => ({
       },
     }),
   markAssetLoading: (path) =>
-    set((state) => ({
-      warmup: {
-        ...state.warmup,
-        assets: {
-          ...state.warmup.assets,
-          [path]: "loading",
+    set((state) => {
+      const current = state.warmup.assets[path];
+      if (current === "ready" || current === "error") return state;
+      return {
+        warmup: {
+          ...state.warmup,
+          assets: {
+            ...state.warmup.assets,
+            [path]: "loading",
+          },
         },
-      },
-    })),
+      };
+    }),
   markAssetReady: (path) =>
     set((state) => {
-      const wasReady = state.warmup.assets[path] === "ready";
+      const current = state.warmup.assets[path];
+      const wasSettled = current === "ready" || current === "error";
       return {
         warmup: {
           ...state.warmup,
@@ -246,13 +251,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
             ...state.warmup.assets,
             [path]: "ready",
           },
-          completedCount: wasReady ? state.warmup.completedCount : state.warmup.completedCount + 1,
+          completedCount: wasSettled ? state.warmup.completedCount : state.warmup.completedCount + 1,
         },
       };
     }),
   markAssetError: (path) =>
     set((state) => {
-      const wasSettled = state.warmup.assets[path] === "ready" || state.warmup.assets[path] === "error";
+      const current = state.warmup.assets[path];
+      const wasSettled = current === "ready" || current === "error";
       return {
         warmup: {
           ...state.warmup,
