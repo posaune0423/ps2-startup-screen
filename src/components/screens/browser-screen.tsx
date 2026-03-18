@@ -160,9 +160,9 @@ const CameraAdjust = memo(function CameraAdjust({ isMobile }: { isMobile: boolea
   const { camera } = useThree();
   useEffect(() => {
     if (isMobile) {
-      camera.position.set(0, 0.3, 3.5);
+      camera.position.set(0, 0.7, 3.5);
     } else {
-      camera.position.set(0, 1.2, 5.5);
+      camera.position.set(0, 2.0, 5.5);
     }
     camera.lookAt(0, 0, 0);
   }, [camera, isMobile]);
@@ -172,7 +172,7 @@ const CameraAdjust = memo(function CameraAdjust({ isMobile }: { isMobile: boolea
 const DIR_LIGHT_POS: [number, number, number] = [-4.5, 6.5, 4.5];
 const SPOT_LIGHT_POS: [number, number, number] = [-4, 7.5, 5.5];
 const POINT_LIGHT_POS: [number, number, number] = [3.5, 1.2, 4.2];
-const HEMI_ARGS: [string, string, number] = ["#F6F9FF", "#070910", 0.75];
+const HEMI_ARGS: [string, string, number] = ["#F6F9FF", "#070910", 0.9];
 
 export const BrowserStage = memo(function BrowserStage({
   activeIndex,
@@ -187,11 +187,11 @@ export const BrowserStage = memo(function BrowserStage({
   return (
     <>
       <CameraAdjust isMobile={isMobile} />
-      <ambientLight intensity={0.46} />
+      <ambientLight intensity={0.58} />
       <hemisphereLight args={HEMI_ARGS} />
-      <directionalLight position={DIR_LIGHT_POS} intensity={2.1} color="#D6E0FF" />
-      <spotLight position={SPOT_LIGHT_POS} angle={0.6} penumbra={0.84} intensity={1.3} color="#FFFDF4" />
-      <pointLight position={POINT_LIGHT_POS} intensity={0.9} color="#7FA9FF" distance={18} decay={1.7} />
+      <directionalLight position={DIR_LIGHT_POS} intensity={2.6} color="#D6E0FF" />
+      <spotLight position={SPOT_LIGHT_POS} angle={0.6} penumbra={0.84} intensity={1.6} color="#FFFDF4" />
+      <pointLight position={POINT_LIGHT_POS} intensity={1.15} color="#7FA9FF" distance={18} decay={1.7} />
 
       <Suspense fallback={null}>
         {CARDS.map((card, index) => {
@@ -263,7 +263,7 @@ export function BrowserMemoryCardDebugPanel({ activeIndex, isMobile }: { activeI
 
 const GL_PROPS = { antialias: false, alpha: true, powerPreference: "low-power" as const };
 const CANVAS_STYLE = { width: "100%", height: "100%" } as const;
-const CAMERA_PROPS = { position: [0, 1.5, 5.5] as [number, number, number], fov: 45 };
+const CAMERA_PROPS = { position: [0, 2.2, 5.5] as [number, number, number], fov: 45 };
 
 export function BrowserScreen({ active = true }: { active?: boolean }) {
   const { playEnter, playSelect, playBack } = useNavigationSound();
@@ -292,6 +292,7 @@ export function BrowserScreen({ active = true }: { active?: boolean }) {
     direction: "horizontal",
     onSelect: handleSelect,
     onBack: handleBack,
+    onMove: playSelect,
     enabled: active,
   });
 
@@ -300,13 +301,11 @@ export function BrowserScreen({ active = true }: { active?: boolean }) {
     startAmbientAudio();
   }, [active]);
 
-  useSelectSound(activeIndex, playSelect);
-
   const selectHandlers = useMemo(() => CARDS.map((_, i) => () => selectByIndex(i)), [selectByIndex]);
 
   return (
     <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
-      <Canvas camera={CAMERA_PROPS} dpr={compact ? 0.8 : 1} frameloop="demand" gl={GL_PROPS} style={CANVAS_STYLE}>
+      <Canvas camera={CAMERA_PROPS} dpr={compact ? 0.8 : 1} frameloop="demand" resize={{ offsetSize: true }} gl={GL_PROPS} style={CANVAS_STYLE}>
         <BrowserStage activeIndex={activeIndex} isMobile={compact} />
       </Canvas>
       {SHOW_THREE_SCENE_HELPER ? <BrowserMemoryCardDebugPanel activeIndex={activeIndex} isMobile={compact} /> : null}
@@ -369,15 +368,4 @@ export function BrowserScreen({ active = true }: { active?: boolean }) {
       </div>
     </div>
   );
-}
-
-function useSelectSound(activeIndex: number, playSelect: () => void) {
-  const prevRef = useRef(activeIndex);
-
-  useEffect(() => {
-    if (prevRef.current !== activeIndex) {
-      playSelect();
-      prevRef.current = activeIndex;
-    }
-  }, [activeIndex, playSelect]);
 }

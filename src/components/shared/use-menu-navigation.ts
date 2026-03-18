@@ -45,6 +45,7 @@ interface UseMenuNavigationOptions {
   direction: Direction;
   onSelect: (index: number) => void;
   onBack?: () => void;
+  onMove?: () => void;
   initialIndex?: number;
   enabled?: boolean;
 }
@@ -55,6 +56,7 @@ export function useMenuNavigation({
   direction,
   onSelect,
   onBack,
+  onMove,
   initialIndex = 0,
   enabled = true,
 }: UseMenuNavigationOptions) {
@@ -88,13 +90,15 @@ export function useMenuNavigation({
     setScreenActiveIndex(screenId, Math.max(0, activeIndex - 1));
     if (activeIndex <= 0) return;
     triggerHaptic();
-  }, [activeIndex, screenId, setScreenActiveIndex]);
+    onMove?.();
+  }, [activeIndex, onMove, screenId, setScreenActiveIndex]);
 
   const moveNext = useCallback(() => {
     setScreenActiveIndex(screenId, Math.min(itemCount - 1, activeIndex + 1));
     if (activeIndex >= itemCount - 1) return;
     triggerHaptic();
-  }, [activeIndex, itemCount, screenId, setScreenActiveIndex]);
+    onMove?.();
+  }, [activeIndex, itemCount, onMove, screenId, setScreenActiveIndex]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {

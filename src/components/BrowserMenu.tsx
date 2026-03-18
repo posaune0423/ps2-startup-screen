@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 
 import MenuList from "@/components/browser-menu/menu-list";
 import OrbRing from "@/components/browser-menu/orb-ring";
 import { useMenuNavigation } from "@/components/shared/use-menu-navigation";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
-import { startAmbientAudio } from "@/lib/ambient-audio";
+import { playReturnMenuThenAmbient, startAmbientAudio } from "@/lib/ambient-audio";
 import type { TranslationKey } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import { navigate } from "@/lib/navigate";
@@ -18,14 +18,22 @@ const MENU_ITEMS = [
 ] as const;
 
 export default function BrowserMenu({ active = true }: { active?: boolean }) {
-  const { playEnter } = useNavigationSound();
+  const { playEnter, playSelect } = useNavigationSound();
   const { isMobile, isPortrait } = useViewport();
   const { t } = useLanguage();
   const compact = isMobile || isPortrait;
 
+  const isFirstActivation = useRef(true);
+
   useEffect(() => {
     if (!active) return;
-    startAmbientAudio();
+
+    if (isFirstActivation.current) {
+      isFirstActivation.current = false;
+      playReturnMenuThenAmbient();
+    } else {
+      startAmbientAudio();
+    }
   }, [active]);
 
   const handleSelect = useCallback(
@@ -43,6 +51,7 @@ export default function BrowserMenu({ active = true }: { active?: boolean }) {
     itemCount: MENU_ITEMS.length,
     direction: "vertical",
     onSelect: handleSelect,
+    onMove: playSelect,
     enabled: active,
   });
 

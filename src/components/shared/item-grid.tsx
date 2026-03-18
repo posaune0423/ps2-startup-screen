@@ -302,6 +302,7 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
     direction: "horizontal",
     onSelect: handleSelect,
     onBack: handleBack,
+    onMove: playSelect,
     enabled: active,
   });
 
@@ -310,17 +311,9 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
     startAmbientAudio();
   }, [active]);
 
-  const prevIndexRef = useRef(activeIndex);
-  useEffect(() => {
-    if (prevIndexRef.current !== activeIndex) {
-      playSelect();
-      prevIndexRef.current = activeIndex;
-    }
-  }, [activeIndex, playSelect]);
-
   return (
     <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
-      <Canvas camera={cameraProps} dpr={compact ? 1 : 1.25} frameloop="demand" gl={GL_PROPS} style={CANVAS_STYLE}>
+      <Canvas camera={cameraProps} dpr={compact ? 1 : 1.25} frameloop="demand" resize={{ offsetSize: true }} gl={GL_PROPS} style={CANVAS_STYLE}>
         <ItemGridStage
           items={items}
           activeIndex={activeIndex}
