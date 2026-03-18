@@ -44,15 +44,9 @@ export const MEMORY_SHELL_SCREEN_IDS = ["browser", "memoryWork", "memorySns", "m
 const MENU_SHELL_SCREEN_SET = new Set<AppScreenId>(MENU_SHELL_SCREEN_IDS);
 const MEMORY_SHELL_SCREEN_SET = new Set<AppScreenId>(MEMORY_SHELL_SCREEN_IDS);
 
-const SCREEN_BY_PATH: Record<string, AppScreenId> = {
-  "/": "startup",
-  "/menu": "menu",
-  "/browser": "browser",
-  "/memory/work": "memoryWork",
-  "/memory/sns": "memorySns",
-  "/memory/music": "music",
-  "/system": "system",
-};
+const SCREEN_BY_PATH: Record<string, AppScreenId> = Object.fromEntries(
+  Object.entries(SCREEN_PATHS).map(([id, path]) => [path, id as AppScreenId]),
+);
 
 export function getScreenFromPath(pathname: string): AppScreenId {
   return SCREEN_BY_PATH[pathname] ?? "startup";

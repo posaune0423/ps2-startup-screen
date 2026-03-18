@@ -17,11 +17,6 @@ const LanguageContext = createContext<LanguageContextValue | null>(null);
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const locale = useAppStore((state) => state.locale);
   const setLocale = useAppStore((state) => state.setLocale);
-  const hydrateSettings = useAppStore((state) => state.hydrateSettings);
-
-  useEffect(() => {
-    hydrateSettings();
-  }, [hydrateSettings]);
 
   useEffect(() => {
     document.documentElement.lang = locale === "ja" ? "ja" : "en";

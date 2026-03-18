@@ -1,7 +1,8 @@
 "use client";
 
 import { useGLTF } from "@react-three/drei";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { Component, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ErrorInfo, ReactNode } from "react";
 import { usePathname, useRouter } from "vinext/shims/navigation";
 
 import { StartupScreen } from "@/components/screens/startup-screen";
@@ -46,6 +47,28 @@ async function warmAsset(path: string) {
   const response = await fetch(path, { cache: "force-cache" });
   if (!response.ok) {
     throw new Error(`Failed to warm asset: ${path}`);
+  }
+}
+
+class SceneErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("[SceneErrorBoundary]", error, info.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <div style={HYDRATION_PLACEHOLDER_STYLE} />;
+    }
+    return this.props.children;
   }
 }
 
@@ -185,9 +208,11 @@ export default function AppShell() {
 
   return (
     <div style={SHELL_STYLE}>
-      {currentCluster === "startup" ? <StartupScreen /> : null}
-      {currentCluster === "menu" ? <MenuShell currentScreen={currentScreen} /> : null}
-      {currentCluster === "memory" ? <MemoryShell currentScreen={currentScreen} /> : null}
+      <SceneErrorBoundary>
+        {currentCluster === "startup" ? <StartupScreen /> : null}
+        {currentCluster === "menu" ? <MenuShell currentScreen={currentScreen} /> : null}
+        {currentCluster === "memory" ? <MemoryShell currentScreen={currentScreen} /> : null}
+      </SceneErrorBoundary>
       <div
         style={{
           ...OVERLAY_STYLE,

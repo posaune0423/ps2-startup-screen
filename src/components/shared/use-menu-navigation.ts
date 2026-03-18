@@ -69,11 +69,12 @@ export function useMenuNavigation({
 
   const setActiveIndex = useCallback(
     (next: number | ((current: number) => number)) => {
-      const nextIndex = typeof next === "function" ? next(activeIndex) : next;
+      const current = useAppStore.getState().screenState[screenId].activeIndex;
+      const nextIndex = typeof next === "function" ? next(current) : next;
       const clampedIndex = Math.max(0, Math.min(itemCount - 1, nextIndex));
       setScreenActiveIndex(screenId, clampedIndex);
     },
-    [activeIndex, itemCount, screenId, setScreenActiveIndex],
+    [itemCount, screenId, setScreenActiveIndex],
   );
 
   useEffect(() => {

@@ -322,14 +322,11 @@ export function MusicScreen({
   const moveCursor = useCallback(
     (nextIndex: number) => {
       const clampedIndex = Math.max(0, Math.min(nextIndex, MUSIC_TRACKS.length - 1));
-      const previousIndex = cursorIndex;
-      if (previousIndex !== clampedIndex) {
+      if (cursorIndex !== clampedIndex) {
         playSelect();
       }
-      setMusicState({
-        cursorIndex: previousIndex === clampedIndex ? previousIndex : clampedIndex,
-      });
-      return previousIndex === clampedIndex ? previousIndex : clampedIndex;
+      setMusicState({ cursorIndex: clampedIndex });
+      return clampedIndex;
     },
     [cursorIndex, playSelect, setMusicState],
   );
