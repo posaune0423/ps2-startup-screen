@@ -41,7 +41,7 @@ function layerStyle(active: boolean): React.CSSProperties {
   return {
     ...FOREGROUND_LAYER_STYLE,
     opacity: active ? 1 : 0,
-    transform: active ? "translateY(0) scale(1)" : "translateY(12px) scale(0.97)",
+    transform: active ? "none" : "translateY(12px) scale(0.97)",
     pointerEvents: active ? "auto" : "none",
     visibility: active ? "visible" : "hidden",
     transition: `opacity ${LAYER_TRANSITION_MS}ms ease-out, transform ${LAYER_TRANSITION_MS}ms ease-out, visibility 0ms ${active ? "0ms" : `${LAYER_TRANSITION_MS}ms`}`,

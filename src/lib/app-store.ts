@@ -114,7 +114,7 @@ function createPreset(screenId: AppScreenId): TransitionPreset {
 
 const INITIAL_SCREEN = getScreenFromPath(typeof window === "undefined" ? "/" : window.location.pathname);
 
-export const useAppStore = create<AppStore>((set) => ({
+export const useAppStore = create<AppStore>((set, get) => ({
   currentScreen: INITIAL_SCREEN,
   targetScreen: null,
   phase: "idle",
@@ -134,6 +134,7 @@ export const useAppStore = create<AppStore>((set) => ({
     finishedAt: null,
   },
   hydrateSettings: () => {
+    if (get().settingsHydrated) return;
     const locale = readStoredLocale();
     const soundEnabled = readStoredSoundEnabled();
     set({
