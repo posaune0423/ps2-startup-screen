@@ -1,15 +1,13 @@
 "use client";
 
-import { useGLTF } from "@react-three/drei";
-import React, { useCallback, useEffect } from "react";
-import { useRouter } from "vinext/shims/navigation";
+import React, { useCallback, useEffect, useRef } from "react";
 
 import MenuList from "@/components/browser-menu/menu-list";
 import OrbRing from "@/components/browser-menu/orb-ring";
 import { useMenuNavigation } from "@/components/shared/use-menu-navigation";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
-import { startAmbientAudio } from "@/lib/ambient-audio";
+import { playReturnMenuThenAmbient, startAmbientAudio } from "@/lib/ambient-audio";
 import type { TranslationKey } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import { navigate } from "@/lib/navigate";
@@ -18,30 +16,25 @@ const MENU_ITEMS = [
   { labelKey: "menu.browser" as TranslationKey, href: "/browser" },
   { labelKey: "menu.systemConfiguration" as TranslationKey, href: "/system" },
 ] as const;
-const BROWSER_ROUTE_MODEL_PATHS = ["/3d/memorycard.glb", "/3d/icons/cd.glb"] as const;
 
-export default function BrowserMenu() {
-  const { playEnter } = useNavigationSound();
+export default function BrowserMenu({ active = true }: { active?: boolean }) {
+  const { playEnter, playSelect } = useNavigationSound();
   const { isMobile, isPortrait } = useViewport();
   const { t } = useLanguage();
-  const router = useRouter();
   const compact = isMobile || isPortrait;
 
-  useEffect(() => {
-    startAmbientAudio();
-  }, []);
+  const isFirstActivation = useRef(true);
 
   useEffect(() => {
-    for (const modelPath of BROWSER_ROUTE_MODEL_PATHS) {
-      useGLTF.preload(modelPath);
-    }
-  }, []);
+    if (!active) return;
 
-  useEffect(() => {
-    for (const item of MENU_ITEMS) {
-      router.prefetch(item.href);
+    if (isFirstActivation.current) {
+      isFirstActivation.current = false;
+      playReturnMenuThenAmbient();
+    } else {
+      startAmbientAudio();
     }
-  }, [router]);
+  }, [active]);
 
   const handleSelect = useCallback(
     (index: number) => {
@@ -54,9 +47,12 @@ export default function BrowserMenu() {
   );
 
   const { activeIndex, selectByIndex } = useMenuNavigation({
+    screenId: "menu",
     itemCount: MENU_ITEMS.length,
     direction: "vertical",
     onSelect: handleSelect,
+    onMove: playSelect,
+    enabled: active,
   });
 
   return (

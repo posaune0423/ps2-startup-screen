@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback } from "react";
 
 import { useMenuNavigation } from "@/components/shared/use-menu-navigation";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
@@ -14,10 +14,11 @@ const SELECTED_COLOR = "#47B6E1";
 const LOCALES: Locale[] = ["ja", "en"];
 
 interface SystemMenuProps {
+  active?: boolean;
   onBack: () => void;
 }
 
-export default function SystemMenu({ onBack }: SystemMenuProps) {
+export default function SystemMenu({ onBack, active = true }: SystemMenuProps) {
   const { playEnter, playSelect } = useNavigationSound();
   const { isMobile, isPortrait } = useViewport();
   const compact = isMobile || isPortrait;
@@ -56,19 +57,14 @@ export default function SystemMenu({ onBack }: SystemMenuProps) {
   );
 
   const { activeIndex, setActiveIndex } = useMenuNavigation({
+    screenId: "system",
     itemCount: settings.length,
     direction: "vertical",
     onSelect: handleSelect,
     onBack,
+    onMove: playSelect,
+    enabled: active,
   });
-
-  const prevIndexRef = useRef(activeIndex);
-  useEffect(() => {
-    if (prevIndexRef.current !== activeIndex) {
-      playSelect();
-      prevIndexRef.current = activeIndex;
-    }
-  }, [activeIndex, playSelect]);
 
   const setting = settings[activeIndex];
 
@@ -103,7 +99,11 @@ export default function SystemMenu({ onBack }: SystemMenuProps) {
       {/* Up arrow — navigate only, no toggle */}
       <button
         type="button"
-        onClick={() => setActiveIndex((prev) => (prev - 1 + settings.length) % settings.length)}
+        onClick={() => {
+          const next = (activeIndex - 1 + settings.length) % settings.length;
+          if (next !== activeIndex) playSelect();
+          setActiveIndex(next);
+        }}
         style={{
           background: "none",
           border: "none",
@@ -161,7 +161,11 @@ export default function SystemMenu({ onBack }: SystemMenuProps) {
       {/* Down arrow — navigate only, no toggle */}
       <button
         type="button"
-        onClick={() => setActiveIndex((prev) => (prev + 1) % settings.length)}
+        onClick={() => {
+          const next = (activeIndex + 1) % settings.length;
+          if (next !== activeIndex) playSelect();
+          setActiveIndex(next);
+        }}
         style={{
           background: "none",
           border: "none",

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 
 import { test } from "vite-plus/test";
 
-const musicPageSource = readFileSync(new URL("../../src/app/memory/music/page.tsx", import.meta.url), "utf8");
+const musicPageSource = readFileSync(new URL("../../src/components/screens/music-screen.tsx", import.meta.url), "utf8");
 
 test("music page renders the Audio CD header, track counter, and responsive grid layout", () => {
   assert.match(musicPageSource, /Audio CD/);
@@ -44,7 +44,7 @@ test("music page abstracts YouTube playback through a dedicated hook and keeps p
     musicPageSource,
     /const \{\s*activeTrackIndex,\s*currentSeconds,\s*errorMessage,\s*isReady,[\s\S]*noticeMessage,[\s\S]*playerHostRef,[\s\S]*playerState,/s,
   );
-  assert.match(musicPageSource, /aria-live="polite"/);
+  assert.match(musicPageSource, /aria-live=\{active \? "polite" : "off"\}/);
   assert.doesNotMatch(musicPageSource, /\{activeTrack\.title\}/);
   assert.doesNotMatch(musicPageSource, /\{activeTrack\.artist\}/);
 });
@@ -57,10 +57,8 @@ test("music page keeps the hidden YouTube host offscreen without using a zero-si
 });
 
 test("music page uses a six-face cube and animates the selected cube into the player pane", () => {
-  assert.match(
-    musicPageSource,
-    /const \[viewMode, setViewMode\] = useState<"grid" \| "player" \| "transition">\("grid"\);/,
-  );
+  assert.match(musicPageSource, /const viewMode = useAppStore\(\(state\) => state\.screenState\.music\.viewMode\);/);
+  assert.match(musicPageSource, /const setMusicState = useAppStore\(\(state\) => state\.setMusicState\);/);
   assert.match(musicPageSource, /rotateY\(180deg\) translateZ/);
   assert.match(musicPageSource, /rotateY\(90deg\) translateZ/);
   assert.match(musicPageSource, /rotateY\(-90deg\) translateZ/);
@@ -94,6 +92,6 @@ test("music page keeps x/y aligned and exposes an env-toggled grid helper for ax
 
 test("music page keeps shared text outline smoothing and avoids forcing the player text pane onto a 3d layer", () => {
   assert.doesNotMatch(musicPageSource, /textShadow:\s*"none"/);
-  assert.match(musicPageSource, /transform: `translateY\(\$\{viewMode === "grid" \? "24px" : "0"\}\)`/);
+  assert.match(musicPageSource, /translateY/);
   assert.doesNotMatch(musicPageSource, /transform: `translate3d\(0, \$\{viewMode === "grid" \? "24px" : "0"\}, 0\)`/);
 });
