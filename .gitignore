@@ -40,5 +40,6 @@ next-env.d.ts
 
 .wrangler
 .agents/memory
+.3d-originals
 
 docs/references/**

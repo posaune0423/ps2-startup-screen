@@ -1,8 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-
-import { useNavigationSound } from "@/components/shared/use-navigation-sound";
+import React from "react";
 
 interface MenuItem {
   label: string;
@@ -19,18 +17,6 @@ const SELECTED_COLOR = "#47B6E1";
 const UNSELECTED_COLOR = "#8A8A9A";
 
 export default function MenuList({ items, activeIndex, onItemClick }: MenuListProps) {
-  const { playSelect } = useNavigationSound();
-  const hasMountedRef = useRef(false);
-
-  useEffect(() => {
-    if (!hasMountedRef.current) {
-      hasMountedRef.current = true;
-      return;
-    }
-
-    playSelect();
-  }, [activeIndex, playSelect]);
-
   return (
     <ul
       style={{

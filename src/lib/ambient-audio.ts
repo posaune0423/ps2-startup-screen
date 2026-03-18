@@ -35,6 +35,22 @@ export function stopAmbientAudio(): void {
   audio = null;
 }
 
+export function playReturnMenuThenAmbient(): void {
+  wantsAmbientAudio = true;
+
+  initializeSoundEnabled();
+  if (!getSoundEnabled()) return;
+
+  const se = new Audio("/sound/se/return-menu.wav");
+  se.volume = 0.5;
+  const handleEnded = () => {
+    startAmbientAudio();
+    se.removeEventListener("ended", handleEnded);
+  };
+  se.addEventListener("ended", handleEnded);
+  se.play().catch(() => startAmbientAudio());
+}
+
 export function syncAmbientAudio(): void {
   initializeSoundEnabled();
 

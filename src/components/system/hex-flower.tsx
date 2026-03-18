@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import React, { useEffect, useRef } from "react";
+import React, { memo, useLayoutEffect, useRef } from "react";
 import * as THREE from "three";
 
 const PETAL_COUNT = 12;
@@ -43,11 +43,15 @@ const sharedMaterial = new THREE.MeshPhysicalMaterial({
   flatShading: true,
 });
 
-export default function HexFlower() {
+const HexFlower = memo(function HexFlower() {
   const groupRef = useRef<THREE.Group>(null);
   const petalsRef = useRef<THREE.InstancedMesh>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (groupRef.current) {
+      groupRef.current.rotation.set(-0.25, 0, 0.3);
+    }
+
     const mesh = petalsRef.current;
     if (!mesh) return;
 
@@ -74,11 +78,13 @@ export default function HexFlower() {
   });
 
   return (
-    <group ref={groupRef} position={[-3.2, 0.3, -5]} rotation={[-0.25, 0, 0.3]}>
+    <group ref={groupRef} position={[-3.2, 0.3, -5]}>
       <pointLight position={[2, 3, 4]} intensity={40} color="#A0D0FF" distance={18} decay={1.5} />
       <pointLight position={[-3, -1, 2]} intensity={25} color="#6090FF" distance={14} decay={1.5} />
       <pointLight position={[0, 0, 0]} intensity={20} color="#7080FF" distance={10} decay={1.8} />
       <instancedMesh ref={petalsRef} args={[sharedGeometry, sharedMaterial, PETAL_DATA.length]} />
     </group>
   );
-}
+});
+
+export default HexFlower;

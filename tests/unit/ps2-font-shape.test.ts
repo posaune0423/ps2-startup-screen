@@ -9,7 +9,10 @@ const menuListSource = readFileSync(
   "utf8",
 );
 const systemMenuSource = readFileSync(new URL("../../src/components/system/system-menu.tsx", import.meta.url), "utf8");
-const browserPageSource = readFileSync(new URL("../../src/app/browser/page.tsx", import.meta.url), "utf8");
+const browserPageSource = readFileSync(
+  new URL("../../src/components/screens/browser-screen.tsx", import.meta.url),
+  "utf8",
+);
 const itemGridSource = readFileSync(new URL("../../src/components/shared/item-grid.tsx", import.meta.url), "utf8");
 
 test("shared PS2 text class keeps a Helvetica-based stack with horizontal shaping", () => {

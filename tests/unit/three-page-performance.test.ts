@@ -13,9 +13,15 @@ const postProcessingSource = readFileSync(
   new URL("../../src/components/scene/PostProcessing.tsx", import.meta.url),
   "utf8",
 );
-const browserPageSource = readFileSync(new URL("../../src/app/browser/page.tsx", import.meta.url), "utf8");
+const browserScreenSource = readFileSync(
+  new URL("../../src/components/screens/browser-screen.tsx", import.meta.url),
+  "utf8",
+);
 const itemGridSource = readFileSync(new URL("../../src/components/shared/item-grid.tsx", import.meta.url), "utf8");
-const systemPageSource = readFileSync(new URL("../../src/app/system/page.tsx", import.meta.url), "utf8");
+const systemScreenSource = readFileSync(
+  new URL("../../src/components/screens/system-screen.tsx", import.meta.url),
+  "utf8",
+);
 const hexFlowerSource = readFileSync(new URL("../../src/components/system/hex-flower.tsx", import.meta.url), "utf8");
 const helperSource = readFileSync(
   new URL("../../src/components/shared/three-scene-helper-panel.tsx", import.meta.url),
@@ -24,7 +30,7 @@ const helperSource = readFileSync(
 
 test("browser and item-grid canvases use demand frameloops for mostly static 3d pages", () => {
   assert.match(
-    browserPageSource,
+    browserScreenSource,
     /<Canvas[\s\S]*camera=\{CAMERA_PROPS\}[\s\S]*dpr=\{compact \? 0\.8 : 1\}[\s\S]*frameloop="demand"/,
   );
   assert.match(
@@ -35,10 +41,10 @@ test("browser and item-grid canvases use demand frameloops for mostly static 3d 
     itemGridSource,
     /camera=\{MEMORY_CARD_ICON_CAMERA\}[\s\S]*dpr=\{compact \? 1 : 1\}[\s\S]*frameloop="demand"/,
   );
-  assert.match(browserPageSource, /const invalidate = useThree\(\(state\) => state\.invalidate\);/);
+  assert.match(browserScreenSource, /const invalidate = useThree\(\(state\) => state\.invalidate\);/);
   assert.match(itemGridSource, /const invalidate = useThree\(\(state\) => state\.invalidate\);/);
-  assert.doesNotMatch(browserPageSource, /const \[mounted, setMounted\] = useState\(false\);/);
-  assert.doesNotMatch(browserPageSource, /\{mounted && \(/);
+  assert.doesNotMatch(browserScreenSource, /const \[mounted, setMounted\] = useState\(false\);/);
+  assert.doesNotMatch(browserScreenSource, /\{mounted && \(/);
 });
 
 test("main scene keeps the timeout navigation path while restoring the reference startup quality profile", () => {
@@ -50,8 +56,11 @@ test("main scene keeps the timeout navigation path while restoring the reference
 });
 
 test("system and helper canvases keep the higher-quality reference desktop settings", () => {
-  assert.match(systemPageSource, /dpr=\{\[1,\s*1\.5\]\}/);
-  assert.match(systemPageSource, /gl=\{\{ antialias: true, powerPreference: "high-performance" \}\}/);
+  assert.match(systemScreenSource, /dpr=\{\[1,\s*1\.5\]\}/);
+  assert.match(
+    systemScreenSource,
+    /gl=\{\{ alpha: transparentBackground, antialias: true, powerPreference: "high-performance" \}\}/,
+  );
   assert.match(hexFlowerSource, /const petalsRef = useRef<THREE\.InstancedMesh>\(null\);/);
   assert.match(hexFlowerSource, /mesh\.instanceMatrix\.setUsage\(THREE\.StaticDrawUsage\);/);
   assert.match(

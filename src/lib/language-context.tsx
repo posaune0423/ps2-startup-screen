@@ -1,11 +1,10 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo } from "react";
 
+import { useAppStore } from "./app-store";
 import type { Locale, TranslationKey } from "./i18n";
 import { translate } from "./i18n";
-
-const STORAGE_KEY = "ps2-locale";
 
 interface LanguageContextValue {
   locale: Locale;
@@ -15,27 +14,11 @@ interface LanguageContextValue {
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
-function getStoredLocale(): Locale | null {
-  if (typeof window === "undefined") return null;
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === "ja" || stored === "en") return stored;
-  return null;
-}
-
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("ja");
-
-  const setLocale = useCallback((next: Locale) => {
-    setLocaleState(next);
-    localStorage.setItem(STORAGE_KEY, next);
-  }, []);
+  const locale = useAppStore((state) => state.locale);
+  const setLocale = useAppStore((state) => state.setLocale);
 
   useEffect(() => {
-    const storedLocale = getStoredLocale();
-    if (storedLocale && storedLocale !== locale) {
-      setLocaleState(storedLocale);
-      return;
-    }
     document.documentElement.lang = locale === "ja" ? "ja" : "en";
   }, [locale]);
 

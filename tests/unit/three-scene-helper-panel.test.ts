@@ -8,8 +8,14 @@ const helperSource = readFileSync(
   "utf8",
 );
 const sceneSource = readFileSync(new URL("../../src/components/Scene.tsx", import.meta.url), "utf8");
-const browserPageSource = readFileSync(new URL("../../src/app/browser/page.tsx", import.meta.url), "utf8");
-const systemPageSource = readFileSync(new URL("../../src/app/system/page.tsx", import.meta.url), "utf8");
+const browserPageSource = readFileSync(
+  new URL("../../src/components/screens/browser-screen.tsx", import.meta.url),
+  "utf8",
+);
+const systemPageSource = readFileSync(
+  new URL("../../src/components/screens/system-screen.tsx", import.meta.url),
+  "utf8",
+);
 const itemGridSource = readFileSync(new URL("../../src/components/shared/item-grid.tsx", import.meta.url), "utf8");
 
 test("shared three scene helper panel uses real r3f helpers behind a global env toggle", () => {
