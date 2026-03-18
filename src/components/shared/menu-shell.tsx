@@ -25,7 +25,7 @@ function layerStyle(active: boolean): React.CSSProperties {
     position: "absolute",
     inset: 0,
     opacity: active ? 1 : 0,
-    transform: active ? "translateY(0) scale(1)" : "translateY(10px) scale(0.98)",
+    transform: active ? "none" : "translateY(10px) scale(0.98)",
     pointerEvents: active ? "auto" : "none",
     visibility: active ? "visible" : "hidden",
     transition: `opacity ${LAYER_TRANSITION_MS}ms ease-out, transform ${LAYER_TRANSITION_MS}ms ease-out, visibility 0ms ${active ? "0ms" : `${LAYER_TRANSITION_MS}ms`}`,

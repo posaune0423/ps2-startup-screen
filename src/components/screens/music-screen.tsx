@@ -188,9 +188,7 @@ export function MusicScreen({
     const track = MUSIC_TRACKS[targetIndex];
 
     if (!source || !track) {
-      startTransition(() => {
-        setMusicState({ transportIndex: 4, viewMode: "grid" });
-      });
+      setMusicState({ transportIndex: 4, viewMode: "grid" });
       return;
     }
 
@@ -199,15 +197,13 @@ export function MusicScreen({
     const sourceRect = toViewportRect(source.getBoundingClientRect());
     const returnSpinOffset = performance.now() - spinStartTimeRef.current;
 
-    startTransition(() => {
-      setMusicState({ viewMode: "returning", cursorIndex: targetIndex });
-      setTransitionCube({
-        fromRect: sourceRect,
-        settled: false,
-        spinOffset: returnSpinOffset,
-        toRect: sourceRect,
-        track,
-      });
+    setMusicState({ viewMode: "returning", cursorIndex: targetIndex });
+    setTransitionCube({
+      fromRect: sourceRect,
+      settled: false,
+      spinOffset: returnSpinOffset,
+      toRect: sourceRect,
+      track,
     });
 
     window.requestAnimationFrame(() => {
@@ -226,14 +222,14 @@ export function MusicScreen({
         setTransitionCube((current) =>
           current && current.track.id === track.id ? { ...current, settled: true } : current,
         );
+
+        transitionTimerRef.current = window.setTimeout(() => {
+          clearTransitionTimer();
+          setTransitionCube(null);
+          setMusicState({ transportIndex: 4, viewMode: "grid" });
+        }, PLAYER_TRANSITION_MS + 20);
       });
     });
-
-    transitionTimerRef.current = window.setTimeout(() => {
-      clearTransitionTimer();
-      setTransitionCube(null);
-      setMusicState({ transportIndex: 4, viewMode: "grid" });
-    }, PLAYER_TRANSITION_MS);
   }, [activeTrackIndex, clearTransitionTimer, setMusicState, stop]);
 
   useEffect(() => {
@@ -509,7 +505,7 @@ export function MusicScreen({
                 : "translateX(-50%) translateY(24px)",
             transition:
               viewMode === "returning"
-                ? "opacity 300ms ease"
+                ? `opacity ${PLAYER_TRANSITION_MS}ms ease-out`
                 : "opacity 220ms ease, transform 520ms cubic-bezier(0.22, 1, 0.36, 1)",
             width: "100%",
           }}
@@ -558,7 +554,6 @@ export function MusicScreen({
                         justifyContent: "center",
                         opacity: hiddenForTravel ? 0 : 1,
                         padding: 0,
-                        transition: "opacity 120ms linear",
                         transformStyle: "preserve-3d",
                       }}
                     >
@@ -590,7 +585,10 @@ export function MusicScreen({
             pointerEvents: viewMode === "player" ? "auto" : "none",
             position: "absolute",
             transform: `translateY(${viewMode === "player" || viewMode === "transition" || viewMode === "returning" ? "0" : "24px"})`,
-            transition: "opacity 360ms ease, transform 620ms cubic-bezier(0.22, 1, 0.36, 1)",
+            transition:
+              viewMode === "returning"
+                ? `opacity ${PLAYER_TRANSITION_MS}ms ease-out`
+                : "opacity 360ms ease, transform 620ms cubic-bezier(0.22, 1, 0.36, 1)",
             flexDirection: compact ? "column" : "row",
           }}
         >
