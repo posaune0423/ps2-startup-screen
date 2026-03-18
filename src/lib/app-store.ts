@@ -155,15 +155,17 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
     set({ soundEnabled: enabled });
   },
-  syncScreenFromPath: (pathname, reason = "user") =>
+  syncScreenFromPath: (pathname, reason = "user") => {
+    const screenId = getScreenFromPath(pathname);
     set({
-      currentScreen: getScreenFromPath(pathname),
+      currentScreen: screenId,
       targetScreen: null,
       phase: "idle",
       reason,
       inputLocked: false,
-      transitionPreset: createPreset(getScreenFromPath(pathname)),
-    }),
+      transitionPreset: createPreset(screenId),
+    });
+  },
   beginNavigation: (targetScreen, reason) =>
     set({
       targetScreen,

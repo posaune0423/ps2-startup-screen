@@ -11,7 +11,7 @@ interface MenuShellProps {
 }
 
 const SHELL_STYLE: React.CSSProperties = {
-  width: "100vw",
+  width: "100%",
   height: "100dvh",
   position: "relative",
   overflow: "hidden",

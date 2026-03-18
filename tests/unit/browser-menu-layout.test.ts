@@ -27,8 +27,8 @@ test("home menu labels are center-aligned", () => {
 });
 
 test("home menu does not play select sound for the initial auto-selected item", () => {
-  assert.match(menuListSource, /const hasMountedRef = useRef\(false\)/);
-  assert.match(menuListSource, /if \(!hasMountedRef\.current\) \{\s*hasMountedRef\.current = true;\s*return;\s*\}/s);
+  assert.doesNotMatch(menuListSource, /useRef/, "MenuList must be a pure presentational component with no refs");
+  assert.doesNotMatch(menuListSource, /playSelect|playSe|Audio/, "MenuList must not contain any sound logic");
 });
 
 test("home menu does not render a bullet marker or text glow beside the active item", () => {

@@ -64,6 +64,8 @@ const googleAnalyticsBootstrap = `
   gtag("config", "${gaMeasurementId}");
 `;
 
+// AppShell manages all screen rendering; children is accepted only to satisfy
+// the Next.js/Vinext layout signature and is intentionally unused.
 export default function RootLayout({
   children: _children,
 }: Readonly<{
