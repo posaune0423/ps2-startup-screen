@@ -2,9 +2,10 @@
 
 import { Environment } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import React, { useCallback, useEffect, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 
+import { LAYER_TRANSITION_MS } from "@/components/shared/menu-shell";
 import { ThreeSceneHelperPanel } from "@/components/shared/three-scene-helper-panel";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import HexFlower from "@/components/system/hex-flower";
@@ -99,6 +100,16 @@ export function SystemScreen({
   transparentBackground?: boolean;
 }) {
   const { playBack } = useNavigationSound();
+  const [rendering, setRendering] = useState(active);
+
+  useEffect(() => {
+    if (active) {
+      setRendering(true);
+      return;
+    }
+    const timer = setTimeout(() => setRendering(false), LAYER_TRANSITION_MS + 50);
+    return () => clearTimeout(timer);
+  }, [active]);
 
   useEffect(() => {
     if (!active) return;
@@ -124,7 +135,7 @@ export function SystemScreen({
         style={{ width: "100%", height: "100%" }}
         dpr={[1, 1.5]}
         resize={{ offsetSize: true }}
-        frameloop={active ? "always" : "never"}
+        frameloop={rendering ? "always" : "never"}
         gl={{ alpha: transparentBackground, antialias: true, powerPreference: "high-performance" }}
       >
         <SystemScene active={active} transparentBackground={transparentBackground} />
