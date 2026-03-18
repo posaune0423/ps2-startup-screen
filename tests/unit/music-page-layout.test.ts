@@ -44,7 +44,7 @@ test("music page abstracts YouTube playback through a dedicated hook and keeps p
     musicPageSource,
     /const \{\s*activeTrackIndex,\s*currentSeconds,\s*errorMessage,\s*isReady,[\s\S]*noticeMessage,[\s\S]*playerHostRef,[\s\S]*playerState,/s,
   );
-  assert.match(musicPageSource, /aria-live="polite"/);
+  assert.match(musicPageSource, /aria-live=\{active \? "polite" : "off"\}/);
   assert.doesNotMatch(musicPageSource, /\{activeTrack\.title\}/);
   assert.doesNotMatch(musicPageSource, /\{activeTrack\.artist\}/);
 });
