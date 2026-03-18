@@ -21,7 +21,7 @@ test("root layout keeps the app shell and back button inside the language provid
 });
 
 test("root layout no longer opts into native document view transitions", () => {
-  assert.match(layoutSource, /<head \/>/);
+  assert.match(layoutSource, /<head>/);
   assert.doesNotMatch(layoutSource, /name="view-transition"/);
 });
 

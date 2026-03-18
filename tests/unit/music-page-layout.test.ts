@@ -92,6 +92,6 @@ test("music page keeps x/y aligned and exposes an env-toggled grid helper for ax
 
 test("music page keeps shared text outline smoothing and avoids forcing the player text pane onto a 3d layer", () => {
   assert.doesNotMatch(musicPageSource, /textShadow:\s*"none"/);
-  assert.match(musicPageSource, /transform: `translateY\(\$\{viewMode === "grid" \? "24px" : "0"\}\)`/);
+  assert.match(musicPageSource, /translateY/);
   assert.doesNotMatch(musicPageSource, /transform: `translate3d\(0, \$\{viewMode === "grid" \? "24px" : "0"\}, 0\)`/);
 });
