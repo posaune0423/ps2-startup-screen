@@ -4,20 +4,16 @@ import { Clone, useGLTF } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import React, { memo, Suspense, useCallback, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { useRouter } from "vinext/shims/navigation";
 
 import GlowCursor from "@/components/shared/glow-cursor";
-import Ps2BrowserBg, { PS2_BROWSER_BG_FALLBACK } from "@/components/shared/ps2-browser-bg";
 import { SHOW_THREE_SCENE_HELPER, ThreeSceneHelperPanel } from "@/components/shared/three-scene-helper-panel";
 import { useMenuNavigation } from "@/components/shared/use-menu-navigation";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
 import { startAmbientAudio } from "@/lib/ambient-audio";
-import { releaseGLTFAsset } from "@/lib/gltf-memory";
 import type { TranslationKey } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import { navigate } from "@/lib/navigate";
-import { markRouteReady } from "@/lib/route-transition-ready";
 
 interface BrowserCard {
   href: string;
@@ -62,17 +58,7 @@ const CARDS = [
     normalizeScale: true,
   },
 ] as const satisfies readonly BrowserCard[];
-const PRELOADED_MODEL_PATHS = new Set<string>();
-const BROWSER_READY_MODEL_COUNT = new Set(CARDS.map((card) => card.modelPath)).size;
-const MEMORY_ROUTE_MODEL_PATHS = [
-  "/3d/work/velvett.glb",
-  "/3d/work/dena.glb",
-  "/3d/work/daiko.glb",
-  "/3d/work/doom.glb",
-  "/3d/sns/linkedin.glb",
-  "/3d/sns/twitter.glb",
-  "/3d/sns/github.glb",
-] as const;
+export const BROWSER_CARDS = CARDS;
 
 const ANIM_DURATION = 0.8;
 const ANIM_STAGGER = 0.15;
@@ -96,14 +82,8 @@ function createHorizontalPositions(itemCount: number, spacing: number): [number,
   ]);
 }
 
-function getBrowserCardPositions(isMobile: boolean) {
+export function getBrowserCardPositions(isMobile: boolean) {
   return isMobile ? MOBILE_CARD_POSITIONS : createHorizontalPositions(CARDS.length, 0.92);
-}
-
-for (const { modelPath } of CARDS) {
-  if (PRELOADED_MODEL_PATHS.has(modelPath)) continue;
-  PRELOADED_MODEL_PATHS.add(modelPath);
-  useGLTF.preload(modelPath);
 }
 
 const GenericCardModel = memo(function GenericCardModel({
@@ -111,7 +91,6 @@ const GenericCardModel = memo(function GenericCardModel({
   modelPath,
   modelScale = 1,
   modelRotation,
-  onModelReady,
   normalizeScale = false,
   index = 0,
 }: {
@@ -119,7 +98,6 @@ const GenericCardModel = memo(function GenericCardModel({
   modelPath: string;
   modelScale?: number;
   modelRotation: [number, number, number];
-  onModelReady?: (modelPath: string) => void;
   normalizeScale?: boolean;
   index?: number;
 }) {
@@ -129,9 +107,6 @@ const GenericCardModel = memo(function GenericCardModel({
   const elapsed = useRef(0);
   const settledRef = useRef(false);
   const delay = index * ANIM_STAGGER;
-  const clearGLTF = useCallback((path: string) => {
-    useGLTF.clear(path);
-  }, []);
 
   const initPos = useMemo(
     (): [number, number, number] => [position[0], position[1] + ANIM_OFFSET_Y, position[2]],
@@ -153,16 +128,6 @@ const GenericCardModel = memo(function GenericCardModel({
     settledRef.current = false;
     invalidate();
   }, [invalidate, modelScale, normalizedScale, position]);
-
-  useEffect(() => {
-    onModelReady?.(modelPath);
-  }, [modelPath, onModelReady, scene]);
-
-  useEffect(() => {
-    return () => {
-      releaseGLTFAsset(modelPath, scene, clearGLTF);
-    };
-  }, [clearGLTF, modelPath, scene]);
 
   useFrame((_, delta) => {
     if (settledRef.current) return;
@@ -209,14 +174,12 @@ const SPOT_LIGHT_POS: [number, number, number] = [-4, 7.5, 5.5];
 const POINT_LIGHT_POS: [number, number, number] = [3.5, 1.2, 4.2];
 const HEMI_ARGS: [string, string, number] = ["#F6F9FF", "#070910", 0.75];
 
-const BrowserScene = memo(function BrowserScene({
+export const BrowserStage = memo(function BrowserStage({
   activeIndex,
   isMobile,
-  onModelReady,
 }: {
   activeIndex: number;
   isMobile: boolean;
-  onModelReady: (modelPath: string) => void;
 }) {
   const positions = useMemo(() => getBrowserCardPositions(isMobile), [isMobile]);
   const cursorPosition = useMemo((): [number, number, number] => [...positions[activeIndex]], [positions, activeIndex]);
@@ -224,7 +187,6 @@ const BrowserScene = memo(function BrowserScene({
   return (
     <>
       <CameraAdjust isMobile={isMobile} />
-      <Ps2BrowserBg />
       <ambientLight intensity={0.46} />
       <hemisphereLight args={HEMI_ARGS} />
       <directionalLight position={DIR_LIGHT_POS} intensity={2.1} color="#D6E0FF" />
@@ -242,7 +204,6 @@ const BrowserScene = memo(function BrowserScene({
               modelPath={card.modelPath}
               modelScale={modelScale}
               modelRotation={card.rotation}
-              onModelReady={onModelReady}
               normalizeScale={card.normalizeScale}
               index={index}
             />
@@ -255,7 +216,7 @@ const BrowserScene = memo(function BrowserScene({
   );
 });
 
-function BrowserMemoryCardDebugPanel({ activeIndex, isMobile }: { activeIndex: number; isMobile: boolean }) {
+export function BrowserMemoryCardDebugPanel({ activeIndex, isMobile }: { activeIndex: number; isMobile: boolean }) {
   const positions = useMemo(() => getBrowserCardPositions(isMobile), [isMobile]);
 
   return (
@@ -304,11 +265,10 @@ const GL_PROPS = { antialias: false, alpha: true, powerPreference: "low-power" a
 const CANVAS_STYLE = { width: "100%", height: "100%" } as const;
 const CAMERA_PROPS = { position: [0, 1.5, 5.5] as [number, number, number], fov: 45 };
 
-export default function BrowserPage() {
+export function BrowserScreen({ active = true }: { active?: boolean }) {
   const { playEnter, playSelect, playBack } = useNavigationSound();
   const { t } = useLanguage();
   const { isMobile, isPortrait } = useViewport();
-  const router = useRouter();
   const compact = isMobile || isPortrait;
 
   const handleSelect = useCallback(
@@ -327,46 +287,27 @@ export default function BrowserPage() {
   }, [playBack]);
 
   const { activeIndex, selectByIndex } = useMenuNavigation({
+    screenId: "browser",
     itemCount: CARDS.length,
     direction: "horizontal",
     onSelect: handleSelect,
     onBack: handleBack,
+    enabled: active,
   });
 
   useEffect(() => {
+    if (!active) return;
     startAmbientAudio();
-  }, []);
-
-  useEffect(() => {
-    for (const modelPath of MEMORY_ROUTE_MODEL_PATHS) {
-      if (PRELOADED_MODEL_PATHS.has(modelPath)) continue;
-      PRELOADED_MODEL_PATHS.add(modelPath);
-      useGLTF.preload(modelPath);
-    }
-  }, []);
-
-  useEffect(() => {
-    for (const card of CARDS) {
-      router.prefetch(card.href);
-    }
-  }, [router]);
-
-  const loadedModelPathsRef = useRef(new Set<string>());
-  const handleModelReady = useCallback((modelPath: string) => {
-    loadedModelPathsRef.current.add(modelPath);
-    if (loadedModelPathsRef.current.size >= BROWSER_READY_MODEL_COUNT) {
-      markRouteReady("/browser");
-    }
-  }, []);
+  }, [active]);
 
   useSelectSound(activeIndex, playSelect);
 
   const selectHandlers = useMemo(() => CARDS.map((_, i) => () => selectByIndex(i)), [selectByIndex]);
 
   return (
-    <div style={{ width: "100vw", height: "100dvh", position: "relative", background: PS2_BROWSER_BG_FALLBACK }}>
+    <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
       <Canvas camera={CAMERA_PROPS} dpr={compact ? 0.8 : 1} frameloop="demand" gl={GL_PROPS} style={CANVAS_STYLE}>
-        <BrowserScene activeIndex={activeIndex} isMobile={compact} onModelReady={handleModelReady} />
+        <BrowserStage activeIndex={activeIndex} isMobile={compact} />
       </Canvas>
       {SHOW_THREE_SCENE_HELPER ? <BrowserMemoryCardDebugPanel activeIndex={activeIndex} isMobile={compact} /> : null}
 

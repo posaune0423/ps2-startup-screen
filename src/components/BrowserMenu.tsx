@@ -1,8 +1,6 @@
 "use client";
 
-import { useGLTF } from "@react-three/drei";
 import React, { useCallback, useEffect } from "react";
-import { useRouter } from "vinext/shims/navigation";
 
 import MenuList from "@/components/browser-menu/menu-list";
 import OrbRing from "@/components/browser-menu/orb-ring";
@@ -18,30 +16,17 @@ const MENU_ITEMS = [
   { labelKey: "menu.browser" as TranslationKey, href: "/browser" },
   { labelKey: "menu.systemConfiguration" as TranslationKey, href: "/system" },
 ] as const;
-const BROWSER_ROUTE_MODEL_PATHS = ["/3d/memorycard.glb", "/3d/icons/cd.glb"] as const;
 
-export default function BrowserMenu() {
+export default function BrowserMenu({ active = true }: { active?: boolean }) {
   const { playEnter } = useNavigationSound();
   const { isMobile, isPortrait } = useViewport();
   const { t } = useLanguage();
-  const router = useRouter();
   const compact = isMobile || isPortrait;
 
   useEffect(() => {
+    if (!active) return;
     startAmbientAudio();
-  }, []);
-
-  useEffect(() => {
-    for (const modelPath of BROWSER_ROUTE_MODEL_PATHS) {
-      useGLTF.preload(modelPath);
-    }
-  }, []);
-
-  useEffect(() => {
-    for (const item of MENU_ITEMS) {
-      router.prefetch(item.href);
-    }
-  }, [router]);
+  }, [active]);
 
   const handleSelect = useCallback(
     (index: number) => {
@@ -54,9 +39,11 @@ export default function BrowserMenu() {
   );
 
   const { activeIndex, selectByIndex } = useMenuNavigation({
+    screenId: "menu",
     itemCount: MENU_ITEMS.length,
     direction: "vertical",
     onSelect: handleSelect,
+    enabled: active,
   });
 
   return (

@@ -10,6 +10,7 @@ import { MUSIC_TRACKS } from "@/constants/music";
 import type { MusicTrack } from "@/constants/music";
 import { useYoutubeMusicPlayer } from "@/hooks/use-youtube-music-player";
 import { stopAmbientAudio } from "@/lib/ambient-audio";
+import { useAppStore } from "@/lib/app-store";
 import { formatElapsedTime, HIDDEN_YOUTUBE_PLAYER_DIMENSION } from "@/lib/youtube";
 
 const GRID_COLUMNS = { desktop: 5, mobile: 4 } as const;
@@ -96,7 +97,13 @@ function createLiveRegionMessage({
   return isReady ? `Player state ${playerState}.` : "Player booting.";
 }
 
-export default function MusicPage() {
+export function MusicScreen({
+  active = true,
+  transparentBackground = false,
+}: {
+  active?: boolean;
+  transparentBackground?: boolean;
+}) {
   const { playEnter, playSelect } = useNavigationSound();
   const { isMobile, isPortrait } = useViewport();
   const compact = isMobile || isPortrait;
@@ -104,9 +111,10 @@ export default function MusicPage() {
   const gridLayout = compact ? GRID_LAYOUT.mobile : GRID_LAYOUT.desktop;
   const gridCamera = compact ? GRID_CAMERA.mobile : GRID_CAMERA.desktop;
   const playerCubeSize = compact ? PLAYER_CUBE_SIZE.mobile : PLAYER_CUBE_SIZE.desktop;
-  const [cursorIndex, setCursorIndex] = useState(0);
-  const [viewMode, setViewMode] = useState<"grid" | "player" | "transition">("grid");
-  const [transportIndex, setTransportIndex] = useState(4);
+  const cursorIndex = useAppStore((state) => state.screenState.music.cursorIndex);
+  const viewMode = useAppStore((state) => state.screenState.music.viewMode);
+  const transportIndex = useAppStore((state) => state.screenState.music.transportIndex);
+  const setMusicState = useAppStore((state) => state.setMusicState);
   const [transitionCube, setTransitionCube] = useState<TransitionCubeState | null>(null);
   const [enteredCount, setEnteredCount] = useState(0);
   const {
@@ -134,6 +142,10 @@ export default function MusicPage() {
   const viewModeRef = useRef(viewMode);
   viewModeRef.current = viewMode;
 
+  useEffect(() => {
+    if (!active) setEnteredCount(0);
+  }, [active]);
+
   const currentTrack = MUSIC_TRACKS[viewMode === "grid" ? cursorIndex : activeTrackIndex] ?? MUSIC_TRACKS[0];
   const activeTrack = MUSIC_TRACKS[activeTrackIndex] ?? MUSIC_TRACKS[0];
   const liveRegionMessage = useMemo(
@@ -148,33 +160,36 @@ export default function MusicPage() {
   );
 
   useEffect(() => {
+    if (!active) return;
     stopAmbientAudio();
-  }, []);
+  }, [active]);
 
   useEffect(() => {
+    if (!active) return;
     if (enteredCount >= MUSIC_TRACKS.length) return;
     const timer = window.setTimeout(() => {
       setEnteredCount((c) => c + 1);
     }, 120);
     return () => window.clearTimeout(timer);
-  }, [enteredCount]);
+  }, [enteredCount, active]);
 
   const handleBackToGrid = useCallback(() => {
     stop();
     startTransition(() => {
-      setViewMode("grid");
+      setMusicState({ transportIndex: 4, viewMode: "grid" });
     });
-  }, [stop]);
+  }, [setMusicState, stop]);
 
   useEffect(() => {
     function interceptBack(e: Event) {
+      if (!active) return;
       if (viewModeRef.current !== "player") return;
       e.preventDefault();
       handleBackToGrid();
     }
     window.addEventListener("app:navigate", interceptBack);
     return () => window.removeEventListener("app:navigate", interceptBack);
-  }, [handleBackToGrid]);
+  }, [active, handleBackToGrid]);
 
   const clearTransitionTimer = useCallback(() => {
     if (transitionTimerRef.current === null) return;
@@ -192,8 +207,8 @@ export default function MusicPage() {
     clearTransitionTimer();
     playerSpinOffsetRef.current = performance.now() - spinStartTimeRef.current;
     setTransitionCube(null);
-    setViewMode("player");
-  }, [clearTransitionTimer]);
+    setMusicState({ viewMode: "player" });
+  }, [clearTransitionTimer, setMusicState]);
 
   const handleActivateTrack = useCallback(
     (index: number) => {
@@ -202,14 +217,14 @@ export default function MusicPage() {
 
       playEnter();
       selectTrack(index, true);
-      setCursorIndex(index);
+      setMusicState({ cursorIndex: index });
 
       const source = trackButtonRefs.current[index];
       const target = playerDockRef.current;
 
       if (!source || !target) {
         startTransition(() => {
-          setViewMode("player");
+          setMusicState({ viewMode: "player" });
         });
         return;
       }
@@ -217,7 +232,7 @@ export default function MusicPage() {
       clearTransitionTimer();
       spinStartTimeRef.current = performance.now();
       startTransition(() => {
-        setViewMode("transition");
+        setMusicState({ viewMode: "transition" });
         setTransitionCube({
           fromRect: toViewportRect(source.getBoundingClientRect()),
           settled: false,
@@ -236,23 +251,27 @@ export default function MusicPage() {
 
       transitionTimerRef.current = window.setTimeout(completeTransition, PLAYER_TRANSITION_MS);
     },
-    [clearTransitionTimer, completeTransition, playEnter, selectTrack],
+    [clearTransitionTimer, completeTransition, playEnter, selectTrack, setMusicState],
   );
 
   const moveCursor = useCallback(
     (nextIndex: number) => {
       const clampedIndex = Math.max(0, Math.min(nextIndex, MUSIC_TRACKS.length - 1));
-      setCursorIndex((previousIndex) => {
-        if (previousIndex === clampedIndex) return previousIndex;
+      const previousIndex = cursorIndex;
+      if (previousIndex !== clampedIndex) {
         playSelect();
-        return clampedIndex;
+      }
+      setMusicState({
+        cursorIndex: previousIndex === clampedIndex ? previousIndex : clampedIndex,
       });
+      return previousIndex === clampedIndex ? previousIndex : clampedIndex;
     },
-    [playSelect],
+    [cursorIndex, playSelect, setMusicState],
   );
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      if (!active) return;
       if (viewMode === "transition") {
         return;
       }
@@ -297,19 +316,17 @@ export default function MusicPage() {
       switch (event.key) {
         case "ArrowLeft":
           event.preventDefault();
-          setTransportIndex((i) => {
-            const next = Math.max(0, i - 1);
-            if (next !== i) playSelect();
-            return next;
+          setMusicState({
+            transportIndex: transportIndex > 0 ? transportIndex - 1 : transportIndex,
           });
+          if (transportIndex > 0) playSelect();
           break;
         case "ArrowRight":
           event.preventDefault();
-          setTransportIndex((i) => {
-            const next = Math.min(TRANSPORT_COUNT - 1, i + 1);
-            if (next !== i) playSelect();
-            return next;
+          setMusicState({
+            transportIndex: transportIndex < TRANSPORT_COUNT - 1 ? transportIndex + 1 : transportIndex,
           });
+          if (transportIndex < TRANSPORT_COUNT - 1) playSelect();
           break;
         case "ArrowUp":
           event.preventDefault();
@@ -342,16 +359,19 @@ export default function MusicPage() {
     prevTrack,
     retry,
     seekBy,
+    setMusicState,
     stop,
     transportIndex,
     viewMode,
+    active,
   ]);
 
   return (
     <div
       style={{
-        background:
-          "radial-gradient(circle at 18% 12%, rgba(255,255,255,0.18), transparent 18%), linear-gradient(180deg, #D0D0CE 0%, #B7B7B4 54%, #A5A5A2 100%)",
+        background: transparentBackground
+          ? "transparent"
+          : "radial-gradient(circle at 18% 12%, rgba(255,255,255,0.18), transparent 18%), linear-gradient(180deg, #D0D0CE 0%, #B7B7B4 54%, #A5A5A2 100%)",
         color: "#FFFFFF",
         height: "100dvh",
         overflow: "hidden",

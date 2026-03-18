@@ -14,10 +14,11 @@ const SELECTED_COLOR = "#47B6E1";
 const LOCALES: Locale[] = ["ja", "en"];
 
 interface SystemMenuProps {
+  active?: boolean;
   onBack: () => void;
 }
 
-export default function SystemMenu({ onBack }: SystemMenuProps) {
+export default function SystemMenu({ onBack, active = true }: SystemMenuProps) {
   const { playEnter, playSelect } = useNavigationSound();
   const { isMobile, isPortrait } = useViewport();
   const compact = isMobile || isPortrait;
@@ -56,10 +57,12 @@ export default function SystemMenu({ onBack }: SystemMenuProps) {
   );
 
   const { activeIndex, setActiveIndex } = useMenuNavigation({
+    screenId: "system",
     itemCount: settings.length,
     direction: "vertical",
     onSelect: handleSelect,
     onBack,
+    enabled: active,
   });
 
   const prevIndexRef = useRef(activeIndex);

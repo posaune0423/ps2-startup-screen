@@ -25,7 +25,8 @@ const SNS_ITEMS: GridItem[] = [
     href: "https://github.com/posaune0423",
   },
 ];
+export const MEMORY_SNS_ITEMS = SNS_ITEMS;
 
-export default function SnsPage() {
-  return <ItemGrid items={SNS_ITEMS} readyRoute="/memory/sns" title="SNS" />;
+export function SnsScreen({ active = true }: { active?: boolean }) {
+  return <ItemGrid items={SNS_ITEMS} screenId="memorySns" title="SNS" active={active} />;
 }

@@ -31,7 +31,8 @@ const WORK_ITEMS: GridItem[] = [
     href: "https://doomindex.fun",
   },
 ];
+export const MEMORY_WORK_ITEMS = WORK_ITEMS;
 
-export default function WorkPage() {
-  return <ItemGrid items={WORK_ITEMS} readyRoute="/memory/work" title="Work" />;
+export function WorkScreen({ active = true }: { active?: boolean }) {
+  return <ItemGrid items={WORK_ITEMS} screenId="memoryWork" title="Work" active={active} />;
 }
