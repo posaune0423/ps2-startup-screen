@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import React from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import { BrowserScreen } from "@/components/screens/browser-screen";
 import { MusicScreen } from "@/components/screens/music-screen";
@@ -15,7 +15,7 @@ interface MemoryShellProps {
 }
 
 const SHELL_STYLE: React.CSSProperties = {
-  width: "100vw",
+  width: "100%",
   height: "100dvh",
   position: "relative",
   overflow: "hidden",
@@ -61,27 +61,59 @@ function MemoryShellBackground() {
   );
 }
 
+function renderMemoryScreen(screen: AppScreenId, active: boolean) {
+  switch (screen) {
+    case "browser":
+      return <BrowserScreen active={active} />;
+    case "memoryWork":
+      return <WorkScreen active={active} />;
+    case "memorySns":
+      return <SnsScreen active={active} />;
+    case "music":
+      return <MusicScreen active={active} transparentBackground />;
+    case "startup":
+    case "menu":
+    case "system":
+      return null;
+  }
+}
+
 export default function MemoryShell({ currentScreen }: MemoryShellProps) {
-  const browserActive = currentScreen === "browser";
-  const workActive = currentScreen === "memoryWork";
-  const snsActive = currentScreen === "memorySns";
-  const musicActive = currentScreen === "music";
+  const [exitingScreen, setExitingScreen] = useState<AppScreenId | null>(null);
+  const previousScreenRef = useRef(currentScreen);
+
+  useEffect(() => {
+    const previousScreen = previousScreenRef.current;
+    if (previousScreen === currentScreen) return;
+
+    previousScreenRef.current = currentScreen;
+    setExitingScreen(previousScreen);
+
+    const timer = window.setTimeout(() => {
+      setExitingScreen((screen) => (screen === previousScreen ? null : screen));
+    }, LAYER_TRANSITION_MS + 50);
+
+    return () => window.clearTimeout(timer);
+  }, [currentScreen]);
+
+  const visibleScreens = useMemo(() => {
+    if (exitingScreen === null || exitingScreen === currentScreen) {
+      return [currentScreen];
+    }
+    return [exitingScreen, currentScreen];
+  }, [currentScreen, exitingScreen]);
 
   return (
     <div style={SHELL_STYLE}>
       <MemoryShellBackground />
-      <div style={layerStyle(browserActive)}>
-        <BrowserScreen active={browserActive} />
-      </div>
-      <div style={layerStyle(workActive)}>
-        <WorkScreen active={workActive} />
-      </div>
-      <div style={layerStyle(snsActive)}>
-        <SnsScreen active={snsActive} />
-      </div>
-      <div style={layerStyle(musicActive)}>
-        <MusicScreen active={musicActive} transparentBackground />
-      </div>
+      {visibleScreens.map((screen) => {
+        const active = screen === currentScreen;
+        return (
+          <div key={screen} style={layerStyle(active)}>
+            {renderMemoryScreen(screen, active)}
+          </div>
+        );
+      })}
     </div>
   );
 }

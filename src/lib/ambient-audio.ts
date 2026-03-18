@@ -43,7 +43,11 @@ export function playReturnMenuThenAmbient(): void {
 
   const se = new Audio("/sound/se/return-menu.wav");
   se.volume = 0.5;
-  se.onended = () => startAmbientAudio();
+  const handleEnded = () => {
+    startAmbientAudio();
+    se.removeEventListener("ended", handleEnded);
+  };
+  se.addEventListener("ended", handleEnded);
   se.play().catch(() => startAmbientAudio());
 }
 
