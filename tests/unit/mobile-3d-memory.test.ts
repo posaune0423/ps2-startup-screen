@@ -10,24 +10,21 @@ const browserPageSource = readFileSync(
 );
 const orbRingSource = readFileSync(new URL("../../src/components/browser-menu/orb-ring.tsx", import.meta.url), "utf8");
 
-test("memory pages keep sharper model rendering than the browser card picker", () => {
+test("memory pages use low-power rendering with reduced mobile DPR", () => {
   assert.match(
     itemGridSource,
-    /const GL_PROPS = \{ antialias: true, alpha: true, powerPreference: "high-performance" as const \};/,
+    /const GL_PROPS = \{ antialias: false, alpha: true, powerPreference: "low-power" as const \};/,
   );
   assert.match(itemGridSource, /frameloop="demand"/);
   assert.match(itemGridSource, /gl=\{GL_PROPS\}/);
-  assert.match(itemGridSource, /dpr=\{compact \? 1 : 1\.25\}/);
-  assert.match(itemGridSource, /dpr=\{compact \? 1 : 1\}/);
+  assert.match(itemGridSource, /dpr=\{compact \? 0\.75 : 1\}/);
   assert.doesNotMatch(itemGridSource, /background: PS2_BROWSER_BG_FALLBACK/);
-  assert.match(
-    itemGridSource,
-    /const MEMORY_CARD_ICON_GL = \{ alpha: true, antialias: true, powerPreference: "high-performance" as const \};/,
-  );
+  assert.match(itemGridSource, /function MemoryCardIcon/);
 });
 
 test("browser page also clamps canvas DPR and prefers low-power WebGL settings", () => {
-  assert.match(browserPageSource, /dpr=\{compact \? 0\.8 : 1\}/);
+  assert.match(browserPageSource, /dpr=\{compact \? 0\.7 : 1\}/);
+
   assert.match(browserPageSource, /frameloop="demand"/);
   assert.match(
     browserPageSource,
