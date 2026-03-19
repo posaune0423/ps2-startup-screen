@@ -31,11 +31,11 @@ const helperSource = readFileSync(
 test("browser and item-grid canvases use demand frameloops for mostly static 3d pages", () => {
   assert.match(
     browserScreenSource,
-    /<Canvas[\s\S]*camera=\{CAMERA_PROPS\}[\s\S]*dpr=\{compact \? 0\.7 : 1\}[\s\S]*frameloop="demand"/,
+    /<Canvas[\s\S]*camera=\{CAMERA_PROPS\}[\s\S]*dpr=\{compact \? 0\.8 : 1\}[\s\S]*frameloop="demand"/,
   );
   assert.match(
     itemGridSource,
-    /<Canvas[\s\S]*camera=\{cameraProps\}[\s\S]*dpr=\{compact \? 0\.75 : 1\}[\s\S]*frameloop="demand"/,
+    /<Canvas[\s\S]*camera=\{cameraProps\}[\s\S]*dpr=\{compact \? 1 : 1\.25\}[\s\S]*frameloop="demand"/,
   );
   assert.match(browserScreenSource, /const invalidate = useThree\(\(state\) => state\.invalidate\);/);
   assert.match(itemGridSource, /const invalidate = useThree\(\(state\) => state\.invalidate\);/);

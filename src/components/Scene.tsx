@@ -9,8 +9,6 @@ import * as THREE from "three";
 import useSceneSound from "use-sound";
 
 import { ThreeSceneHelperPanel } from "@/components/shared/three-scene-helper-panel";
-import { useViewport } from "@/components/shared/use-viewport";
-import { stopAmbientAudio } from "@/lib/ambient-audio";
 import { navigate } from "@/lib/navigate";
 import { getSoundEnabled, initializeSoundEnabled } from "@/lib/sound-settings";
 
@@ -25,13 +23,7 @@ import PostProcessing from "./scene/PostProcessing";
 import PrismField from "./scene/PrismField";
 import { startSceneSound } from "./sceneAudio";
 
-const SceneContent = memo(function SceneContent({
-  elapsedRef,
-  lite,
-}: {
-  elapsedRef: RefObject<number>;
-  lite: boolean;
-}) {
+const SceneContent = memo(function SceneContent({ elapsedRef }: { elapsedRef: RefObject<number> }) {
   const sceneGroupRef = useRef<THREE.Group>(null);
 
   return (
@@ -39,15 +31,15 @@ const SceneContent = memo(function SceneContent({
       <color attach="background" args={["#1A1A1A"]} />
       <fog attach="fog" args={["#1A1A1A", 4, 12]} />
       <CameraRig elapsedRef={elapsedRef} sceneGroupRef={sceneGroupRef} />
-      {!lite && <Environment preset="studio" background={false} environmentIntensity={0.3} />}
+      <Environment preset="studio" background={false} environmentIntensity={0.3} />
       <group ref={sceneGroupRef}>
         <Lighting elapsedRef={elapsedRef} />
         <CentralGlow elapsedRef={elapsedRef} />
         <PrismField />
-        <FloatingCubes elapsedRef={elapsedRef} lite={lite} />
+        <FloatingCubes elapsedRef={elapsedRef} />
         <ParticleTrails elapsedRef={elapsedRef} />
       </group>
-      {!lite && <PostProcessing />}
+      <PostProcessing />
     </>
   );
 });
@@ -57,8 +49,6 @@ const CANVAS_STYLE = { width: "100%", height: "100%" } as const;
 const CONTAINER_STYLE = { position: "relative" as const, width: "100vw", height: "100vh", cursor: "pointer" };
 
 export default function Scene() {
-  const { isMobile, isPortrait } = useViewport();
-  const lite = isMobile || isPortrait;
   const elapsedRef = useRef(0);
   const soundStartedRef = useRef(false);
   const soundPositionSyncedRef = useRef(false);
@@ -88,10 +78,6 @@ export default function Scene() {
       soundPlaybackRequestedRef.current = false;
     },
   });
-
-  useEffect(() => {
-    stopAmbientAudio();
-  }, []);
 
   useEffect(() => {
     soundRef.current = (sound as Howl | null) ?? null;
@@ -163,14 +149,14 @@ export default function Scene() {
   return (
     <div style={CONTAINER_STYLE} onClick={handleStartSound}>
       <Canvas
-        shadows={!lite}
-        dpr={lite ? 0.5 : CONFIG.render.dpr}
+        shadows
+        dpr={CONFIG.render.dpr}
         gl={GL_PROPS}
         onCreated={onCreated}
         camera={cameraProps}
         style={CANVAS_STYLE}
       >
-        <SceneContent elapsedRef={elapsedRef} lite={lite} />
+        <SceneContent elapsedRef={elapsedRef} />
       </Canvas>
       <ThreeSceneHelperPanel panelStyle={{ bottom: "24px", left: "24px" }} />
       <FadeOverlay getOpacity={getOverlayOpacity} />

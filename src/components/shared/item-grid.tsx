@@ -12,6 +12,7 @@ import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
 import { startAmbientAudio } from "@/lib/ambient-audio";
 import type { ActiveIndexScreenId } from "@/lib/app-screen";
+import { createGPURenderer } from "@/lib/gpu-renderer";
 import { navigate } from "@/lib/navigate";
 
 export interface GridItem {
@@ -204,7 +205,6 @@ const DIR_LIGHT_POS: [number, number, number] = [-3.5, 5.5, 5.5];
 const SPOT_LIGHT_POS: [number, number, number] = [0, 5.5, 6];
 const POINT_LIGHT_POS: [number, number, number] = [3.5, 1.8, 4.8];
 const HEMI_ARGS: [string, string, number] = ["#F8FBFF", "#0A0C14", 1.05];
-const GL_PROPS = { antialias: false, alpha: true, powerPreference: "low-power" as const };
 const CANVAS_STYLE = { width: "100%", height: "100%" } as const;
 
 export const ItemGridStage = memo(function ItemGridStage({
@@ -320,10 +320,10 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
     <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
       <Canvas
         camera={cameraProps}
-        dpr={compact ? 0.75 : 1}
+        dpr={compact ? 1 : 1.25}
         frameloop="demand"
         resize={{ offsetSize: true }}
-        gl={GL_PROPS}
+        gl={createGPURenderer}
         style={CANVAS_STYLE}
       >
         <ItemGridStage
