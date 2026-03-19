@@ -11,6 +11,7 @@ import MenuShell from "@/components/shared/menu-shell";
 import { MOBILE_BREAKPOINT } from "@/components/shared/use-viewport";
 import { getScreenCluster, getScreenFromPath, SCREEN_ASSETS, WARMUP_ASSET_PATHS } from "@/lib/app-screen";
 import { useAppStore } from "@/lib/app-store";
+import { clearGLTF } from "@/lib/gltf-memory";
 
 const LEAVE_MS = 600;
 const ENTER_MS = 600;
@@ -123,7 +124,7 @@ export default function AppShell() {
 
           const oldAssets = SCREEN_ASSETS[currentScreen] ?? [];
           for (const path of oldAssets) {
-            useGLTF.clear(path);
+            clearGLTF(path, (p) => useGLTF.clear(p));
           }
         }
 

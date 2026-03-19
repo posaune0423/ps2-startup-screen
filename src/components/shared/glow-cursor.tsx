@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo, useMemo } from "react";
+import React, { memo, useEffect, useMemo } from "react";
 import * as THREE from "three";
 
 import { createCursorTexture } from "@/lib/glowTexture";
@@ -27,6 +27,13 @@ export default memo(function GlowCursor({ position, visible = true, color = "#75
       }),
     [texture, color],
   );
+
+  useEffect(() => {
+    return () => {
+      texture.dispose();
+      material.dispose();
+    };
+  }, [texture, material]);
 
   const spriteScale = useMemo((): [number, number, number] => [scale, scale, 1], [scale]);
 

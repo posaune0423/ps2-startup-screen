@@ -12,6 +12,7 @@ import Ps2BrowserBg, { PS2_BROWSER_BG_FALLBACK } from "@/components/shared/ps2-b
 import { useViewport } from "@/components/shared/use-viewport";
 import type { AppScreenId } from "@/lib/app-screen";
 import { SCREEN_ASSETS } from "@/lib/app-screen";
+import { clearGLTF } from "@/lib/gltf-memory";
 
 interface MemoryShellProps {
   currentScreen: AppScreenId;
@@ -105,7 +106,7 @@ export default function MemoryShell({ currentScreen }: MemoryShellProps) {
       const currAssets = new Set(SCREEN_ASSETS[currentScreen] ?? []);
       for (const path of prevAssets) {
         if (!currAssets.has(path)) {
-          useGLTF.clear(path);
+          clearGLTF(path, (p) => useGLTF.clear(p));
         }
       }
     }, LAYER_TRANSITION_MS + 50);

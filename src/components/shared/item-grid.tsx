@@ -12,6 +12,7 @@ import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
 import { startAmbientAudio } from "@/lib/ambient-audio";
 import type { ActiveIndexScreenId } from "@/lib/app-screen";
+import { registerGLTFScene } from "@/lib/gltf-memory";
 import { navigate } from "@/lib/navigate";
 
 export interface GridItem {
@@ -63,6 +64,10 @@ const CameraSetup = memo(function CameraSetup({ camPos }: { camPos: [number, num
 
 const GlbModel = memo(function GlbModel({ modelPath, isMobile }: { modelPath: string; isMobile: boolean }) {
   const { scene } = useGLTF(modelPath);
+
+  useEffect(() => {
+    registerGLTFScene(modelPath, scene);
+  }, [modelPath, scene]);
 
   const normalizedScale = useMemo(() => {
     const target = isMobile ? TARGET_SIZE_MOBILE : TARGET_SIZE;
@@ -147,14 +152,25 @@ const GridItemModel = memo(function GridItemModel({
   const fallbackMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isActive ? "#8BE8FF" : "#46506A",
-        emissive: new THREE.Color(isActive ? "#63D8FF" : "#0E1220"),
-        emissiveIntensity: isActive ? 0.32 : 0.04,
         roughness: 0.28,
         metalness: 0.3,
       }),
-    [isActive],
+    [],
   );
+
+  useEffect(() => {
+    fallbackMaterial.color.set(isActive ? "#8BE8FF" : "#46506A");
+    fallbackMaterial.emissive.set(isActive ? "#63D8FF" : "#0E1220");
+    fallbackMaterial.emissiveIntensity = isActive ? 0.32 : 0.04;
+    fallbackMaterial.needsUpdate = true;
+  }, [isActive, fallbackMaterial]);
+
+  useEffect(() => {
+    return () => {
+      fallbackGeo.dispose();
+      fallbackMaterial.dispose();
+    };
+  }, [fallbackGeo, fallbackMaterial]);
 
   useFrame((_, delta) => {
     if (settledRef.current && modelPath) return;
@@ -260,7 +276,15 @@ export const ItemGridStage = memo(function ItemGridStage({
 
 function MemoryCardIcon({ size }: { size: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 48 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      focusable="false"
+    >
       <rect x="6" y="8" width="36" height="32" rx="3" fill="#3A3F52" stroke="#6B7290" strokeWidth="1.5" />
       <rect x="10" y="12" width="6" height="8" rx="1" fill="#8B93B0" />
       <rect x="18" y="12" width="6" height="8" rx="1" fill="#8B93B0" />

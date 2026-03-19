@@ -18,7 +18,6 @@ function BackgroundHaze({ active }: { active: boolean }) {
   const planeGeometry = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
   const mats = useMemo(
     () => [
-      // Main purple ring fog (#433767 base)
       createRingFogMaterial({
         color: "#433767",
         opacity: 0.95,
@@ -30,7 +29,6 @@ function BackgroundHaze({ active }: { active: boolean }) {
         outerRadius: 0.88,
         ringWidth: 0.22,
       }),
-      // Outer deep purple — wide and diffuse
       createRingFogMaterial({
         color: "#2A2040",
         opacity: 0.7,
@@ -42,7 +40,6 @@ function BackgroundHaze({ active }: { active: boolean }) {
         outerRadius: 0.95,
         ringWidth: 0.28,
       }),
-      // Lighter purple — thin fog layer
       createRingFogMaterial({
         color: "#6650A0",
         opacity: 0.5,
@@ -57,6 +54,13 @@ function BackgroundHaze({ active }: { active: boolean }) {
     ],
     [],
   );
+
+  useEffect(() => {
+    return () => {
+      planeGeometry.dispose();
+      for (const mat of mats) mat.dispose();
+    };
+  }, [planeGeometry, mats]);
 
   useFrame(({ clock }) => {
     if (!active) return;
