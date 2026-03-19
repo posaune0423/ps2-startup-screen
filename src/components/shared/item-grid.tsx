@@ -2,7 +2,7 @@
 
 import { Clone, useGLTF } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import React, { memo, Suspense, useCallback, useEffect, useMemo, useRef } from "react";
+import React, { memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
 import GlowCursor from "@/components/shared/glow-cursor";
@@ -20,6 +20,9 @@ export interface GridItem {
   label: string;
   modelPath: string;
   href: string;
+  description?: string;
+  tags?: string[];
+  period?: string;
 }
 
 interface ItemGridProps {
@@ -34,6 +37,10 @@ const ROW_DEPTH = 0.7;
 const TARGET_SIZE = 0.5;
 const TARGET_SIZE_MOBILE = 0.6;
 const NORMALIZED_SCALE_CACHE = new Map<string, number>();
+
+const DETAIL_ANIM_DURATION = 0.6;
+const DETAIL_SCALE_FACTOR = 1.8;
+const DETAIL_OFFSET_X = -1.2;
 
 function calcGridPositions(items: GridItem[]): [number, number, number][] {
   const n = items.length;
@@ -97,12 +104,22 @@ function easeOutCubic(t: number) {
   return 1 - (1 - t) ** 3;
 }
 
+function easeInOutCubic(t: number) {
+  return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+}
+
+function lerpValue(a: number, b: number, t: number) {
+  return a + (b - a) * t;
+}
+
 const onPointerOver = () => {
   document.body.style.cursor = "pointer";
 };
 const onPointerOut = () => {
   document.body.style.cursor = "auto";
 };
+
+type SelectionPhase = "idle" | "selecting" | "selected" | "deselecting";
 
 const GridItemModel = memo(function GridItemModel({
   position,
@@ -112,6 +129,11 @@ const GridItemModel = memo(function GridItemModel({
   isMobile,
   isActive,
   active,
+  selectionPhase,
+  isSelected,
+  detailPosition,
+  detailScale,
+  onAnimationComplete,
 }: {
   position: [number, number, number];
   modelPath: string;
@@ -120,6 +142,11 @@ const GridItemModel = memo(function GridItemModel({
   isMobile: boolean;
   isActive: boolean;
   active: boolean;
+  selectionPhase: SelectionPhase;
+  isSelected: boolean;
+  detailPosition: [number, number, number];
+  detailScale: number;
+  onAnimationComplete: () => void;
 }) {
   const invalidate = useThree((state) => state.invalidate);
   const groupRef = useRef<THREE.Group>(null);
@@ -128,6 +155,9 @@ const GridItemModel = memo(function GridItemModel({
   const settledRef = useRef(false);
   const prevActiveRef = useRef<boolean | null>(null);
   const delay = index * ANIM_STAGGER;
+
+  const selectionElapsed = useRef(0);
+  const prevSelectionPhase = useRef<SelectionPhase>("idle");
 
   useEffect(() => {
     if (active && prevActiveRef.current === false) {
@@ -141,6 +171,16 @@ const GridItemModel = memo(function GridItemModel({
     }
     prevActiveRef.current = active;
   }, [active, invalidate, position]);
+
+  useEffect(() => {
+    if (selectionPhase !== prevSelectionPhase.current) {
+      if (selectionPhase === "selecting" || selectionPhase === "deselecting") {
+        selectionElapsed.current = 0;
+      }
+      prevSelectionPhase.current = selectionPhase;
+      invalidate();
+    }
+  }, [selectionPhase, invalidate]);
 
   const fallbackGeo = useMemo(() => new THREE.BoxGeometry(0.8, 0.8, 0.8), []);
 
@@ -173,37 +213,96 @@ const GridItemModel = memo(function GridItemModel({
   }, [fallbackGeo, fallbackMaterial]);
 
   useFrame((_, delta) => {
-    if (settledRef.current && modelPath) return;
+    const g = groupRef.current;
+    if (!g) return;
 
-    elapsed.current += delta;
-    const t = Math.min(1, Math.max(0, (elapsed.current - delay) / ANIM_DURATION));
-    const eased = easeOutCubic(t);
+    const isEntering = !settledRef.current;
 
-    if (groupRef.current) {
-      groupRef.current.position.y = position[1] + ANIM_OFFSET_Y * (1 - eased);
-      groupRef.current.scale.setScalar(eased);
+    if (isEntering) {
+      elapsed.current += delta;
+      const t = Math.min(1, Math.max(0, (elapsed.current - delay) / ANIM_DURATION));
+      const eased = easeOutCubic(t);
+
+      g.position.y = position[1] + ANIM_OFFSET_Y * (1 - eased);
+      g.scale.setScalar(eased);
+
+      if (!modelPath && meshRef.current) {
+        meshRef.current.rotation.y += delta * 0.5;
+      }
+
+      if (t < 1 || !modelPath) {
+        invalidate();
+        return;
+      }
+
+      settledRef.current = true;
+    }
+
+    if (selectionPhase === "selecting" && isSelected) {
+      selectionElapsed.current += delta;
+      const t = Math.min(1, selectionElapsed.current / DETAIL_ANIM_DURATION);
+      const eased = easeInOutCubic(t);
+
+      g.position.x = lerpValue(position[0], detailPosition[0], eased);
+      g.position.y = lerpValue(position[1], detailPosition[1], eased);
+      g.position.z = lerpValue(position[2], detailPosition[2], eased);
+      g.scale.setScalar(lerpValue(1, detailScale, eased));
+
+      invalidate();
+
+      if (t >= 1) {
+        onAnimationComplete();
+      }
+      return;
+    }
+
+    if (selectionPhase === "deselecting" && isSelected) {
+      selectionElapsed.current += delta;
+      const t = Math.min(1, selectionElapsed.current / DETAIL_ANIM_DURATION);
+      const eased = easeInOutCubic(t);
+
+      g.position.x = lerpValue(detailPosition[0], position[0], eased);
+      g.position.y = lerpValue(detailPosition[1], position[1], eased);
+      g.position.z = lerpValue(detailPosition[2], position[2], eased);
+      g.scale.setScalar(lerpValue(detailScale, 1, eased));
+
+      invalidate();
+
+      if (t >= 1) {
+        onAnimationComplete();
+      }
+      return;
+    }
+
+    if (selectionPhase === "selected" && isSelected) {
+      g.position.set(...detailPosition);
+      g.scale.setScalar(detailScale);
+      if (!modelPath && meshRef.current) {
+        meshRef.current.rotation.y += delta * 0.3;
+        invalidate();
+      }
+      return;
     }
 
     if (!modelPath && meshRef.current) {
       meshRef.current.rotation.y += delta * 0.5;
-    }
-
-    if (t < 1 || !modelPath) {
       invalidate();
-      return;
     }
-
-    settledRef.current = true;
   });
+
+  const hasSelection = selectionPhase !== "idle";
+  const shouldFade = hasSelection && !isSelected;
+  const isClickable = selectionPhase === "idle";
 
   return (
     <group
       ref={groupRef}
       position={initPos}
       scale={0}
-      onClick={onClick}
-      onPointerOver={onPointerOver}
-      onPointerOut={onPointerOut}
+      onClick={isClickable ? onClick : undefined}
+      onPointerOver={isClickable ? onPointerOver : undefined}
+      onPointerOut={isClickable ? onPointerOut : undefined}
+      visible={!shouldFade}
     >
       {modelPath ? (
         <Suspense fallback={null}>
@@ -230,6 +329,9 @@ export const ItemGridStage = memo(function ItemGridStage({
   onItemClick,
   isMobile,
   active = true,
+  selectionPhase,
+  selectedIndex,
+  onAnimationComplete,
 }: {
   items: GridItem[];
   activeIndex: number;
@@ -237,6 +339,9 @@ export const ItemGridStage = memo(function ItemGridStage({
   onItemClick: (index: number) => void;
   isMobile: boolean;
   active?: boolean;
+  selectionPhase: SelectionPhase;
+  selectedIndex: number | null;
+  onAnimationComplete: () => void;
 }) {
   const positions = useMemo(() => calcGridPositions(items), [items]);
   const safeIndex = items.length === 0 ? 0 : Math.min(activeIndex, items.length - 1);
@@ -246,6 +351,10 @@ export const ItemGridStage = memo(function ItemGridStage({
   );
 
   const clickHandlers = useMemo(() => items.map((_, i) => () => onItemClick(i)), [items, onItemClick]);
+
+  const detailPosition = useMemo((): [number, number, number] => {
+    return [DETAIL_OFFSET_X, 0.1, 0.8];
+  }, []);
 
   return (
     <>
@@ -266,10 +375,15 @@ export const ItemGridStage = memo(function ItemGridStage({
           isMobile={isMobile}
           isActive={i === safeIndex}
           active={active}
+          selectionPhase={selectionPhase}
+          isSelected={selectedIndex === i}
+          detailPosition={detailPosition}
+          detailScale={DETAIL_SCALE_FACTOR}
+          onAnimationComplete={onAnimationComplete}
         />
       ))}
 
-      <GlowCursor position={cursorPos} color="#75D9EB" scale={0.6} />
+      {selectionPhase === "idle" && <GlowCursor position={cursorPos} color="#75D9EB" scale={0.6} />}
     </>
   );
 });
@@ -287,10 +401,177 @@ function MemoryCardImage({ size }: { size: number }) {
   );
 }
 
+function DetailPanel({
+  item,
+  visible,
+  compact,
+  onBack,
+}: {
+  item: GridItem | null;
+  visible: boolean;
+  compact: boolean;
+  onBack: () => void;
+}) {
+  if (!item) return null;
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: 0,
+        right: 0,
+        width: compact ? "100%" : "45%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: compact ? "flex-end" : "center",
+        padding: compact ? "0 24px 80px" : "0 48px",
+        pointerEvents: visible ? "auto" : "none",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateX(0)" : "translateX(30px)",
+        transition: "opacity 0.4s ease, transform 0.4s ease",
+        zIndex: 20,
+      }}
+    >
+      <div
+        style={{
+          background: compact ? "linear-gradient(transparent, rgba(0,0,0,0.85) 30%)" : "transparent",
+          borderRadius: compact ? 0 : 8,
+          padding: compact ? "40px 0 0" : 0,
+        }}
+      >
+        <h2
+          className="ps2-text"
+          style={{
+            fontSize: compact ? "clamp(22px, 5vw, 32px)" : "clamp(28px, 3vw, 42px)",
+            fontWeight: 700,
+            color: "#C5CF1F",
+            marginBottom: 8,
+            letterSpacing: "0.02em",
+          }}
+        >
+          {item.label}
+        </h2>
+
+        {item.period && (
+          <p
+            className="ps2-text"
+            style={{
+              fontSize: compact ? 13 : 15,
+              color: "#8899BB",
+              marginBottom: 12,
+              letterSpacing: "0.04em",
+            }}
+          >
+            {item.period}
+          </p>
+        )}
+
+        {item.description && (
+          <p
+            className="ps2-text"
+            style={{
+              fontSize: compact ? 14 : 16,
+              color: "#C8D0E0",
+              lineHeight: 1.6,
+              marginBottom: 16,
+              maxWidth: 400,
+            }}
+          >
+            {item.description}
+          </p>
+        )}
+
+        {item.tags && item.tags.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
+            {item.tags.map((tag) => (
+              <span
+                key={tag}
+                className="ps2-text"
+                style={{
+                  fontSize: 12,
+                  color: "#75D9EB",
+                  border: "1px solid rgba(117,217,235,0.3)",
+                  borderRadius: 4,
+                  padding: "2px 8px",
+                  letterSpacing: "0.03em",
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <a
+            href={item.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ps2-text"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: compact ? 14 : 16,
+              color: "#0E1220",
+              background: "#C5CF1F",
+              padding: "8px 20px",
+              borderRadius: 4,
+              textDecoration: "none",
+              fontWeight: 700,
+              letterSpacing: "0.02em",
+              transition: "background 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#D5DF3F";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#C5CF1F";
+            }}
+          >
+            Open ↗
+          </a>
+          <button
+            type="button"
+            onClick={onBack}
+            className="ps2-text"
+            style={{
+              fontSize: compact ? 14 : 16,
+              color: "#8899BB",
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(136,153,187,0.25)",
+              padding: "8px 20px",
+              borderRadius: 4,
+              cursor: "pointer",
+              fontWeight: 600,
+              letterSpacing: "0.02em",
+              transition: "background 0.2s, color 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.12)";
+              e.currentTarget.style.color = "#C8D0E0";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+              e.currentTarget.style.color = "#8899BB";
+            }}
+          >
+            Back
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ItemGrid({ items, screenId, title, active = true }: ItemGridProps) {
   const { playEnter, playSelect, playBack } = useNavigationSound();
   const { isMobile, isPortrait } = useViewport();
   const compact = isMobile || isPortrait;
+
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [selectionPhase, setSelectionPhase] = useState<SelectionPhase>("idle");
 
   const camPos = useMemo((): [number, number, number] => {
     const zBase = items.length > 3 ? 6 : 4.5;
@@ -300,18 +581,52 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
 
   const cameraProps = useMemo(() => ({ position: camPos, fov: 50 }), [camPos]);
 
+  const isAnimating = selectionPhase === "selecting" || selectionPhase === "deselecting";
+  const isDetailVisible = selectionPhase === "selected" || selectionPhase === "selecting";
+
+  const handleAnimationComplete = useCallback(() => {
+    setSelectionPhase((prev) => {
+      if (prev === "selecting") return "selected";
+      if (prev === "deselecting") {
+        setSelectedIndex(null);
+        return "idle";
+      }
+      return prev;
+    });
+  }, []);
+
   const handleSelect = useCallback(
     (index: number) => {
+      if (isAnimating) return;
+      if (selectionPhase !== "idle") return;
+
       playEnter();
-      window.open(items[index].href, "_blank");
+      setSelectedIndex(index);
+      setSelectionPhase("selecting");
     },
-    [playEnter, items],
+    [playEnter, isAnimating, selectionPhase],
   );
 
-  const handleBack = useCallback(() => {
+  const handleDetailBack = useCallback(() => {
+    if (isAnimating) return;
+    if (selectionPhase !== "selected") return;
+
+    playBack();
+    setSelectionPhase("deselecting");
+  }, [playBack, isAnimating, selectionPhase]);
+
+  const handleGridBack = useCallback(() => {
     playBack();
     navigate("/browser");
   }, [playBack]);
+
+  const handleBack = useCallback(() => {
+    if (selectionPhase === "selected") {
+      handleDetailBack();
+    } else if (selectionPhase === "idle") {
+      handleGridBack();
+    }
+  }, [selectionPhase, handleDetailBack, handleGridBack]);
 
   const { activeIndex: rawActiveIndex } = useMenuNavigation({
     screenId,
@@ -320,14 +635,29 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
     onSelect: handleSelect,
     onBack: handleBack,
     onMove: playSelect,
-    enabled: active,
+    enabled: active && selectionPhase === "idle",
   });
   const activeIndex = items.length === 0 ? 0 : Math.min(rawActiveIndex, items.length - 1);
+
+  useEffect(() => {
+    if (selectionPhase === "selected") {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape" || e.key === "Backspace") {
+          e.preventDefault();
+          handleDetailBack();
+        }
+      };
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [selectionPhase, handleDetailBack]);
 
   useEffect(() => {
     if (!active) return;
     startAmbientAudio();
   }, [active]);
+
+  const selectedItem = selectedIndex !== null ? items[selectedIndex] : null;
 
   return (
     <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
@@ -346,6 +676,9 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
           onItemClick={handleSelect}
           isMobile={compact}
           active={active}
+          selectionPhase={selectionPhase}
+          selectedIndex={selectedIndex}
+          onAnimationComplete={handleAnimationComplete}
         />
       </Canvas>
       <ThreeSceneHelperPanel panelStyle={{ bottom: "24px", left: "24px" }} />
@@ -361,6 +694,8 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
           alignItems: "center",
           justifyContent: "center",
           gap: "6px",
+          opacity: selectionPhase === "idle" ? 1 : 0,
+          transition: "opacity 0.3s ease",
         }}
       >
         <div
@@ -399,6 +734,8 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
           pointerEvents: "none",
           zIndex: 10,
           maxWidth: "40vw",
+          opacity: selectionPhase === "idle" ? 1 : 0,
+          transition: "opacity 0.3s ease",
         }}
       >
         <div
@@ -417,6 +754,8 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
           {items[activeIndex]?.label}
         </div>
       </div>
+
+      <DetailPanel item={selectedItem} visible={isDetailVisible} compact={compact} onBack={handleDetailBack} />
     </div>
   );
 }
