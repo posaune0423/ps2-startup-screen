@@ -11,7 +11,6 @@ import MenuShell from "@/components/shared/menu-shell";
 import { MOBILE_BREAKPOINT } from "@/components/shared/use-viewport";
 import { getScreenCluster, getScreenFromPath, SCREEN_ASSETS, WARMUP_ASSET_PATHS } from "@/lib/app-screen";
 import { useAppStore } from "@/lib/app-store";
-import { warmupGPU } from "@/lib/gpu-renderer";
 
 const LEAVE_MS = 600;
 const ENTER_MS = 600;
@@ -177,7 +176,6 @@ export default function AppShell() {
     if (warmupStartedRef.current) return;
 
     warmupStartedRef.current = true;
-    warmupGPU();
     let cancelled = false;
 
     if (window.innerWidth < MOBILE_BREAKPOINT) {
