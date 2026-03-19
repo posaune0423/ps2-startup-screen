@@ -31,9 +31,14 @@ export default memo(function GlowCursor({ position, visible = true, color = "#75
   useEffect(() => {
     return () => {
       texture.dispose();
+    };
+  }, [texture]);
+
+  useEffect(() => {
+    return () => {
       material.dispose();
     };
-  }, [texture, material]);
+  }, [material]);
 
   const spriteScale = useMemo((): [number, number, number] => [scale, scale, 1], [scale]);
 
