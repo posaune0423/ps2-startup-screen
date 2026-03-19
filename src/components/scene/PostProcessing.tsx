@@ -8,7 +8,7 @@ import { CONFIG } from "./config";
 
 export default memo(function PostProcessing() {
   return (
-    <EffectComposer multisampling={0}>
+    <EffectComposer>
       <Noise premultiply blendFunction={BlendFunction.OVERLAY} opacity={CONFIG.render.noiseIntensity} />
       <Vignette offset={CONFIG.render.vignetteOffset} darkness={CONFIG.render.vignetteDarkness} />
     </EffectComposer>
