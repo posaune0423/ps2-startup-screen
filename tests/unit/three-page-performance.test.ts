@@ -48,7 +48,7 @@ test("main scene keeps the timeout navigation path while restoring the reference
   assert.doesNotMatch(sceneSource, /requestAnimationFrame\(check\)/);
   assert.doesNotMatch(postProcessingSource, /<EffectComposer multisampling=\{0\}>/);
   assert.match(sceneConfigSource, /shadowMapSize:\s*1024,/);
-  assert.match(floatingCubesSource, /side=\{THREE\.DoubleSide\}/);
+  assert.match(floatingCubesSource, /side:\s*THREE\.DoubleSide,/);
 });
 
 test("system and helper canvases keep the higher-quality reference desktop settings", () => {

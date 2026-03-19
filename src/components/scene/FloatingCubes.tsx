@@ -1,6 +1,5 @@
 "use client";
 
-import { MeshTransmissionMaterial } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import React, { memo, useCallback, useRef, useMemo } from "react";
 import * as THREE from "three";
@@ -59,6 +58,30 @@ export default memo(function FloatingCubes({ elapsedRef }: { elapsedRef: React.R
 
   const geometries = useMemo(() => cubes.map((c) => new THREE.BoxGeometry(c.size, c.size, c.size)), [cubes]);
 
+  const material = useMemo(() => {
+    const cfg = CONFIG.floatingCubes;
+    return new THREE.MeshPhysicalMaterial({
+      color: cfg.color,
+      roughness: cfg.roughness,
+      metalness: cfg.metalness,
+      transmission: cfg.transmission,
+      ior: cfg.ior,
+      thickness: cfg.thickness,
+      clearcoat: cfg.clearcoat,
+      clearcoatRoughness: cfg.clearcoatRoughness,
+      specularIntensity: cfg.specularIntensity,
+      specularColor: new THREE.Color(cfg.specularColor),
+      attenuationColor: new THREE.Color(cfg.attenuationColor),
+      attenuationDistance: cfg.attenuationDistance,
+      iridescence: cfg.iridescence,
+      iridescenceIOR: cfg.iridescenceIOR,
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      envMapIntensity: 1.0,
+    });
+  }, []);
+
   const setMeshRef = useCallback(
     (i: number) => (el: THREE.Mesh | null) => {
       if (el) meshRefs.current[i] = el;
@@ -82,8 +105,6 @@ export default memo(function FloatingCubes({ elapsedRef }: { elapsedRef: React.R
     }
   });
 
-  const cfg = CONFIG.floatingCubes;
-
   return (
     <group ref={groupRef} renderOrder={2}>
       {cubes.map((cube, i) => (
@@ -91,29 +112,9 @@ export default memo(function FloatingCubes({ elapsedRef }: { elapsedRef: React.R
           key={`${cube.position.join("-")}-${cube.size}`}
           ref={setMeshRef(i)}
           position={cube.position}
+          material={material}
           geometry={geometries[i]}
-        >
-          <MeshTransmissionMaterial
-            transmission={cfg.transmission}
-            roughness={cfg.roughness}
-            metalness={cfg.metalness}
-            ior={cfg.ior}
-            thickness={cfg.thickness}
-            clearcoat={cfg.clearcoat}
-            clearcoatRoughness={cfg.clearcoatRoughness}
-            specularIntensity={cfg.specularIntensity}
-            specularColor={cfg.specularColor}
-            attenuationColor={cfg.attenuationColor}
-            attenuationDistance={cfg.attenuationDistance}
-            iridescence={cfg.iridescence}
-            iridescenceIOR={cfg.iridescenceIOR}
-            color={cfg.color}
-            transparent
-            depthWrite={false}
-            side={THREE.DoubleSide}
-            envMapIntensity={1.0}
-          />
-        </mesh>
+        />
       ))}
     </group>
   );
