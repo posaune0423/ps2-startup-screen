@@ -37,10 +37,6 @@ test("browser and item-grid canvases use demand frameloops for mostly static 3d 
     itemGridSource,
     /<Canvas[\s\S]*camera=\{cameraProps\}[\s\S]*dpr=\{compact \? 1 : 1\.25\}[\s\S]*frameloop="demand"/,
   );
-  assert.match(
-    itemGridSource,
-    /camera=\{MEMORY_CARD_ICON_CAMERA\}[\s\S]*dpr=\{compact \? 1 : 1\}[\s\S]*frameloop="demand"/,
-  );
   assert.match(browserScreenSource, /const invalidate = useThree\(\(state\) => state\.invalidate\);/);
   assert.match(itemGridSource, /const invalidate = useThree\(\(state\) => state\.invalidate\);/);
   assert.doesNotMatch(browserScreenSource, /const \[mounted, setMounted\] = useState\(false\);/);

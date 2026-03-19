@@ -185,6 +185,15 @@ export default memo(function PrismField() {
   );
 
   useEffect(() => {
+    return () => {
+      geometry.dispose();
+      material.dispose();
+      topCapMaterial.dispose();
+      for (const geo of topCapGeometries) geo.dispose();
+    };
+  }, [geometry, material, topCapMaterial, topCapGeometries]);
+
+  useEffect(() => {
     const mesh = meshRef.current;
     if (!mesh) return;
 

@@ -78,8 +78,9 @@ test("memory card grids stay in a persistent shell and rely on shell warmup inst
   assert.match(itemGridSource, /screenId: ActiveIndexScreenId;/);
   assert.match(itemGridSource, /screenId,/);
   assert.match(memoryShellSource, /opacity \$\{LAYER_TRANSITION_MS\}ms ease-out/);
-  assert.match(memoryShellSource, /<MemoryShellBackground \/>/);
+  assert.match(memoryShellSource, /<MemoryShellBackground useCssFallback=\{compact\} \/>/);
   assert.match(memoryShellSource, /<Ps2BrowserBg \/>/);
+  assert.match(memoryShellSource, /clearGLTF\(path,/);
   assert.doesNotMatch(browserScreenSource, /background:\s*PS2_BROWSER_BG_FALLBACK/);
   assert.doesNotMatch(browserScreenSource, /<Ps2BrowserBg \/>/);
   assert.doesNotMatch(itemGridSource, /background:\s*PS2_BROWSER_BG_FALLBACK/);

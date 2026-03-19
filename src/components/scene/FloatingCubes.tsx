@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import React, { memo, useCallback, useRef, useMemo } from "react";
+import React, { memo, useCallback, useEffect, useRef, useMemo } from "react";
 import * as THREE from "three";
 
 import { CONFIG } from "./config";
@@ -60,27 +60,23 @@ export default memo(function FloatingCubes({ elapsedRef }: { elapsedRef: React.R
 
   const material = useMemo(() => {
     const cfg = CONFIG.floatingCubes;
-    return new THREE.MeshPhysicalMaterial({
+    return new THREE.MeshStandardMaterial({
       color: cfg.color,
-      roughness: cfg.roughness,
-      metalness: cfg.metalness,
-      transmission: cfg.transmission,
-      ior: cfg.ior,
-      thickness: cfg.thickness,
-      clearcoat: cfg.clearcoat,
-      clearcoatRoughness: cfg.clearcoatRoughness,
-      specularIntensity: cfg.specularIntensity,
-      specularColor: new THREE.Color(cfg.specularColor),
-      attenuationColor: new THREE.Color(cfg.attenuationColor),
-      attenuationDistance: cfg.attenuationDistance,
-      iridescence: cfg.iridescence,
-      iridescenceIOR: cfg.iridescenceIOR,
+      roughness: 0.1,
+      metalness: 0.2,
       transparent: true,
+      opacity: 0.15,
       depthWrite: false,
       side: THREE.DoubleSide,
-      envMapIntensity: 1.0,
     });
   }, []);
+
+  useEffect(() => {
+    return () => {
+      for (const geo of geometries) geo.dispose();
+      material.dispose();
+    };
+  }, [geometries, material]);
 
   const setMeshRef = useCallback(
     (i: number) => (el: THREE.Mesh | null) => {

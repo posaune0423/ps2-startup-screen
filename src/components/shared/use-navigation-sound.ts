@@ -1,45 +1,43 @@
 "use client";
 
-import type { RefObject } from "react";
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 
 import { getSoundEnabled, initializeSoundEnabled } from "@/lib/sound-settings";
 
 const SE_PATHS = {
-  select: "/sound/se/select.wav",
-  enter: "/sound/se/enter.wav",
-  back: "/sound/se/back.wav",
+  select: "/sound/se/select.m4a",
+  enter: "/sound/se/enter.m4a",
+  back: "/sound/se/back.m4a",
 } as const;
 
-function playOnce(audioRef: RefObject<HTMLAudioElement | null>, path: string): void {
+const seCache: Record<string, HTMLAudioElement> = {};
+
+function playOnce(path: string): void {
   initializeSoundEnabled();
   if (!getSoundEnabled()) return;
 
-  if (!audioRef.current) {
-    audioRef.current = new Audio(path);
-    audioRef.current.volume = 0.5;
+  let audio = seCache[path];
+  if (!audio) {
+    audio = new Audio(path);
+    audio.volume = 0.5;
+    seCache[path] = audio;
   }
 
-  const audio = audioRef.current;
   audio.currentTime = 0;
   audio.play().catch(() => {});
 }
 
 export function useNavigationSound() {
-  const selectRef = useRef<HTMLAudioElement | null>(null);
-  const enterRef = useRef<HTMLAudioElement | null>(null);
-  const backRef = useRef<HTMLAudioElement | null>(null);
-
   const playSelect = useCallback(() => {
-    playOnce(selectRef, SE_PATHS.select);
+    playOnce(SE_PATHS.select);
   }, []);
 
   const playEnter = useCallback(() => {
-    playOnce(enterRef, SE_PATHS.enter);
+    playOnce(SE_PATHS.enter);
   }, []);
 
   const playBack = useCallback(() => {
-    playOnce(backRef, SE_PATHS.back);
+    playOnce(SE_PATHS.back);
   }, []);
 
   return { playSelect, playEnter, playBack } as const;

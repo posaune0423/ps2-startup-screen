@@ -21,9 +21,9 @@ test("memory pages use stronger light contrast instead of flat ambient fill", ()
 });
 
 test("memory page item boxes keep clearer highlight and shadow separation", () => {
-  assert.match(itemGridSource, /color: isActive \? "#8BE8FF" : "#46506A"/);
-  assert.match(itemGridSource, /emissive: new THREE\.Color\(isActive \? "#63D8FF" : "#0E1220"\)/);
-  assert.match(itemGridSource, /emissiveIntensity: isActive \? 0\.32 : 0\.04/);
+  assert.match(itemGridSource, /fallbackMaterial\.color\.set\(isActive \? "#8BE8FF" : "#46506A"\)/);
+  assert.match(itemGridSource, /fallbackMaterial\.emissive\.set\(isActive \? "#63D8FF" : "#0E1220"\)/);
+  assert.match(itemGridSource, /fallbackMaterial\.emissiveIntensity = isActive \? 0\.32 : 0\.04/);
   assert.match(itemGridSource, /roughness: 0\.28/);
   assert.match(itemGridSource, /metalness: 0\.3/);
 });

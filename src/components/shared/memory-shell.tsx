@@ -1,5 +1,6 @@
 "use client";
 
+import { useGLTF } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
@@ -8,7 +9,10 @@ import { MusicScreen } from "@/components/screens/music-screen";
 import { SnsScreen } from "@/components/screens/sns-screen";
 import { WorkScreen } from "@/components/screens/work-screen";
 import Ps2BrowserBg, { PS2_BROWSER_BG_FALLBACK } from "@/components/shared/ps2-browser-bg";
+import { useViewport } from "@/components/shared/use-viewport";
 import type { AppScreenId } from "@/lib/app-screen";
+import { SCREEN_ASSETS } from "@/lib/app-screen";
+import { clearGLTF } from "@/lib/gltf-memory";
 
 interface MemoryShellProps {
   currentScreen: AppScreenId;
@@ -48,7 +52,11 @@ function layerStyle(active: boolean): React.CSSProperties {
   };
 }
 
-function MemoryShellBackground() {
+function MemoryShellBackground({ useCssFallback }: { useCssFallback: boolean }) {
+  if (useCssFallback) {
+    return <div style={{ ...BACKGROUND_CANVAS_STYLE, background: PS2_BROWSER_BG_FALLBACK }} />;
+  }
+
   return (
     <Canvas
       frameloop="demand"
@@ -79,6 +87,8 @@ function renderMemoryScreen(screen: AppScreenId, active: boolean) {
 }
 
 export default function MemoryShell({ currentScreen }: MemoryShellProps) {
+  const { isMobile, isPortrait } = useViewport();
+  const compact = isMobile || isPortrait;
   const [exitingScreen, setExitingScreen] = useState<AppScreenId | null>(null);
   const previousScreenRef = useRef(currentScreen);
 
@@ -91,6 +101,14 @@ export default function MemoryShell({ currentScreen }: MemoryShellProps) {
 
     const timer = window.setTimeout(() => {
       setExitingScreen((screen) => (screen === previousScreen ? null : screen));
+
+      const prevAssets = SCREEN_ASSETS[previousScreen] ?? [];
+      const currAssets = new Set(SCREEN_ASSETS[currentScreen] ?? []);
+      for (const path of prevAssets) {
+        if (!currAssets.has(path)) {
+          clearGLTF(path, (p) => useGLTF.clear(p));
+        }
+      }
     }, LAYER_TRANSITION_MS + 50);
 
     return () => window.clearTimeout(timer);
@@ -105,7 +123,7 @@ export default function MemoryShell({ currentScreen }: MemoryShellProps) {
 
   return (
     <div style={SHELL_STYLE}>
-      <MemoryShellBackground />
+      <MemoryShellBackground useCssFallback={compact} />
       {visibleScreens.map((screen) => {
         const active = screen === currentScreen;
         return (
