@@ -12,6 +12,7 @@ import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
 import { startAmbientAudio } from "@/lib/ambient-audio";
 import type { ActiveIndexScreenId } from "@/lib/app-screen";
+import { registerGLTFScene } from "@/lib/gltf-memory";
 import { navigate } from "@/lib/navigate";
 
 export interface GridItem {
@@ -63,6 +64,10 @@ const CameraSetup = memo(function CameraSetup({ camPos }: { camPos: [number, num
 
 const GlbModel = memo(function GlbModel({ modelPath, isMobile }: { modelPath: string; isMobile: boolean }) {
   const { scene } = useGLTF(modelPath);
+
+  useEffect(() => {
+    registerGLTFScene(modelPath, scene);
+  }, [modelPath, scene]);
 
   const normalizedScale = useMemo(() => {
     const target = isMobile ? TARGET_SIZE_MOBILE : TARGET_SIZE;
@@ -147,14 +152,25 @@ const GridItemModel = memo(function GridItemModel({
   const fallbackMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: isActive ? "#8BE8FF" : "#46506A",
-        emissive: new THREE.Color(isActive ? "#63D8FF" : "#0E1220"),
-        emissiveIntensity: isActive ? 0.32 : 0.04,
         roughness: 0.28,
         metalness: 0.3,
       }),
-    [isActive],
+    [],
   );
+
+  useEffect(() => {
+    fallbackMaterial.color.set(isActive ? "#8BE8FF" : "#46506A");
+    fallbackMaterial.emissive.set(isActive ? "#63D8FF" : "#0E1220");
+    fallbackMaterial.emissiveIntensity = isActive ? 0.32 : 0.04;
+    fallbackMaterial.needsUpdate = true;
+  }, [isActive, fallbackMaterial]);
+
+  useEffect(() => {
+    return () => {
+      fallbackGeo.dispose();
+      fallbackMaterial.dispose();
+    };
+  }, [fallbackGeo, fallbackMaterial]);
 
   useFrame((_, delta) => {
     if (settledRef.current && modelPath) return;
@@ -258,21 +274,18 @@ export const ItemGridStage = memo(function ItemGridStage({
   );
 });
 
-const MEMORY_CARD_ICON_CAMERA = { position: [0, 0, 1.2] as [number, number, number], fov: 45 };
-const MEMORY_CARD_ICON_GL = { alpha: true, antialias: true, powerPreference: "high-performance" as const };
-
-const TinyMemoryCard = memo(function TinyMemoryCard() {
-  const { scene } = useGLTF("/3d/memorycard.glb");
-
+function MemoryCardImage({ size }: { size: number }) {
   return (
-    <>
-      <ambientLight intensity={1.6} />
-      <directionalLight position={[-2, 3, 2]} intensity={3.2} color="#EEF4FF" />
-      <pointLight position={[1.5, 0.8, 1.8]} intensity={1.6} color="#8FB5FF" distance={4.5} decay={1.6} />
-      <Clone object={scene} position={[0, 0.15, 0.15]} rotation={[-0.3, Math.PI / 2, 1.8]} />
-    </>
+    <img
+      src="/memorycard.png"
+      alt=""
+      aria-hidden="true"
+      width={size}
+      height={size}
+      style={{ objectFit: "contain", display: "block" }}
+    />
   );
-});
+}
 
 export default function ItemGrid({ items, screenId, title, active = true }: ItemGridProps) {
   const { playEnter, playSelect, playBack } = useNavigationSound();
@@ -350,18 +363,17 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
           gap: "6px",
         }}
       >
-        <div style={{ width: compact ? 40 : 48, height: compact ? 40 : 48, flexShrink: 0, marginTop: "6px" }}>
-          <Canvas
-            camera={MEMORY_CARD_ICON_CAMERA}
-            dpr={compact ? 1 : 1}
-            frameloop="demand"
-            gl={MEMORY_CARD_ICON_GL}
-            style={CANVAS_STYLE}
-          >
-            <Suspense fallback={null}>
-              <TinyMemoryCard />
-            </Suspense>
-          </Canvas>
+        <div
+          style={{
+            width: compact ? 28 : 36,
+            height: compact ? 28 : 36,
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <MemoryCardImage size={compact ? 24 : 32} />
         </div>
         <span
           className="ps2-text"

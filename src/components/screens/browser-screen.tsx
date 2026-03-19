@@ -11,6 +11,7 @@ import { useMenuNavigation } from "@/components/shared/use-menu-navigation";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
 import { startAmbientAudio } from "@/lib/ambient-audio";
+import { registerGLTFScene } from "@/lib/gltf-memory";
 import type { TranslationKey } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import { navigate } from "@/lib/navigate";
@@ -105,6 +106,10 @@ const GenericCardModel = memo(function GenericCardModel({
 }) {
   const { scene } = useGLTF(modelPath);
   const invalidate = useThree((state) => state.invalidate);
+
+  useEffect(() => {
+    registerGLTFScene(modelPath, scene);
+  }, [modelPath, scene]);
   const groupRef = useRef<THREE.Group>(null);
   const elapsed = useRef(0);
   const settledRef = useRef(false);

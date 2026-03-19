@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo, useMemo } from "react";
+import React, { memo, useEffect, useMemo } from "react";
 import * as THREE from "three";
 
 export const PS2_BROWSER_BG_FALLBACK =
@@ -47,6 +47,13 @@ export default memo(function Ps2BrowserBg() {
       depthTest: false,
     });
   }, []);
+
+  useEffect(() => {
+    return () => {
+      geometry.dispose();
+      material.dispose();
+    };
+  }, [geometry, material]);
 
   return <mesh renderOrder={-1} frustumCulled={false} material={material} geometry={geometry} />;
 });

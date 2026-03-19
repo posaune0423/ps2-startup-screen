@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import React, { memo, useCallback, useRef, useMemo } from "react";
+import React, { memo, useCallback, useEffect, useRef, useMemo } from "react";
 import * as THREE from "three";
 
 import { createGlowTexture } from "@/lib/glowTexture";
@@ -65,6 +65,15 @@ export default memo(function CentralGlow({ elapsedRef }: { elapsedRef: React.Ref
       ),
     [glowTexture],
   );
+
+  useEffect(() => {
+    return () => {
+      glowTexture.dispose();
+      unitPlaneGeo.dispose();
+      for (const mat of vaporMaterials) mat.dispose();
+      for (const mat of glowMaterials) mat.dispose();
+    };
+  }, [glowTexture, unitPlaneGeo, vaporMaterials, glowMaterials]);
 
   const setGlowSpriteRef = useCallback(
     (i: number) => (el: THREE.Sprite | null) => {
