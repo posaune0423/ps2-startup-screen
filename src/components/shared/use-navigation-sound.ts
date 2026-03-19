@@ -6,9 +6,9 @@ import { useCallback, useRef } from "react";
 import { getSoundEnabled, initializeSoundEnabled } from "@/lib/sound-settings";
 
 const SE_PATHS = {
-  select: "/sound/se/select.wav",
-  enter: "/sound/se/enter.wav",
-  back: "/sound/se/back.wav",
+  select: "/sound/se/select.m4a",
+  enter: "/sound/se/enter.m4a",
+  back: "/sound/se/back.m4a",
 } as const;
 
 function playOnce(audioRef: RefObject<HTMLAudioElement | null>, path: string): void {

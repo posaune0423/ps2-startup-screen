@@ -10,7 +10,7 @@ export function startAmbientAudio(): void {
   if (!getSoundEnabled()) return;
 
   if (!audio) {
-    audio = new Audio("/sound/ambient.wav");
+    audio = new Audio("/sound/ambient.m4a");
     audio.loop = true;
     audio.volume = 0.4;
   }
@@ -41,7 +41,7 @@ export function playReturnMenuThenAmbient(): void {
   initializeSoundEnabled();
   if (!getSoundEnabled()) return;
 
-  const se = new Audio("/sound/se/return-menu.wav");
+  const se = new Audio("/sound/se/return-menu.m4a");
   se.volume = 0.5;
   const handleEnded = () => {
     startAmbientAudio();
