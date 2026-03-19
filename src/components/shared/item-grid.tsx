@@ -363,8 +363,8 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
           gap: "6px",
         }}
       >
-        <div style={{ width: compact ? 40 : 52, height: compact ? 40 : 52, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <MemoryCardImage size={compact ? 36 : 46} />
+        <div style={{ width: compact ? 28 : 36, height: compact ? 28 : 36, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <MemoryCardImage size={compact ? 24 : 32} />
         </div>
         <span
           className="ps2-text"
