@@ -116,10 +116,15 @@ const Trail = memo(function Trail({
     return () => {
       geometry.dispose();
       material.dispose();
+    };
+  }, [geometry, material]);
+
+  useEffect(() => {
+    return () => {
       headSpriteMat.dispose();
       haloSpriteMat.dispose();
     };
-  }, [geometry, material, headSpriteMat, haloSpriteMat]);
+  }, [headSpriteMat, haloSpriteMat]);
 
   const headSpriteRef = useRef<THREE.Sprite>(null);
   const haloSpriteRef = useRef<THREE.Sprite>(null);
