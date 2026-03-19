@@ -1,6 +1,5 @@
 "use client";
 
-import { Environment } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import type { Howl } from "howler";
 import React, { memo, useCallback, useEffect, useMemo, useRef } from "react";
@@ -31,7 +30,6 @@ const SceneContent = memo(function SceneContent({ elapsedRef }: { elapsedRef: Re
       <color attach="background" args={["#1A1A1A"]} />
       <fog attach="fog" args={["#1A1A1A", 4, 12]} />
       <CameraRig elapsedRef={elapsedRef} sceneGroupRef={sceneGroupRef} />
-      <Environment preset="studio" background={false} environmentIntensity={0.3} />
       <group ref={sceneGroupRef}>
         <Lighting elapsedRef={elapsedRef} />
         <CentralGlow elapsedRef={elapsedRef} />
