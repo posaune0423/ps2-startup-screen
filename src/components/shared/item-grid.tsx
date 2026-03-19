@@ -290,19 +290,14 @@ const GridItemModel = memo(function GridItemModel({
     }
   });
 
-  const hasSelection = selectionPhase !== "idle";
-  const shouldFade = hasSelection && !isSelected;
-  const isClickable = selectionPhase === "idle";
-
   return (
     <group
       ref={groupRef}
       position={initPos}
       scale={0}
-      onClick={isClickable ? onClick : undefined}
-      onPointerOver={isClickable ? onPointerOver : undefined}
-      onPointerOut={isClickable ? onPointerOut : undefined}
-      visible={!shouldFade}
+      onClick={onClick}
+      onPointerOver={onPointerOver}
+      onPointerOut={onPointerOut}
     >
       {modelPath ? (
         <Suspense fallback={null}>
@@ -572,6 +567,8 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [selectionPhase, setSelectionPhase] = useState<SelectionPhase>("idle");
+  const phaseRef = useRef<SelectionPhase>("idle");
+  phaseRef.current = selectionPhase;
 
   const camPos = useMemo((): [number, number, number] => {
     const zBase = items.length > 3 ? 6 : 4.5;
@@ -581,39 +578,33 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
 
   const cameraProps = useMemo(() => ({ position: camPos, fov: 50 }), [camPos]);
 
-  const isAnimating = selectionPhase === "selecting" || selectionPhase === "deselecting";
   const isDetailVisible = selectionPhase === "selected" || selectionPhase === "selecting";
 
   const handleAnimationComplete = useCallback(() => {
-    setSelectionPhase((prev) => {
-      if (prev === "selecting") return "selected";
-      if (prev === "deselecting") {
-        setSelectedIndex(null);
-        return "idle";
-      }
-      return prev;
-    });
+    const p = phaseRef.current;
+    if (p === "selecting") {
+      setSelectionPhase("selected");
+    } else if (p === "deselecting") {
+      setSelectionPhase("idle");
+      setSelectedIndex(null);
+    }
   }, []);
 
   const handleSelect = useCallback(
     (index: number) => {
-      if (isAnimating) return;
-      if (selectionPhase !== "idle") return;
-
+      if (phaseRef.current !== "idle") return;
       playEnter();
       setSelectedIndex(index);
       setSelectionPhase("selecting");
     },
-    [playEnter, isAnimating, selectionPhase],
+    [playEnter],
   );
 
   const handleDetailBack = useCallback(() => {
-    if (isAnimating) return;
-    if (selectionPhase !== "selected") return;
-
+    if (phaseRef.current !== "selected") return;
     playBack();
     setSelectionPhase("deselecting");
-  }, [playBack, isAnimating, selectionPhase]);
+  }, [playBack]);
 
   const handleGridBack = useCallback(() => {
     playBack();
@@ -621,12 +612,13 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
   }, [playBack]);
 
   const handleBack = useCallback(() => {
-    if (selectionPhase === "selected") {
+    const p = phaseRef.current;
+    if (p === "selected") {
       handleDetailBack();
-    } else if (selectionPhase === "idle") {
+    } else if (p === "idle") {
       handleGridBack();
     }
-  }, [selectionPhase, handleDetailBack, handleGridBack]);
+  }, [handleDetailBack, handleGridBack]);
 
   const { activeIndex: rawActiveIndex } = useMenuNavigation({
     screenId,
