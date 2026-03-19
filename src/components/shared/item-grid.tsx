@@ -274,27 +274,16 @@ export const ItemGridStage = memo(function ItemGridStage({
   );
 });
 
-function MemoryCardIcon({ size }: { size: number }) {
+function MemoryCardImage({ size }: { size: number }) {
   return (
-    <svg
+    <img
+      src="/memorycard.png"
+      alt=""
+      aria-hidden="true"
       width={size}
       height={size}
-      viewBox="0 0 48 48"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <rect x="6" y="8" width="36" height="32" rx="3" fill="#3A3F52" stroke="#6B7290" strokeWidth="1.5" />
-      <rect x="10" y="12" width="6" height="8" rx="1" fill="#8B93B0" />
-      <rect x="18" y="12" width="6" height="8" rx="1" fill="#8B93B0" />
-      <rect x="26" y="12" width="6" height="8" rx="1" fill="#8B93B0" />
-      <rect x="34" y="12" width="6" height="8" rx="1" fill="#8B93B0" />
-      <rect x="14" y="26" width="20" height="10" rx="2" fill="#5A6180" />
-      <text x="24" y="33" textAnchor="middle" fontSize="7" fontWeight="700" fill="#C8D0E8">
-        MC
-      </text>
-    </svg>
+      style={{ objectFit: "contain", display: "block" }}
+    />
   );
 }
 
@@ -374,8 +363,8 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
           gap: "6px",
         }}
       >
-        <div style={{ width: compact ? 40 : 48, height: compact ? 40 : 48, flexShrink: 0, marginTop: "6px" }}>
-          <MemoryCardIcon size={compact ? 40 : 48} />
+        <div style={{ width: compact ? 40 : 52, height: compact ? 40 : 52, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <MemoryCardImage size={compact ? 36 : 46} />
         </div>
         <span
           className="ps2-text"

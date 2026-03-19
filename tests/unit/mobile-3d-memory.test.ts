@@ -19,7 +19,7 @@ test("memory pages use full-quality GL settings with demand frameloop", () => {
   assert.match(itemGridSource, /gl=\{GL_PROPS\}/);
   assert.match(itemGridSource, /dpr=\{compact \? 1 : 1\.25\}/);
   assert.doesNotMatch(itemGridSource, /background: PS2_BROWSER_BG_FALLBACK/);
-  assert.match(itemGridSource, /function MemoryCardIcon/);
+  assert.match(itemGridSource, /function MemoryCardImage/);
 });
 
 test("browser page uses low-power GL settings with demand frameloop", () => {
