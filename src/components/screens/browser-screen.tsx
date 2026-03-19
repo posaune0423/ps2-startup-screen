@@ -320,7 +320,7 @@ export function BrowserScreen({ active = true }: { active?: boolean }) {
     <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
       <Canvas
         camera={CAMERA_PROPS}
-        dpr={compact ? 0.8 : 1}
+        dpr={compact ? 0.7 : 1}
         frameloop="demand"
         resize={{ offsetSize: true }}
         gl={GL_PROPS}

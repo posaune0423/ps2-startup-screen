@@ -204,7 +204,7 @@ const DIR_LIGHT_POS: [number, number, number] = [-3.5, 5.5, 5.5];
 const SPOT_LIGHT_POS: [number, number, number] = [0, 5.5, 6];
 const POINT_LIGHT_POS: [number, number, number] = [3.5, 1.8, 4.8];
 const HEMI_ARGS: [string, string, number] = ["#F8FBFF", "#0A0C14", 1.05];
-const GL_PROPS = { antialias: true, alpha: true, powerPreference: "high-performance" as const };
+const GL_PROPS = { antialias: false, alpha: true, powerPreference: "low-power" as const };
 const CANVAS_STYLE = { width: "100%", height: "100%" } as const;
 
 export const ItemGridStage = memo(function ItemGridStage({
@@ -258,21 +258,21 @@ export const ItemGridStage = memo(function ItemGridStage({
   );
 });
 
-const MEMORY_CARD_ICON_CAMERA = { position: [0, 0, 1.2] as [number, number, number], fov: 45 };
-const MEMORY_CARD_ICON_GL = { alpha: true, antialias: true, powerPreference: "high-performance" as const };
-
-const TinyMemoryCard = memo(function TinyMemoryCard() {
-  const { scene } = useGLTF("/3d/memorycard.glb");
-
+function MemoryCardIcon({ size }: { size: number }) {
   return (
-    <>
-      <ambientLight intensity={1.6} />
-      <directionalLight position={[-2, 3, 2]} intensity={3.2} color="#EEF4FF" />
-      <pointLight position={[1.5, 0.8, 1.8]} intensity={1.6} color="#8FB5FF" distance={4.5} decay={1.6} />
-      <Clone object={scene} position={[0, 0.15, 0.15]} rotation={[-0.3, Math.PI / 2, 1.8]} />
-    </>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="6" y="8" width="36" height="32" rx="3" fill="#3A3F52" stroke="#6B7290" strokeWidth="1.5" />
+      <rect x="10" y="12" width="6" height="8" rx="1" fill="#8B93B0" />
+      <rect x="18" y="12" width="6" height="8" rx="1" fill="#8B93B0" />
+      <rect x="26" y="12" width="6" height="8" rx="1" fill="#8B93B0" />
+      <rect x="34" y="12" width="6" height="8" rx="1" fill="#8B93B0" />
+      <rect x="14" y="26" width="20" height="10" rx="2" fill="#5A6180" />
+      <text x="24" y="33" textAnchor="middle" fontSize="7" fontWeight="700" fill="#C8D0E8">
+        MC
+      </text>
+    </svg>
   );
-});
+}
 
 export default function ItemGrid({ items, screenId, title, active = true }: ItemGridProps) {
   const { playEnter, playSelect, playBack } = useNavigationSound();
@@ -320,7 +320,7 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
     <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
       <Canvas
         camera={cameraProps}
-        dpr={compact ? 1 : 1.25}
+        dpr={compact ? 0.75 : 1}
         frameloop="demand"
         resize={{ offsetSize: true }}
         gl={GL_PROPS}
@@ -351,17 +351,7 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
         }}
       >
         <div style={{ width: compact ? 40 : 48, height: compact ? 40 : 48, flexShrink: 0, marginTop: "6px" }}>
-          <Canvas
-            camera={MEMORY_CARD_ICON_CAMERA}
-            dpr={compact ? 1 : 1}
-            frameloop="demand"
-            gl={MEMORY_CARD_ICON_GL}
-            style={CANVAS_STYLE}
-          >
-            <Suspense fallback={null}>
-              <TinyMemoryCard />
-            </Suspense>
-          </Canvas>
+          <MemoryCardIcon size={compact ? 40 : 48} />
         </div>
         <span
           className="ps2-text"
