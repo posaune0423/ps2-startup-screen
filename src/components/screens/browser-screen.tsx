@@ -11,7 +11,6 @@ import { useMenuNavigation } from "@/components/shared/use-menu-navigation";
 import { useNavigationSound } from "@/components/shared/use-navigation-sound";
 import { useViewport } from "@/components/shared/use-viewport";
 import { startAmbientAudio } from "@/lib/ambient-audio";
-import { createGPURenderer } from "@/lib/gpu-renderer";
 import type { TranslationKey } from "@/lib/i18n";
 import { useLanguage } from "@/lib/language-context";
 import { navigate } from "@/lib/navigate";
@@ -275,6 +274,7 @@ export function BrowserMemoryCardDebugPanel({ activeIndex, isMobile }: { activeI
   );
 }
 
+const GL_PROPS = { antialias: false, alpha: true, powerPreference: "low-power" as const };
 const CANVAS_STYLE = { width: "100%", height: "100%" } as const;
 const CAMERA_PROPS = { position: [0, 2.2, 5.5] as [number, number, number], fov: 45 };
 
@@ -323,7 +323,7 @@ export function BrowserScreen({ active = true }: { active?: boolean }) {
         dpr={compact ? 0.8 : 1}
         frameloop="demand"
         resize={{ offsetSize: true }}
-        gl={createGPURenderer}
+        gl={GL_PROPS}
         style={CANVAS_STYLE}
       >
         <BrowserStage activeIndex={activeIndex} isMobile={compact} active={active} />
