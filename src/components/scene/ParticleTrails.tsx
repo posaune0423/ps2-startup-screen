@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import React, { memo, useRef, useMemo } from "react";
+import React, { memo, useEffect, useRef, useMemo } from "react";
 import * as THREE from "three";
 
 import { createTrailHeadTexture } from "@/lib/glowTexture";
@@ -112,6 +112,15 @@ const Trail = memo(function Trail({
     [headTexture, params.color],
   );
 
+  useEffect(() => {
+    return () => {
+      geometry.dispose();
+      material.dispose();
+      headSpriteMat.dispose();
+      haloSpriteMat.dispose();
+    };
+  }, [geometry, material, headSpriteMat, haloSpriteMat]);
+
   const headSpriteRef = useRef<THREE.Sprite>(null);
   const haloSpriteRef = useRef<THREE.Sprite>(null);
   const timeRef = useRef(0);
@@ -195,6 +204,12 @@ export default memo(function ParticleTrails({ elapsedRef }: { elapsedRef: React.
   const { count, trailLength, speed, colors, yRange, xzRange } = CONFIG.particle;
 
   const headTexture = useMemo(() => createTrailHeadTexture(), []);
+
+  useEffect(() => {
+    return () => {
+      headTexture.dispose();
+    };
+  }, [headTexture]);
 
   const { paramsList, runtimes } = useMemo(() => {
     const rand = seededRandom(789);

@@ -1,7 +1,7 @@
 "use client";
 
 import type { RefObject } from "react";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { getSoundEnabled, initializeSoundEnabled } from "@/lib/sound-settings";
 
@@ -25,10 +25,25 @@ function playOnce(audioRef: RefObject<HTMLAudioElement | null>, path: string): v
   audio.play().catch(() => {});
 }
 
+function disposeAudio(ref: RefObject<HTMLAudioElement | null>) {
+  if (!ref.current) return;
+  ref.current.pause();
+  ref.current.src = "";
+  ref.current = null;
+}
+
 export function useNavigationSound() {
   const selectRef = useRef<HTMLAudioElement | null>(null);
   const enterRef = useRef<HTMLAudioElement | null>(null);
   const backRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    return () => {
+      disposeAudio(selectRef);
+      disposeAudio(enterRef);
+      disposeAudio(backRef);
+    };
+  }, []);
 
   const playSelect = useCallback(() => {
     playOnce(selectRef, SE_PATHS.select);

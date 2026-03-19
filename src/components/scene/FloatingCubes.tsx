@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import React, { memo, useCallback, useRef, useMemo } from "react";
+import React, { memo, useCallback, useEffect, useRef, useMemo } from "react";
 import * as THREE from "three";
 
 import { CONFIG } from "./config";
@@ -70,6 +70,13 @@ export default memo(function FloatingCubes({ elapsedRef }: { elapsedRef: React.R
       side: THREE.DoubleSide,
     });
   }, []);
+
+  useEffect(() => {
+    return () => {
+      for (const geo of geometries) geo.dispose();
+      material.dispose();
+    };
+  }, [geometries, material]);
 
   const setMeshRef = useCallback(
     (i: number) => (el: THREE.Mesh | null) => {

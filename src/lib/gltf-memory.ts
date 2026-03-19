@@ -28,6 +28,8 @@ const TEXTURE_KEYS = [
 ] as const;
 
 const releasedScenes = new WeakSet<Object3D>();
+const sceneRegistry = new Map<string, Object3D>();
+
 interface DisposableTexture {
   dispose: () => void;
 }
@@ -80,6 +82,20 @@ export function disposeSceneResources(root: Object3D) {
       disposeMaterial(object.material);
     }
   });
+}
+
+export function registerGLTFScene(path: string, scene: Object3D) {
+  sceneRegistry.set(path, scene);
+}
+
+export function clearGLTF(path: string, clear: (path: string) => void) {
+  const scene = sceneRegistry.get(path);
+  if (scene && !releasedScenes.has(scene)) {
+    disposeSceneResources(scene);
+    releasedScenes.add(scene);
+  }
+  sceneRegistry.delete(path);
+  clear(path);
 }
 
 export function releaseGLTFAsset(path: string, scene: Object3D | null | undefined, clear: (path: string) => void) {
