@@ -46,7 +46,7 @@ test("browser and item-grid canvases use demand frameloops for mostly static 3d 
 test("main scene keeps the timeout navigation path while restoring the reference startup quality profile", () => {
   assert.match(sceneSource, /const timeoutId = window\.setTimeout\(\(\) => \{\s*navigate\("\/menu"\);/s);
   assert.doesNotMatch(sceneSource, /requestAnimationFrame\(check\)/);
-  assert.doesNotMatch(postProcessingSource, /<EffectComposer multisampling=\{0\}>/);
+  assert.match(postProcessingSource, /<EffectComposer multisampling=\{0\}>/);
   assert.match(sceneConfigSource, /shadowMapSize:\s*1024,/);
   assert.match(floatingCubesSource, /side:\s*THREE\.DoubleSide,/);
 });
