@@ -21,13 +21,7 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-export default memo(function FloatingCubes({
-  elapsedRef,
-  lite = false,
-}: {
-  elapsedRef: React.RefObject<number>;
-  lite?: boolean;
-}) {
+export default memo(function FloatingCubes({ elapsedRef }: { elapsedRef: React.RefObject<number> }) {
   const groupRef = useRef<THREE.Group>(null);
   const meshRefs = useRef<THREE.Mesh[]>([]);
 
@@ -66,17 +60,6 @@ export default memo(function FloatingCubes({
 
   const material = useMemo(() => {
     const cfg = CONFIG.floatingCubes;
-    if (lite) {
-      return new THREE.MeshStandardMaterial({
-        color: cfg.color,
-        roughness: 0.1,
-        metalness: 0.2,
-        transparent: true,
-        opacity: 0.3,
-        depthWrite: false,
-        side: THREE.DoubleSide,
-      });
-    }
     return new THREE.MeshPhysicalMaterial({
       color: cfg.color,
       roughness: cfg.roughness,
@@ -97,7 +80,7 @@ export default memo(function FloatingCubes({
       side: THREE.DoubleSide,
       envMapIntensity: 1.0,
     });
-  }, [lite]);
+  }, []);
 
   const setMeshRef = useCallback(
     (i: number) => (el: THREE.Mesh | null) => {

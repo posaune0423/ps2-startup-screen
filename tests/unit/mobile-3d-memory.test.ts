@@ -10,27 +10,20 @@ const browserPageSource = readFileSync(
 );
 const orbRingSource = readFileSync(new URL("../../src/components/browser-menu/orb-ring.tsx", import.meta.url), "utf8");
 
-test("memory pages use low-power rendering with reduced mobile DPR", () => {
-  assert.match(
-    itemGridSource,
-    /const GL_PROPS = \{ antialias: false, alpha: true, powerPreference: "low-power" as const \};/,
-  );
+test("memory pages use WebGPU renderer with full quality and demand frameloop", () => {
+  assert.match(itemGridSource, /import \{ createGPURenderer \} from "@\/lib\/gpu-renderer"/);
   assert.match(itemGridSource, /frameloop="demand"/);
-  assert.match(itemGridSource, /gl=\{GL_PROPS\}/);
-  assert.match(itemGridSource, /dpr=\{compact \? 0\.75 : 1\}/);
+  assert.match(itemGridSource, /gl=\{createGPURenderer\}/);
+  assert.match(itemGridSource, /dpr=\{compact \? 1 : 1\.25\}/);
   assert.doesNotMatch(itemGridSource, /background: PS2_BROWSER_BG_FALLBACK/);
   assert.match(itemGridSource, /function MemoryCardIcon/);
 });
 
-test("browser page also clamps canvas DPR and prefers low-power WebGL settings", () => {
-  assert.match(browserPageSource, /dpr=\{compact \? 0\.7 : 1\}/);
-
+test("browser page uses WebGPU renderer with demand frameloop", () => {
+  assert.match(browserPageSource, /dpr=\{compact \? 0\.8 : 1\}/);
   assert.match(browserPageSource, /frameloop="demand"/);
-  assert.match(
-    browserPageSource,
-    /const GL_PROPS = \{ antialias: false, alpha: true, powerPreference: "low-power" as const \};/,
-  );
-  assert.match(browserPageSource, /gl=\{GL_PROPS\}/);
+  assert.match(browserPageSource, /import \{ createGPURenderer \} from "@\/lib\/gpu-renderer"/);
+  assert.match(browserPageSource, /gl=\{createGPURenderer\}/);
   assert.doesNotMatch(browserPageSource, /background: PS2_BROWSER_BG_FALLBACK/);
 });
 
