@@ -60,25 +60,14 @@ export default memo(function FloatingCubes({ elapsedRef }: { elapsedRef: React.R
 
   const material = useMemo(() => {
     const cfg = CONFIG.floatingCubes;
-    return new THREE.MeshPhysicalMaterial({
+    return new THREE.MeshStandardMaterial({
       color: cfg.color,
-      roughness: cfg.roughness,
-      metalness: cfg.metalness,
-      transmission: cfg.transmission,
-      ior: cfg.ior,
-      thickness: cfg.thickness,
-      clearcoat: cfg.clearcoat,
-      clearcoatRoughness: cfg.clearcoatRoughness,
-      specularIntensity: cfg.specularIntensity,
-      specularColor: new THREE.Color(cfg.specularColor),
-      attenuationColor: new THREE.Color(cfg.attenuationColor),
-      attenuationDistance: cfg.attenuationDistance,
-      iridescence: cfg.iridescence,
-      iridescenceIOR: cfg.iridescenceIOR,
+      roughness: 0.1,
+      metalness: 0.2,
       transparent: true,
+      opacity: 0.15,
       depthWrite: false,
       side: THREE.DoubleSide,
-      envMapIntensity: 1.0,
     });
   }, []);
 
