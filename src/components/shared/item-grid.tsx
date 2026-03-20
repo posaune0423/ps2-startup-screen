@@ -396,6 +396,12 @@ function MemoryCardImage({ size }: { size: number }) {
   );
 }
 
+const DETAIL_PANEL_CLEAR_TEXT: React.CSSProperties = {
+  WebkitTextStroke: "0",
+  textShadow: "none",
+  paintOrder: "normal",
+};
+
 function DetailPanel({
   item,
   visible,
@@ -450,12 +456,13 @@ function DetailPanel({
 
         {item.period && (
           <p
-            className="ps2-text"
             style={{
+              ...DETAIL_PANEL_CLEAR_TEXT,
               fontSize: compact ? 13 : 15,
               color: "#8899BB",
               marginBottom: 12,
               letterSpacing: "0.04em",
+              fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
             }}
           >
             {item.period}
@@ -464,13 +471,14 @@ function DetailPanel({
 
         {item.description && (
           <p
-            className="ps2-text"
             style={{
+              ...DETAIL_PANEL_CLEAR_TEXT,
               fontSize: compact ? 14 : 16,
               color: "#C8D0E0",
               lineHeight: 1.6,
               marginBottom: 16,
               maxWidth: 400,
+              fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
             }}
           >
             {item.description}
@@ -482,14 +490,15 @@ function DetailPanel({
             {item.tags.map((tag) => (
               <span
                 key={tag}
-                className="ps2-text"
                 style={{
+                  ...DETAIL_PANEL_CLEAR_TEXT,
                   fontSize: 12,
                   color: "#75D9EB",
                   border: "1px solid rgba(117,217,235,0.3)",
                   borderRadius: 4,
                   padding: "2px 8px",
                   letterSpacing: "0.03em",
+                  fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
                 }}
               >
                 {tag}
@@ -503,8 +512,8 @@ function DetailPanel({
             href={item.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="ps2-text"
             style={{
+              ...DETAIL_PANEL_CLEAR_TEXT,
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
@@ -517,6 +526,7 @@ function DetailPanel({
               fontWeight: 700,
               letterSpacing: "0.02em",
               transition: "background 0.2s",
+              fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "#D5DF3F";
@@ -530,8 +540,8 @@ function DetailPanel({
           <button
             type="button"
             onClick={onBack}
-            className="ps2-text"
             style={{
+              ...DETAIL_PANEL_CLEAR_TEXT,
               fontSize: compact ? 14 : 16,
               color: "#8899BB",
               background: "rgba(255,255,255,0.06)",
@@ -542,6 +552,7 @@ function DetailPanel({
               fontWeight: 600,
               letterSpacing: "0.02em",
               transition: "background 0.2s, color 0.2s",
+              fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "rgba(255,255,255,0.12)";
@@ -650,6 +661,7 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
   }, [active]);
 
   const selectedItem = selectedIndex !== null ? items[selectedIndex] : null;
+  const showGrid = selectionPhase === "idle";
 
   return (
     <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
@@ -673,6 +685,20 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
           onAnimationComplete={handleAnimationComplete}
         />
       </Canvas>
+
+      {/* Background scrim — covers the grid behind the selected model */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "rgba(0,0,0,0.85)",
+          opacity: showGrid ? 0 : 1,
+          pointerEvents: "none",
+          transition: "opacity 0.4s ease",
+          zIndex: 5,
+        }}
+      />
+
       <ThreeSceneHelperPanel panelStyle={{ bottom: "24px", left: "24px" }} />
 
       <div
@@ -682,12 +708,10 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
           left: "clamp(20px, 5vw, 52px)",
           pointerEvents: "none",
           zIndex: 10,
-          display: "flex",
+          display: showGrid ? "flex" : "none",
           alignItems: "center",
           justifyContent: "center",
           gap: "6px",
-          opacity: selectionPhase === "idle" ? 1 : 0,
-          transition: "opacity 0.3s ease",
         }}
       >
         <div
@@ -726,8 +750,7 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
           pointerEvents: "none",
           zIndex: 10,
           maxWidth: "40vw",
-          opacity: selectionPhase === "idle" ? 1 : 0,
-          transition: "opacity 0.3s ease",
+          display: showGrid ? "block" : "none",
         }}
       >
         <div
