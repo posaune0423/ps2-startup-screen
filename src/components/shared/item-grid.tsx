@@ -290,6 +290,8 @@ const GridItemModel = memo(function GridItemModel({
     }
   });
 
+  const hideForSelection = selectionPhase !== "idle" && !isSelected;
+
   return (
     <group
       ref={groupRef}
@@ -298,6 +300,7 @@ const GridItemModel = memo(function GridItemModel({
       onClick={onClick}
       onPointerOver={onPointerOver}
       onPointerOut={onPointerOut}
+      visible={!hideForSelection}
     >
       {modelPath ? (
         <Suspense fallback={null}>
@@ -315,7 +318,7 @@ const SPOT_LIGHT_POS: [number, number, number] = [0, 5.5, 6];
 const POINT_LIGHT_POS: [number, number, number] = [3.5, 1.8, 4.8];
 const HEMI_ARGS: [string, string, number] = ["#F8FBFF", "#0A0C14", 1.05];
 const GL_PROPS = { antialias: true, alpha: true, powerPreference: "high-performance" as const };
-const CANVAS_STYLE = { width: "100%", height: "100%" } as const;
+const CANVAS_STYLE = { width: "100%", height: "100%", position: "relative" as const, zIndex: 8 };
 
 export const ItemGridStage = memo(function ItemGridStage({
   items,
