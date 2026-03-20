@@ -39,8 +39,7 @@ const TARGET_SIZE_MOBILE = 0.6;
 const NORMALIZED_SCALE_CACHE = new Map<string, number>();
 
 const DETAIL_ANIM_DURATION = 0.6;
-const DETAIL_SCALE_FACTOR = 1.8;
-const DETAIL_OFFSET_X = -1.2;
+const DETAIL_SCALE_FACTOR = 2.4;
 
 function calcGridPositions(items: GridItem[]): [number, number, number][] {
   const n = items.length;
@@ -318,7 +317,7 @@ const SPOT_LIGHT_POS: [number, number, number] = [0, 5.5, 6];
 const POINT_LIGHT_POS: [number, number, number] = [3.5, 1.8, 4.8];
 const HEMI_ARGS: [string, string, number] = ["#F8FBFF", "#0A0C14", 1.05];
 const GL_PROPS = { antialias: true, alpha: true, powerPreference: "high-performance" as const };
-const CANVAS_STYLE = { width: "100%", height: "100%", position: "relative" as const, zIndex: 8 };
+const CANVAS_STYLE = { width: "100%", height: "100%" } as const;
 
 export const ItemGridStage = memo(function ItemGridStage({
   items,
@@ -350,9 +349,10 @@ export const ItemGridStage = memo(function ItemGridStage({
 
   const clickHandlers = useMemo(() => items.map((_, i) => () => onItemClick(i)), [items, onItemClick]);
 
-  const detailPosition = useMemo((): [number, number, number] => {
-    return [DETAIL_OFFSET_X, 0.1, 0.8];
-  }, []);
+  const detailPosition = useMemo(
+    (): [number, number, number] => (isMobile ? [0, 0.9, 0.8] : [-1.2, 0.1, 0.8]),
+    [isMobile],
+  );
 
   return (
     <>
@@ -399,22 +399,16 @@ function MemoryCardImage({ size }: { size: number }) {
   );
 }
 
-const DETAIL_PANEL_CLEAR_TEXT: React.CSSProperties = {
-  WebkitTextStroke: "0",
-  textShadow: "none",
-  paintOrder: "normal",
-};
-
 function DetailPanel({
   item,
   visible,
   compact,
-  onBack,
+  title,
 }: {
   item: GridItem | null;
   visible: boolean;
   compact: boolean;
-  onBack: () => void;
+  title: string;
 }) {
   if (!item) return null;
 
@@ -422,154 +416,107 @@ function DetailPanel({
     <div
       style={{
         position: "absolute",
-        top: 0,
-        right: 0,
-        width: compact ? "100%" : "45%",
-        height: "100%",
+        ...(compact ? { bottom: "14%", left: 0, right: 0 } : { top: 0, right: 0, width: "55%", height: "100%" }),
         display: "flex",
         flexDirection: "column",
-        justifyContent: compact ? "flex-end" : "center",
-        padding: compact ? "0 24px 80px" : "0 48px",
+        alignItems: "center",
+        justifyContent: compact ? "flex-start" : "center",
+        padding: compact ? "0 24px" : "0 32px",
         pointerEvents: visible ? "auto" : "none",
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateX(0)" : "translateX(30px)",
+        transform: visible ? "translate(0, 0)" : compact ? "translateY(20px)" : "translateX(30px)",
         transition: "opacity 0.4s ease, transform 0.4s ease",
         zIndex: 20,
       }}
     >
-      <div
+      <span
+        className="ps2-text"
         style={{
-          background: compact ? "linear-gradient(transparent, rgba(0,0,0,0.85) 30%)" : "transparent",
-          borderRadius: compact ? 0 : 8,
-          padding: compact ? "40px 0 0" : 0,
+          fontSize: compact ? "clamp(16px, 4vw, 22px)" : "clamp(20px, 1.7vw, 28px)",
+          color: "#FFFFFF",
+          marginBottom: 6,
+          letterSpacing: "0.02em",
         }}
       >
-        <h2
+        Memory Card <span style={{ fontSize: "0.8em" }}>({title})</span>/1
+      </span>
+
+      <h2
+        className="ps2-text"
+        style={{
+          fontSize: compact ? "clamp(28px, 7.5vw, 44px)" : "clamp(34px, 3.2vw, 52px)",
+          fontWeight: 700,
+          color: "#C5CF1F",
+          margin: "0 0 4px",
+          letterSpacing: "0.02em",
+          textAlign: "center",
+          lineHeight: 1.15,
+        }}
+      >
+        {item.label}
+      </h2>
+
+      {item.description && (
+        <p
           className="ps2-text"
           style={{
-            fontSize: compact ? "clamp(22px, 5vw, 32px)" : "clamp(28px, 3vw, 42px)",
-            fontWeight: 700,
+            fontSize: compact ? "clamp(11px, 2.8vw, 14px)" : "clamp(12px, 0.85vw, 15px)",
             color: "#C5CF1F",
-            marginBottom: 8,
-            letterSpacing: "0.02em",
+            margin: "0 0 14px",
+            textAlign: "center",
+            lineHeight: 1.7,
+            maxWidth: compact ? "min(88%, 320px)" : "min(80%, 380px)",
+            wordBreak: "break-word" as const,
+            overflowWrap: "break-word" as const,
           }}
         >
-          {item.label}
-        </h2>
+          {item.description}
+        </p>
+      )}
 
-        {item.period && (
-          <p
-            style={{
-              ...DETAIL_PANEL_CLEAR_TEXT,
-              fontSize: compact ? 13 : 15,
-              color: "#8899BB",
-              marginBottom: 12,
-              letterSpacing: "0.04em",
-              fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-            }}
-          >
-            {item.period}
-          </p>
-        )}
+      {item.period && (
+        <p
+          className="ps2-text"
+          style={{
+            fontSize: compact ? "clamp(13px, 3vw, 17px)" : "clamp(14px, 1.1vw, 19px)",
+            color: "#8899BB",
+            margin: "0 0 3px",
+            textAlign: "center",
+          }}
+        >
+          {item.period}
+        </p>
+      )}
 
-        {item.description && (
-          <p
-            style={{
-              ...DETAIL_PANEL_CLEAR_TEXT,
-              fontSize: compact ? 14 : 16,
-              color: "#C8D0E0",
-              lineHeight: 1.6,
-              marginBottom: 16,
-              maxWidth: 400,
-              fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-            }}
-          >
-            {item.description}
-          </p>
-        )}
+      {item.tags && item.tags.length > 0 && (
+        <p
+          className="ps2-text"
+          style={{
+            fontSize: compact ? "clamp(13px, 3vw, 17px)" : "clamp(14px, 1.1vw, 19px)",
+            color: "#8899BB",
+            margin: "0 0 24px",
+            textAlign: "center",
+          }}
+        >
+          {item.tags.join(" · ")}
+        </p>
+      )}
 
-        {item.tags && item.tags.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
-            {item.tags.map((tag) => (
-              <span
-                key={tag}
-                style={{
-                  ...DETAIL_PANEL_CLEAR_TEXT,
-                  fontSize: 12,
-                  color: "#75D9EB",
-                  border: "1px solid rgba(117,217,235,0.3)",
-                  borderRadius: 4,
-                  padding: "2px 8px",
-                  letterSpacing: "0.03em",
-                  fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-                }}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <a
-            href={item.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              ...DETAIL_PANEL_CLEAR_TEXT,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: compact ? 14 : 16,
-              color: "#0E1220",
-              background: "#C5CF1F",
-              padding: "8px 20px",
-              borderRadius: 4,
-              textDecoration: "none",
-              fontWeight: 700,
-              letterSpacing: "0.02em",
-              transition: "background 0.2s",
-              fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#D5DF3F";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#C5CF1F";
-            }}
-          >
-            Open ↗
-          </a>
-          <button
-            type="button"
-            onClick={onBack}
-            style={{
-              ...DETAIL_PANEL_CLEAR_TEXT,
-              fontSize: compact ? 14 : 16,
-              color: "#8899BB",
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(136,153,187,0.25)",
-              padding: "8px 20px",
-              borderRadius: 4,
-              cursor: "pointer",
-              fontWeight: 600,
-              letterSpacing: "0.02em",
-              transition: "background 0.2s, color 0.2s",
-              fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.12)";
-              e.currentTarget.style.color = "#C8D0E0";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-              e.currentTarget.style.color = "#8899BB";
-            }}
-          >
-            Back
-          </button>
-        </div>
-      </div>
+      <a
+        href={item.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ps2-text"
+        style={{
+          fontSize: compact ? "clamp(20px, 5vw, 28px)" : "clamp(22px, 1.8vw, 32px)",
+          color: "#75D9EB",
+          textDecoration: "none",
+          letterSpacing: "0.02em",
+          cursor: "pointer",
+        }}
+      >
+        Open
+      </a>
     </div>
   );
 }
@@ -659,6 +606,20 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
   }, [selectionPhase, handleDetailBack]);
 
   useEffect(() => {
+    function handleNavigate(e: Event) {
+      const p = phaseRef.current;
+      if (p !== "idle") {
+        e.preventDefault();
+        if (p === "selected") {
+          handleDetailBack();
+        }
+      }
+    }
+    window.addEventListener("app:navigate", handleNavigate);
+    return () => window.removeEventListener("app:navigate", handleNavigate);
+  }, [handleDetailBack]);
+
+  useEffect(() => {
     if (!active) return;
     startAmbientAudio();
   }, [active]);
@@ -688,19 +649,6 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
           onAnimationComplete={handleAnimationComplete}
         />
       </Canvas>
-
-      {/* Background scrim — covers the grid behind the selected model */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background: "rgba(0,0,0,0.85)",
-          opacity: showGrid ? 0 : 1,
-          pointerEvents: "none",
-          transition: "opacity 0.4s ease",
-          zIndex: 5,
-        }}
-      />
 
       <ThreeSceneHelperPanel panelStyle={{ bottom: "24px", left: "24px" }} />
 
@@ -773,7 +721,7 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
         </div>
       </div>
 
-      <DetailPanel item={selectedItem} visible={isDetailVisible} compact={compact} onBack={handleDetailBack} />
+      <DetailPanel item={selectedItem} visible={isDetailVisible} compact={compact} title={title} />
     </div>
   );
 }

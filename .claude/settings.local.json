@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -r \"CanvasTexture\\\\|DataTexture\\\\|Texture\\(\\)\" /Users/asumayamada/Private/posaune0423/portfolio/src --include=*.ts --include=*.tsx)"
+    ]
+  }
+}
