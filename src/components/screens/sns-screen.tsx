@@ -11,24 +11,28 @@ const SNS_ITEMS: GridItem[] = [
     label: "LinkedIn",
     modelPath: "/3d/sns/linkedin.glb",
     href: "https://www.linkedin.com/in/posaune0423",
+    description: "Professional profile and career history.",
   },
   {
     id: "twitter",
     label: "X (Twitter)",
     modelPath: "/3d/sns/twitter_blue_bird.glb",
     href: "https://x.com/home",
+    description: "Thoughts on tech, Web3, and development.",
   },
   {
     id: "github",
     label: "GitHub",
     modelPath: "/3d/sns/github_octcat.glb",
     href: "https://github.com/posaune0423",
+    description: "Open source projects and contributions.",
   },
   {
     id: "instagram",
     label: "Instagram",
     modelPath: "/3d/sns/instagram.glb",
     href: "https://www.instagram.com/posaune0131",
+    description: "Photography and daily life snapshots.",
   },
 ];
 export const MEMORY_SNS_ITEMS = SNS_ITEMS;

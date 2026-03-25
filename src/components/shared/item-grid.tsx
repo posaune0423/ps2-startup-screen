@@ -2,7 +2,7 @@
 
 import { Clone, useGLTF } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import React, { memo, Suspense, useCallback, useEffect, useMemo, useRef } from "react";
+import React, { memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
 import GlowCursor from "@/components/shared/glow-cursor";
@@ -20,6 +20,9 @@ export interface GridItem {
   label: string;
   modelPath: string;
   href: string;
+  description?: string;
+  tags?: string[];
+  period?: string;
 }
 
 interface ItemGridProps {
@@ -34,6 +37,8 @@ const ROW_DEPTH = 0.7;
 const TARGET_SIZE = 0.5;
 const TARGET_SIZE_MOBILE = 0.6;
 const NORMALIZED_SCALE_CACHE = new Map<string, number>();
+const DETAIL_ANIM_DURATION = 0.6;
+const DETAIL_SCALE_FACTOR = 2.4;
 
 function calcGridPositions(items: GridItem[]): [number, number, number][] {
   const n = items.length;
@@ -97,12 +102,22 @@ function easeOutCubic(t: number) {
   return 1 - (1 - t) ** 3;
 }
 
+function easeInOutCubic(t: number) {
+  return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+}
+
+function lerpValue(a: number, b: number, t: number) {
+  return a + (b - a) * t;
+}
+
 const onPointerOver = () => {
   document.body.style.cursor = "pointer";
 };
 const onPointerOut = () => {
   document.body.style.cursor = "auto";
 };
+
+type SelectionPhase = "idle" | "selecting" | "selected" | "deselecting";
 
 const GridItemModel = memo(function GridItemModel({
   position,
@@ -112,6 +127,11 @@ const GridItemModel = memo(function GridItemModel({
   isMobile,
   isActive,
   active,
+  selectionPhase,
+  isSelected,
+  detailPosition,
+  detailScale,
+  onAnimationComplete,
 }: {
   position: [number, number, number];
   modelPath: string;
@@ -120,6 +140,11 @@ const GridItemModel = memo(function GridItemModel({
   isMobile: boolean;
   isActive: boolean;
   active: boolean;
+  selectionPhase: SelectionPhase;
+  isSelected: boolean;
+  detailPosition: [number, number, number];
+  detailScale: number;
+  onAnimationComplete: () => void;
 }) {
   const invalidate = useThree((state) => state.invalidate);
   const groupRef = useRef<THREE.Group>(null);
@@ -127,7 +152,19 @@ const GridItemModel = memo(function GridItemModel({
   const elapsed = useRef(0);
   const settledRef = useRef(false);
   const prevActiveRef = useRef<boolean | null>(null);
+  const selectionElapsed = useRef(0);
+  const prevSelectionPhaseRef = useRef<SelectionPhase>("idle");
+  const selectionPhaseRef = useRef(selectionPhase);
+  const clickRef = useRef(onClick);
   const delay = index * ANIM_STAGGER;
+
+  useEffect(() => {
+    selectionPhaseRef.current = selectionPhase;
+  }, [selectionPhase]);
+
+  useEffect(() => {
+    clickRef.current = onClick;
+  }, [onClick]);
 
   useEffect(() => {
     if (active && prevActiveRef.current === false) {
@@ -141,6 +178,15 @@ const GridItemModel = memo(function GridItemModel({
     }
     prevActiveRef.current = active;
   }, [active, invalidate, position]);
+
+  useEffect(() => {
+    if (selectionPhase === prevSelectionPhaseRef.current) return;
+    if (selectionPhase === "selecting" || selectionPhase === "deselecting") {
+      selectionElapsed.current = 0;
+      invalidate();
+    }
+    prevSelectionPhaseRef.current = selectionPhase;
+  }, [invalidate, selectionPhase]);
 
   const fallbackGeo = useMemo(() => new THREE.BoxGeometry(0.8, 0.8, 0.8), []);
 
@@ -172,38 +218,106 @@ const GridItemModel = memo(function GridItemModel({
     };
   }, [fallbackGeo, fallbackMaterial]);
 
+  const handleModelClick = useCallback(() => {
+    if (selectionPhaseRef.current !== "idle") return;
+    clickRef.current();
+  }, []);
+
+  const handleModelPointerOver = useCallback(() => {
+    if (selectionPhaseRef.current !== "idle") return;
+    onPointerOver();
+  }, []);
+
+  const handleModelPointerOut = useCallback(() => {
+    onPointerOut();
+  }, []);
+
   useFrame((_, delta) => {
-    if (settledRef.current && modelPath) return;
+    const group = groupRef.current;
+    if (!group) return;
 
-    elapsed.current += delta;
-    const t = Math.min(1, Math.max(0, (elapsed.current - delay) / ANIM_DURATION));
-    const eased = easeOutCubic(t);
+    if (!settledRef.current) {
+      elapsed.current += delta;
+      const t = Math.min(1, Math.max(0, (elapsed.current - delay) / ANIM_DURATION));
+      const eased = easeOutCubic(t);
 
-    if (groupRef.current) {
-      groupRef.current.position.y = position[1] + ANIM_OFFSET_Y * (1 - eased);
-      groupRef.current.scale.setScalar(eased);
+      group.position.y = position[1] + ANIM_OFFSET_Y * (1 - eased);
+      group.scale.setScalar(eased);
+
+      if (!modelPath && meshRef.current) {
+        meshRef.current.rotation.y += delta * 0.5;
+      }
+
+      if (t < 1 || !modelPath) {
+        invalidate();
+        return;
+      }
+
+      settledRef.current = true;
+    }
+
+    if (selectionPhase === "selecting" && isSelected) {
+      selectionElapsed.current += delta;
+      const t = Math.min(1, selectionElapsed.current / DETAIL_ANIM_DURATION);
+      const eased = easeInOutCubic(t);
+
+      group.position.x = lerpValue(position[0], detailPosition[0], eased);
+      group.position.y = lerpValue(position[1], detailPosition[1], eased);
+      group.position.z = lerpValue(position[2], detailPosition[2], eased);
+      group.scale.setScalar(lerpValue(1, detailScale, eased));
+      invalidate();
+
+      if (t >= 1) {
+        onAnimationComplete();
+      }
+      return;
+    }
+
+    if (selectionPhase === "deselecting" && isSelected) {
+      selectionElapsed.current += delta;
+      const t = Math.min(1, selectionElapsed.current / DETAIL_ANIM_DURATION);
+      const eased = easeInOutCubic(t);
+
+      group.position.x = lerpValue(detailPosition[0], position[0], eased);
+      group.position.y = lerpValue(detailPosition[1], position[1], eased);
+      group.position.z = lerpValue(detailPosition[2], position[2], eased);
+      group.scale.setScalar(lerpValue(detailScale, 1, eased));
+      invalidate();
+
+      if (t >= 1) {
+        onAnimationComplete();
+      }
+      return;
+    }
+
+    if (selectionPhase === "selected" && isSelected) {
+      group.position.set(...detailPosition);
+      group.scale.setScalar(detailScale);
+      if (!modelPath && meshRef.current) {
+        meshRef.current.rotation.y += delta * 0.3;
+        invalidate();
+      }
+      return;
     }
 
     if (!modelPath && meshRef.current) {
       meshRef.current.rotation.y += delta * 0.5;
-    }
-
-    if (t < 1 || !modelPath) {
       invalidate();
-      return;
     }
-
-    settledRef.current = true;
   });
+
+  const hasSelection = selectionPhase !== "idle";
+  const shouldHide = hasSelection && !isSelected;
 
   return (
     <group
       ref={groupRef}
       position={initPos}
       scale={0}
-      onClick={onClick}
-      onPointerOver={onPointerOver}
-      onPointerOut={onPointerOut}
+      onClick={handleModelClick}
+      onPointerOver={handleModelPointerOver}
+      onPointerOut={handleModelPointerOut}
+      visible={!shouldHide}
     >
       {modelPath ? (
         <Suspense fallback={null}>
@@ -230,6 +344,9 @@ export const ItemGridStage = memo(function ItemGridStage({
   onItemClick,
   isMobile,
   active = true,
+  selectionPhase,
+  selectedIndex,
+  onAnimationComplete,
 }: {
   items: GridItem[];
   activeIndex: number;
@@ -237,6 +354,9 @@ export const ItemGridStage = memo(function ItemGridStage({
   onItemClick: (index: number) => void;
   isMobile: boolean;
   active?: boolean;
+  selectionPhase: SelectionPhase;
+  selectedIndex: number | null;
+  onAnimationComplete: () => void;
 }) {
   const positions = useMemo(() => calcGridPositions(items), [items]);
   const safeIndex = items.length === 0 ? 0 : Math.min(activeIndex, items.length - 1);
@@ -246,6 +366,10 @@ export const ItemGridStage = memo(function ItemGridStage({
   );
 
   const clickHandlers = useMemo(() => items.map((_, i) => () => onItemClick(i)), [items, onItemClick]);
+  const detailPosition = useMemo(
+    (): [number, number, number] => (isMobile ? [0, 0.9, 0.8] : [-1.2, 0.1, 0.8]),
+    [isMobile],
+  );
 
   return (
     <>
@@ -266,10 +390,15 @@ export const ItemGridStage = memo(function ItemGridStage({
           isMobile={isMobile}
           isActive={i === safeIndex}
           active={active}
+          selectionPhase={selectionPhase}
+          isSelected={selectedIndex === i}
+          detailPosition={detailPosition}
+          detailScale={DETAIL_SCALE_FACTOR}
+          onAnimationComplete={onAnimationComplete}
         />
       ))}
 
-      <GlowCursor position={cursorPos} color="#75D9EB" scale={0.6} />
+      {selectionPhase === "idle" ? <GlowCursor position={cursorPos} color="#75D9EB" scale={0.6} /> : null}
     </>
   );
 });
@@ -287,10 +416,136 @@ function MemoryCardImage({ size }: { size: number }) {
   );
 }
 
+function DetailPanel({
+  item,
+  visible,
+  compact,
+  title,
+}: {
+  item: GridItem | null;
+  visible: boolean;
+  compact: boolean;
+  title: string;
+}) {
+  if (!item) return null;
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        ...(compact ? { bottom: "14%", left: 0, right: 0 } : { top: 0, right: 0, width: "55%", height: "100%" }),
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: compact ? "flex-start" : "center",
+        padding: compact ? "0 24px" : "0 32px",
+        pointerEvents: visible ? "auto" : "none",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translate(0, 0)" : compact ? "translateY(20px)" : "translateX(30px)",
+        transition: "opacity 0.4s ease, transform 0.4s ease",
+        zIndex: 20,
+      }}
+    >
+      <span
+        className="ps2-text"
+        style={{
+          fontSize: compact ? "clamp(16px, 4vw, 22px)" : "clamp(20px, 1.7vw, 28px)",
+          color: "#FFFFFF",
+          marginBottom: 6,
+          letterSpacing: "0.02em",
+        }}
+      >
+        Memory Card <span style={{ fontSize: "0.8em" }}>({title})</span>/1
+      </span>
+
+      <h2
+        className="ps2-text"
+        style={{
+          fontSize: compact ? "clamp(28px, 7.5vw, 44px)" : "clamp(34px, 3.2vw, 52px)",
+          fontWeight: 700,
+          color: "#C5CF1F",
+          margin: "0 0 4px",
+          letterSpacing: "0.02em",
+          textAlign: "center",
+          lineHeight: 1.15,
+        }}
+      >
+        {item.label}
+      </h2>
+
+      {item.description ? (
+        <p
+          className="ps2-text"
+          style={{
+            fontSize: compact ? "clamp(11px, 2.8vw, 14px)" : "clamp(12px, 0.85vw, 15px)",
+            color: "#C5CF1F",
+            margin: "0 0 14px",
+            textAlign: "center",
+            lineHeight: 1.7,
+            maxWidth: compact ? "min(88%, 320px)" : "min(80%, 380px)",
+            wordBreak: "break-word",
+            overflowWrap: "break-word",
+          }}
+        >
+          {item.description}
+        </p>
+      ) : null}
+
+      {item.period ? (
+        <p
+          className="ps2-text"
+          style={{
+            fontSize: compact ? "clamp(13px, 3vw, 17px)" : "clamp(14px, 1.1vw, 19px)",
+            color: "#8899BB",
+            margin: "0 0 3px",
+            textAlign: "center",
+          }}
+        >
+          {item.period}
+        </p>
+      ) : null}
+
+      {item.tags?.length ? (
+        <p
+          className="ps2-text"
+          style={{
+            fontSize: compact ? "clamp(13px, 3vw, 17px)" : "clamp(14px, 1.1vw, 19px)",
+            color: "#8899BB",
+            margin: "0 0 24px",
+            textAlign: "center",
+          }}
+        >
+          {item.tags.join(" · ")}
+        </p>
+      ) : null}
+
+      <a
+        href={item.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ps2-text"
+        style={{
+          fontSize: compact ? "clamp(20px, 5vw, 28px)" : "clamp(22px, 1.8vw, 32px)",
+          color: "#75D9EB",
+          textDecoration: "none",
+          letterSpacing: "0.02em",
+          cursor: "pointer",
+        }}
+      >
+        Open
+      </a>
+    </div>
+  );
+}
+
 export default function ItemGrid({ items, screenId, title, active = true }: ItemGridProps) {
   const { playEnter, playSelect, playBack } = useNavigationSound();
   const { isMobile, isPortrait } = useViewport();
   const compact = isMobile || isPortrait;
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [selectionPhase, setSelectionPhase] = useState<SelectionPhase>("idle");
+  const phaseRef = useRef<SelectionPhase>("idle");
+  phaseRef.current = selectionPhase;
 
   const camPos = useMemo((): [number, number, number] => {
     const zBase = items.length > 3 ? 6 : 4.5;
@@ -299,19 +554,95 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
   }, [items.length, compact]);
 
   const cameraProps = useMemo(() => ({ position: camPos, fov: 50 }), [camPos]);
+  const isDetailVisible = selectionPhase === "selected" || selectionPhase === "selecting";
+
+  const handleAnimationComplete = useCallback(() => {
+    const phase = phaseRef.current;
+    if (phase === "selecting") {
+      setSelectionPhase("selected");
+    } else if (phase === "deselecting") {
+      setSelectionPhase("idle");
+      setSelectedIndex(null);
+    }
+  }, []);
 
   const handleSelect = useCallback(
     (index: number) => {
+      if (phaseRef.current !== "idle") return;
+      if (!items[index]) return;
       playEnter();
-      window.open(items[index].href, "_blank");
+      setSelectedIndex(index);
+      setSelectionPhase("selecting");
     },
-    [playEnter, items],
+    [items, playEnter],
   );
 
-  const handleBack = useCallback(() => {
+  const handleDetailBack = useCallback(() => {
+    if (phaseRef.current !== "selected") return;
+    playBack();
+    setSelectionPhase("deselecting");
+  }, [playBack]);
+
+  const handleGridBack = useCallback(() => {
     playBack();
     navigate("/browser");
   }, [playBack]);
+
+  const handleBack = useCallback(() => {
+    const phase = phaseRef.current;
+    if (phase === "selected") {
+      handleDetailBack();
+      return;
+    }
+    if (phase === "idle") {
+      handleGridBack();
+    }
+  }, [handleDetailBack, handleGridBack]);
+
+  useEffect(() => {
+    if (selectionPhase !== "selected") return;
+
+    function handleDetailKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape" && event.key !== "Backspace") return;
+      event.preventDefault();
+      handleDetailBack();
+    }
+
+    window.addEventListener("keydown", handleDetailKeyDown);
+    return () => window.removeEventListener("keydown", handleDetailKeyDown);
+  }, [handleDetailBack, selectionPhase]);
+
+  useEffect(() => {
+    function handleNavigate(event: Event) {
+      const phase = phaseRef.current;
+      if (phase === "idle") return;
+      event.preventDefault();
+      if (phase === "selected") {
+        handleDetailBack();
+      }
+    }
+
+    window.addEventListener("app:navigate", handleNavigate);
+    return () => window.removeEventListener("app:navigate", handleNavigate);
+  }, [handleDetailBack]);
+
+  useEffect(() => {
+    if (active) return;
+    setSelectedIndex(null);
+    setSelectionPhase("idle");
+    onPointerOut();
+  }, [active]);
+
+  const selectedItem = selectedIndex === null ? null : (items[selectedIndex] ?? null);
+
+  useEffect(() => {
+    if (selectedIndex === null) return;
+    if (items[selectedIndex]) return;
+    setSelectedIndex(null);
+    setSelectionPhase("idle");
+  }, [items, selectedIndex]);
+
+  const menuNavigationEnabled = active && selectionPhase === "idle";
 
   const { activeIndex: rawActiveIndex } = useMenuNavigation({
     screenId,
@@ -320,7 +651,7 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
     onSelect: handleSelect,
     onBack: handleBack,
     onMove: playSelect,
-    enabled: active,
+    enabled: menuNavigationEnabled,
   });
   const activeIndex = items.length === 0 ? 0 : Math.min(rawActiveIndex, items.length - 1);
 
@@ -328,6 +659,8 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
     if (!active) return;
     startAmbientAudio();
   }, [active]);
+
+  const showGrid = selectionPhase === "idle";
 
   return (
     <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
@@ -346,6 +679,9 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
           onItemClick={handleSelect}
           isMobile={compact}
           active={active}
+          selectionPhase={selectionPhase}
+          selectedIndex={selectedIndex}
+          onAnimationComplete={handleAnimationComplete}
         />
       </Canvas>
       <ThreeSceneHelperPanel panelStyle={{ bottom: "24px", left: "24px" }} />
@@ -357,10 +693,10 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
           left: "clamp(20px, 5vw, 52px)",
           pointerEvents: "none",
           zIndex: 10,
-          display: "flex",
           alignItems: "center",
           justifyContent: "center",
           gap: "6px",
+          display: showGrid ? "flex" : "none",
         }}
       >
         <div
@@ -399,6 +735,7 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
           pointerEvents: "none",
           zIndex: 10,
           maxWidth: "40vw",
+          display: showGrid ? "block" : "none",
         }}
       >
         <div
@@ -417,6 +754,8 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
           {items[activeIndex]?.label}
         </div>
       </div>
+
+      <DetailPanel item={selectedItem} visible={isDetailVisible} compact={compact} title={title} />
     </div>
   );
 }
