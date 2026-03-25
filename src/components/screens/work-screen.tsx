@@ -31,7 +31,7 @@ const WORK_ITEMS: GridItem[] = [
     href: "https://daiko.ai",
     description: "AI-powered productivity tool that streamlines workflows and automates repetitive tasks.",
     tags: ["Solana", "LLM", "Rust"],
-    period: "2023",
+    period: "2025",
   },
   {
     id: "doom",
@@ -40,7 +40,7 @@ const WORK_ITEMS: GridItem[] = [
     href: "https://doomindex.fun",
     description: "Real-time market sentiment tracker visualizing the state of crypto markets.",
     tags: ["FLUX", "Rust", "Cloudflare Workers"],
-    period: "2024",
+    period: "2025",
   },
 ];
 export const MEMORY_WORK_ITEMS = WORK_ITEMS;
