@@ -19,7 +19,7 @@ Built with Three.js, React Three Fiber, and deployed on Cloudflare Workers.
 ---
 
 <div align="center">
-  <img src="docs/reference-frames/frame_001.png" alt="PS2 Startup Scene" width="720" />
+  <img src="public/opengraph-image.jpg" alt="PS2 Startup Scene" width="720" />
   <br />
   <sub>PS2 startup tower animation — the opening experience</sub>
 </div>
