@@ -12,8 +12,8 @@ const WORK_ITEMS: GridItem[] = [
     modelPath: "/3d/work/velvett.glb",
     href: "https://velvett.io",
     description: "Decentralized fashion platform connecting creators and collectors through blockchain technology.",
-    tags: ["Web3", "React", "TypeScript"],
-    period: "2024 -",
+    tags: ["RWA", "Solidity", "NFT"],
+    period: "2024 –",
   },
   {
     id: "dena",
@@ -21,8 +21,8 @@ const WORK_ITEMS: GridItem[] = [
     modelPath: "/3d/work/dena.glb",
     href: "https://dena.com",
     description: "Large-scale mobile gaming and internet services platform serving millions of users.",
-    tags: ["Mobile", "Gaming", "Platform"],
-    period: "2023 - 2024",
+    tags: ["Dify", "Go", "Next.js"],
+    period: "2023 – 2024",
   },
   {
     id: "daiko",
@@ -30,8 +30,8 @@ const WORK_ITEMS: GridItem[] = [
     modelPath: "/3d/work/daiko.glb",
     href: "https://daiko.ai",
     description: "AI-powered productivity tool that streamlines workflows and automates repetitive tasks.",
-    tags: ["AI", "SaaS", "TypeScript"],
-    period: "2025",
+    tags: ["Solana", "LLM", "Rust"],
+    period: "2023",
   },
   {
     id: "doom",
@@ -39,8 +39,8 @@ const WORK_ITEMS: GridItem[] = [
     modelPath: "/3d/work/doom.glb",
     href: "https://doomindex.fun",
     description: "Real-time market sentiment tracker visualizing the state of crypto markets.",
-    tags: ["Crypto", "Data Viz", "React"],
-    period: "2025",
+    tags: ["FLUX", "Rust", "Cloudflare Workers"],
+    period: "2024",
   },
 ];
 export const MEMORY_WORK_ITEMS = WORK_ITEMS;

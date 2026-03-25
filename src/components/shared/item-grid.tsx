@@ -38,8 +38,7 @@ const TARGET_SIZE = 0.5;
 const TARGET_SIZE_MOBILE = 0.6;
 const NORMALIZED_SCALE_CACHE = new Map<string, number>();
 const DETAIL_ANIM_DURATION = 0.6;
-const DETAIL_SCALE_FACTOR = 1.8;
-const DETAIL_OFFSET_X = -1.2;
+const DETAIL_SCALE_FACTOR = 2.4;
 
 function calcGridPositions(items: GridItem[]): [number, number, number][] {
   const n = items.length;
@@ -367,7 +366,10 @@ export const ItemGridStage = memo(function ItemGridStage({
   );
 
   const clickHandlers = useMemo(() => items.map((_, i) => () => onItemClick(i)), [items, onItemClick]);
-  const detailPosition = useMemo((): [number, number, number] => [DETAIL_OFFSET_X, 0.1, 0.8], []);
+  const detailPosition = useMemo(
+    (): [number, number, number] => (isMobile ? [0, 0.9, 0.8] : [-1.2, 0.1, 0.8]),
+    [isMobile],
+  );
 
   return (
     <>
@@ -418,12 +420,12 @@ function DetailPanel({
   item,
   visible,
   compact,
-  onBack,
+  title,
 }: {
   item: GridItem | null;
   visible: boolean;
   compact: boolean;
-  onBack: () => void;
+  title: string;
 }) {
   if (!item) return null;
 
@@ -431,149 +433,107 @@ function DetailPanel({
     <div
       style={{
         position: "absolute",
-        top: 0,
-        right: 0,
-        width: compact ? "100%" : "45%",
-        height: "100%",
+        ...(compact ? { bottom: "14%", left: 0, right: 0 } : { top: 0, right: 0, width: "55%", height: "100%" }),
         display: "flex",
         flexDirection: "column",
-        justifyContent: compact ? "flex-end" : "center",
-        padding: compact ? "0 24px 80px" : "0 48px",
+        alignItems: "center",
+        justifyContent: compact ? "flex-start" : "center",
+        padding: compact ? "0 24px" : "0 32px",
         pointerEvents: visible ? "auto" : "none",
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateX(0)" : "translateX(30px)",
+        transform: visible ? "translate(0, 0)" : compact ? "translateY(20px)" : "translateX(30px)",
         transition: "opacity 0.4s ease, transform 0.4s ease",
         zIndex: 20,
       }}
     >
-      <div
+      <span
+        className="ps2-text"
         style={{
-          background: compact ? "linear-gradient(transparent, rgba(0,0,0,0.85) 30%)" : "transparent",
-          borderRadius: compact ? 0 : 8,
-          padding: compact ? "40px 0 0" : 0,
+          fontSize: compact ? "clamp(16px, 4vw, 22px)" : "clamp(20px, 1.7vw, 28px)",
+          color: "#FFFFFF",
+          marginBottom: 6,
+          letterSpacing: "0.02em",
         }}
       >
-        <h2
+        Memory Card <span style={{ fontSize: "0.8em" }}>({title})</span>/1
+      </span>
+
+      <h2
+        className="ps2-text"
+        style={{
+          fontSize: compact ? "clamp(28px, 7.5vw, 44px)" : "clamp(34px, 3.2vw, 52px)",
+          fontWeight: 700,
+          color: "#C5CF1F",
+          margin: "0 0 4px",
+          letterSpacing: "0.02em",
+          textAlign: "center",
+          lineHeight: 1.15,
+        }}
+      >
+        {item.label}
+      </h2>
+
+      {item.description ? (
+        <p
           className="ps2-text"
           style={{
-            fontSize: compact ? "clamp(22px, 5vw, 32px)" : "clamp(28px, 3vw, 42px)",
-            fontWeight: 700,
+            fontSize: compact ? "clamp(11px, 2.8vw, 14px)" : "clamp(12px, 0.85vw, 15px)",
             color: "#C5CF1F",
-            marginBottom: 8,
-            letterSpacing: "0.02em",
+            margin: "0 0 14px",
+            textAlign: "center",
+            lineHeight: 1.7,
+            maxWidth: compact ? "min(88%, 320px)" : "min(80%, 380px)",
+            wordBreak: "break-word",
+            overflowWrap: "break-word",
           }}
         >
-          {item.label}
-        </h2>
+          {item.description}
+        </p>
+      ) : null}
 
-        {item.period ? (
-          <p
-            className="ps2-text"
-            style={{
-              fontSize: compact ? 13 : 15,
-              color: "#8899BB",
-              marginBottom: 12,
-              letterSpacing: "0.04em",
-            }}
-          >
-            {item.period}
-          </p>
-        ) : null}
+      {item.period ? (
+        <p
+          className="ps2-text"
+          style={{
+            fontSize: compact ? "clamp(13px, 3vw, 17px)" : "clamp(14px, 1.1vw, 19px)",
+            color: "#8899BB",
+            margin: "0 0 3px",
+            textAlign: "center",
+          }}
+        >
+          {item.period}
+        </p>
+      ) : null}
 
-        {item.description ? (
-          <p
-            className="ps2-text"
-            style={{
-              fontSize: compact ? 14 : 16,
-              color: "#C8D0E0",
-              lineHeight: 1.6,
-              marginBottom: 16,
-              maxWidth: 400,
-            }}
-          >
-            {item.description}
-          </p>
-        ) : null}
+      {item.tags?.length ? (
+        <p
+          className="ps2-text"
+          style={{
+            fontSize: compact ? "clamp(13px, 3vw, 17px)" : "clamp(14px, 1.1vw, 19px)",
+            color: "#8899BB",
+            margin: "0 0 24px",
+            textAlign: "center",
+          }}
+        >
+          {item.tags.join(" · ")}
+        </p>
+      ) : null}
 
-        {item.tags?.length ? (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
-            {item.tags.map((tag) => (
-              <span
-                key={tag}
-                className="ps2-text"
-                style={{
-                  fontSize: 12,
-                  color: "#75D9EB",
-                  border: "1px solid rgba(117,217,235,0.3)",
-                  borderRadius: 4,
-                  padding: "2px 8px",
-                  letterSpacing: "0.03em",
-                }}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        ) : null}
-
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <a
-            href={item.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ps2-text"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: compact ? 14 : 16,
-              color: "#0E1220",
-              background: "#C5CF1F",
-              padding: "8px 20px",
-              borderRadius: 4,
-              textDecoration: "none",
-              fontWeight: 700,
-              letterSpacing: "0.02em",
-              transition: "background 0.2s",
-            }}
-            onMouseEnter={(event) => {
-              event.currentTarget.style.background = "#D5DF3F";
-            }}
-            onMouseLeave={(event) => {
-              event.currentTarget.style.background = "#C5CF1F";
-            }}
-          >
-            Open ↗
-          </a>
-          <button
-            type="button"
-            onClick={onBack}
-            className="ps2-text"
-            style={{
-              fontSize: compact ? 14 : 16,
-              color: "#8899BB",
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(136,153,187,0.25)",
-              padding: "8px 20px",
-              borderRadius: 4,
-              cursor: "pointer",
-              fontWeight: 600,
-              letterSpacing: "0.02em",
-              transition: "background 0.2s, color 0.2s",
-            }}
-            onMouseEnter={(event) => {
-              event.currentTarget.style.background = "rgba(255,255,255,0.12)";
-              event.currentTarget.style.color = "#C8D0E0";
-            }}
-            onMouseLeave={(event) => {
-              event.currentTarget.style.background = "rgba(255,255,255,0.06)";
-              event.currentTarget.style.color = "#8899BB";
-            }}
-          >
-            Back
-          </button>
-        </div>
-      </div>
+      <a
+        href={item.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ps2-text"
+        style={{
+          fontSize: compact ? "clamp(20px, 5vw, 28px)" : "clamp(22px, 1.8vw, 32px)",
+          color: "#75D9EB",
+          textDecoration: "none",
+          letterSpacing: "0.02em",
+          cursor: "pointer",
+        }}
+      >
+        Open
+      </a>
     </div>
   );
 }
@@ -584,6 +544,8 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
   const compact = isMobile || isPortrait;
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [selectionPhase, setSelectionPhase] = useState<SelectionPhase>("idle");
+  const phaseRef = useRef<SelectionPhase>("idle");
+  phaseRef.current = selectionPhase;
 
   const camPos = useMemo((): [number, number, number] => {
     const zBase = items.length > 3 ? 6 : 4.5;
@@ -592,36 +554,34 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
   }, [items.length, compact]);
 
   const cameraProps = useMemo(() => ({ position: camPos, fov: 50 }), [camPos]);
-  const isAnimating = selectionPhase === "selecting" || selectionPhase === "deselecting";
   const isDetailVisible = selectionPhase === "selected" || selectionPhase === "selecting";
 
   const handleAnimationComplete = useCallback(() => {
-    setSelectionPhase((phase) => {
-      if (phase === "selecting") return "selected";
-      if (phase === "deselecting") {
-        setSelectedIndex(null);
-        return "idle";
-      }
-      return phase;
-    });
+    const phase = phaseRef.current;
+    if (phase === "selecting") {
+      setSelectionPhase("selected");
+    } else if (phase === "deselecting") {
+      setSelectionPhase("idle");
+      setSelectedIndex(null);
+    }
   }, []);
 
   const handleSelect = useCallback(
     (index: number) => {
-      if (isAnimating || selectionPhase !== "idle") return;
+      if (phaseRef.current !== "idle") return;
       if (!items[index]) return;
       playEnter();
       setSelectedIndex(index);
       setSelectionPhase("selecting");
     },
-    [isAnimating, items, playEnter, selectionPhase],
+    [items, playEnter],
   );
 
   const handleDetailBack = useCallback(() => {
-    if (isAnimating || selectionPhase !== "selected") return;
+    if (phaseRef.current !== "selected") return;
     playBack();
     setSelectionPhase("deselecting");
-  }, [isAnimating, playBack, selectionPhase]);
+  }, [playBack]);
 
   const handleGridBack = useCallback(() => {
     playBack();
@@ -629,14 +589,15 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
   }, [playBack]);
 
   const handleBack = useCallback(() => {
-    if (selectionPhase === "selected") {
+    const phase = phaseRef.current;
+    if (phase === "selected") {
       handleDetailBack();
       return;
     }
-    if (selectionPhase === "idle") {
+    if (phase === "idle") {
       handleGridBack();
     }
-  }, [handleDetailBack, handleGridBack, selectionPhase]);
+  }, [handleDetailBack, handleGridBack]);
 
   useEffect(() => {
     if (selectionPhase !== "selected") return;
@@ -650,6 +611,20 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
     window.addEventListener("keydown", handleDetailKeyDown);
     return () => window.removeEventListener("keydown", handleDetailKeyDown);
   }, [handleDetailBack, selectionPhase]);
+
+  useEffect(() => {
+    function handleNavigate(event: Event) {
+      const phase = phaseRef.current;
+      if (phase === "idle") return;
+      event.preventDefault();
+      if (phase === "selected") {
+        handleDetailBack();
+      }
+    }
+
+    window.addEventListener("app:navigate", handleNavigate);
+    return () => window.removeEventListener("app:navigate", handleNavigate);
+  }, [handleDetailBack]);
 
   useEffect(() => {
     if (active) return;
@@ -681,16 +656,11 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
   const activeIndex = items.length === 0 ? 0 : Math.min(rawActiveIndex, items.length - 1);
 
   useEffect(() => {
-    if (selectionPhase === "idle") return;
-    if (!selectedItem) return;
-    if (activeIndex === selectedIndex) return;
-    setSelectedIndex(activeIndex);
-  }, [activeIndex, selectedIndex, selectedItem, selectionPhase]);
-
-  useEffect(() => {
     if (!active) return;
     startAmbientAudio();
   }, [active]);
+
+  const showGrid = selectionPhase === "idle";
 
   return (
     <div style={{ width: "100vw", height: "100dvh", position: "relative" }}>
@@ -723,12 +693,10 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
           left: "clamp(20px, 5vw, 52px)",
           pointerEvents: "none",
           zIndex: 10,
-          display: "flex",
           alignItems: "center",
           justifyContent: "center",
           gap: "6px",
-          opacity: selectionPhase === "idle" ? 1 : 0,
-          transition: "opacity 0.3s ease",
+          display: showGrid ? "flex" : "none",
         }}
       >
         <div
@@ -767,8 +735,7 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
           pointerEvents: "none",
           zIndex: 10,
           maxWidth: "40vw",
-          opacity: selectionPhase === "idle" ? 1 : 0,
-          transition: "opacity 0.3s ease",
+          display: showGrid ? "block" : "none",
         }}
       >
         <div
@@ -788,7 +755,7 @@ export default function ItemGrid({ items, screenId, title, active = true }: Item
         </div>
       </div>
 
-      <DetailPanel item={selectedItem} visible={isDetailVisible} compact={compact} onBack={handleDetailBack} />
+      <DetailPanel item={selectedItem} visible={isDetailVisible} compact={compact} title={title} />
     </div>
   );
 }
